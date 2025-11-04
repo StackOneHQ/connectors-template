@@ -27,3 +27,25 @@ jobs:
               run: npm ci
             - name: Build connector configs
               run: npm run build
+
+    push-connector-configs:
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        runs-on: ubuntu-24.04
+        concurrency:
+            group: release-${{ github.job }}-${{ github.ref }}
+            cancel-in-progress: false
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Use Node.js 22.14.0
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.14.0
+            - name: Install dependencies
+              run: npm ci
+            - name: Build connector configs
+              run: npm run build
+            - name: Push connectors using StackOne CLI
+              run: npx @stackone/cli push src/configs/
+              env:
+                  STACKONE_API_KEY: ${{ secrets.STACKONE_API_KEY }} ## Set in repository secrets
