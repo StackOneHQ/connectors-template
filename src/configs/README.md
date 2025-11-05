@@ -7,6 +7,8 @@ Connectors can contain both unified and non-unified actions.
 - Unified actions must take inputs defined in the StackOne schema and then provide a response output to the defined StackOne schema for the respective resource.
 - Non-unified actions map exactly to the underlying provider's API call and output the provider's response in its entirety. No mapping of the output data is performed.
 
+**By default only generate non-unified actions unless explictly told otherwise**
+
 # File Structure & Organization
 
 ## Directory Structure
@@ -20,9 +22,10 @@ src/configs/{connector-name}/
 ## File Naming Convention
 
 - Use kebab-case for file names
-- Reference partial configs in main file using `$ref: connector-name.resource`
+- **Do not create a single connector file with all the actions**. Generate partial files for each resource.
+- Reference partial configs in main file using `$ref: connector-name.resource`. Add the references in alphabetical order.
 
-**IMPORTANT: Unless explicitly specified otherwise, ALL operations should be configured as non-unified.**
+**IMPORTANT: Unless explicitly specified otherwise, ALL actions should be configured as non-unified.**
 
 # YAML Structure
 
@@ -59,15 +62,14 @@ authentication:
         - key: production
           name: Production
 
-operations:
-  - operationId: list_users
+actions:
+  - actionId: list_users
     categories:
       - hris
-    operationType: list
+    actionType: list
     schema: users
     description: Get list of users
-    context:
-      - https://api.provider.com/docs/users/list
+    context: https://api.provider.com/docs/users/list
     steps:
       - stepId: fetch_users
         stepFunction:
@@ -79,6 +81,28 @@ operations:
       data: $.steps.fetch_users.output.data
 ```
 
+## YAML Best Practices
+
+### Reserved Characters
+
+**⚠️ IMPORTANT: Never use the `:` character as a value in YAML files.**
+
+The colon (`:`) is a reserved character in YAML syntax used to separate keys from values. Using it as a literal value can cause parsing errors or unexpected behavior.
+
+**Incorrect:**
+
+```yaml
+description: Filter by status: pending, approved, denied, cancelled
+```
+
+**Correct:**
+
+```yaml
+description: Filter by status (pending, approved, denied, cancelled)
+```
+
+If you need to include a colon in a description or other text value, use alternative wording or rephrase the text to avoid the colon character.
+
 ## Meta Info
 
 The `info` section contains metadata about the connector:
@@ -86,25 +110,21 @@ The `info` section contains metadata about the connector:
 ```yaml
 StackOne: 1.0.0
 info:
-  title: Jira                    # Provider display name
-  key: jira                      # Unique provider identifier (lowercase)
-  version: 1.0.0                 # Connector version
+  title: Jira # Provider display name
+  key: jira # Unique provider identifier (lowercase)
+  version: 1.0.0 # Connector version
   assets:
     icon: https://stackone-logos.com/api/jira/filled/png
   description: Jira is a project management and issue tracking tool that helps teams plan, track, and manage their work.
 
-baseUrl: https://api.provider.com/v1  # Base URL for all API calls
+baseUrl: https://api.provider.com/v1 # Base URL for all API calls
 
 # Optional: Rate limiting configuration
 rateLimit:
-  mainRatelimit: 10              # Requests per second
+  mainRatelimit: 10 # Requests per second
 
-# Documentation context (can be string or array of URLs)
+# Documentation context
 context: "Provider API documentation: https://api.provider.com/docs"
-# OR
-context:
-  - https://api.provider.com/docs
-  - https://api.provider.com/reference
 ```
 
 ## Authentication
@@ -139,7 +159,7 @@ authentication:
       environments:
         - key: production
           name: Production
-      testOperationsIds:
+      testActionsIds:
         - list_users
 ```
 
@@ -204,11 +224,11 @@ authentication:
         token: $.credentials.accessToken
         includeBearer: true
       refreshAuthentication:
-        operation:
-          operationId: refresh_token_xero
+        action:
+          actionId: refresh_token_xero
           categories:
             - internal
-          operationType: refresh_token
+          actionType: refresh_token
           label: Refresh Token
           description: Refresh Xero OAuth2 token
           steps:
@@ -262,34 +282,33 @@ authentication:
           name: Production
 ```
 
-## Operations
+## Actions
 
-Operations contain these main parts:
+Actions contain these main parts:
 
-- `categories` - list of categories this operation will appear under in the StackOne UI.
-- `operationType` - can only be one of the following values: list, get, create, update, delete, custom, refresh_token. If the provider does not use cursor based pagination then instead of using list, set this value to get.
-- `context` - Documentation URLs or notes specific to this operation
+- `categories` - list of categories this action will appear under in the StackOne UI.
+- `actionType` - can only be one of the following values: list, get, create, update, delete, custom, refresh_token. If the provider does not use cursor based pagination then instead of using list, set this value to get.
+- `context` - Documentation URLs or notes specific to this action. If adding a URL do not use base documentation URL, be specific and link only the page related to this action.
 - Entry Point
-  - `entrypointUrl` - the url endpoint for this operation to be routed from
+  - `entrypointUrl` - the url endpoint for this action to be routed from
   - `entrypointHttpMethod`
-- `inputs` - input request body definition for the operation that is used to capture any data from the incoming request that will be needed in the proceeding steps. Path, query and body parameters can be mapped to the `inputs` object. These values can then be referenced in the connector config by using `'{{input.[name]}}'`
+- `inputs` - input request body definition for the action that is used to capture any data from the incoming request that will be needed in the proceeding steps. Path, query and body parameters can be mapped to the `inputs` object. These values can then be referenced in the connector config by using `'{{input.[name]}}'`
   - `input.type` can only have the following values: string, number, boolean, datetime_string, object
+  - `input.description` is required and MUST be added. This description is to give context for the user to understand what values are expected. If the values are defined in an enum, you must list all possible values if there is no ISO standard.
   - The `input.type: object` allows the use of the `properties` key which can contain nested entries of input fields.
   - **For non-unified actions, the inputs must match exactly the full provider's request parameters for headers, query, path and body. DO NOT CREATE INPUTS THAT DO NOT EXIST IN THE PROVIDER API**
 - `steps` - List of step functions to execute
-- `result` - Final operation output response
+- `result` - Final action output response
 
 ```yaml
-operations:
-  - operationId: get_user
+actions:
+  - actionId: get_user
     categories:
       - ticketing
-    operationType: get
+    actionType: get
     schema: users
     description: Get Users
-    context:
-      - https://api.provider.com/docs/users/get
-      - https://api.provider.com/guides/user-management
+    context: https://api.provider.com/docs/users/get, https://api.provider.com/guides/user-management
     entrypointUrl: /users/:id
     entrypointHttpMethod: get
     inputs:
@@ -454,8 +473,8 @@ See the implementation in:
 ### Steps
 
 ```yaml
-operations:
-  - operationId:
+actions:
+  - actionId:
 	  ...
   steps:
 	  - stepId: list_users
@@ -487,8 +506,8 @@ operations:
 Read response
 
 ```yaml
-operations:
-  - operationId: list_users
+actions:
+  - actionId: list_users
     ...
     steps:
     ...
@@ -499,8 +518,8 @@ operations:
 Write response
 
 ```yaml
-operations:
-  - operationId: update_users
+actions:
+  - actionId: update_users
     ...
     steps:
     ...

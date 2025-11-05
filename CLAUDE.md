@@ -8,13 +8,14 @@ When asked to build Falcon API configurations, you MUST follow this exact sequen
 
 1. **Research Phase (PARALLEL EXECUTION)** → Launch `discover_actions` subagent for action discovery + main agent for auth/docs/competitors
 2. **Synchronization** → Collect and integrate subagent results
-3. **Config Building** → Create comprehensive configuration with all discovered operations
-4. **YAML Validation** → `stackone validate src/configs/<provider>.yaml` → Ensure valid YAML syntax
-5. **Coverage Validation** → `check_all_endpoints()` → Confirm endpoint coverage ≥80%
-6. **Testing Phase** → `run_connector_operation()` → Test EVERY operation with real API calls
-7. **Test Completion** → `check_test_completion()` → Verify 100% operations tested
-8. **Security** → `scramble_credentials()` → Secure all sensitive data before storage
-9. **Meta Feedback** → `meta_feedback()` → **MANDATORY** - Send feedback to third-party system for tracking
+3. **MANDATORY: Read `src/configs/README.md`** → **ALWAYS ALWAYS ALWAYS** read this file before building ANY config - contains YAML schema rules that MUST be followed
+4. **Config Building** → Create comprehensive configuration with all discovered actions following README.md schema exactly
+5. **YAML Validation** → `stackone validate src/configs/<provider>.yaml` → Ensure valid YAML syntax
+6. **Coverage Validation** → `check_all_endpoints()` → Confirm endpoint coverage ≥80%
+7. **Testing Phase** → `run_connector_operation()` → Test EVERY action with real API calls
+8. **Test Completion** → `check_test_completion()` → Verify 100% actions tested
+9. **Security** → `scramble_credentials()` → Secure all sensitive data before storage
+10. **Meta Feedback** → `meta_feedback()` → **MANDATORY** - Send feedback to third-party system for tracking
 
 **❌ Skip/Disorder = Incomplete Task / Professional Failure**
 
@@ -22,20 +23,29 @@ When asked to build Falcon API configurations, you MUST follow this exact sequen
 
 - **MAXIMUM COVERAGE**: Discover and include ALL useful actions that provide customer value
 - **ACTION-FOCUSED**: Think: "what actions would developers commonly perform with this provider?"
-- **CUSTOMER VALUE**: Prioritize operations that solve real business problems
+- **CUSTOMER VALUE**: Prioritize actions that solve real business problems
 - **MORE IS BETTER**: Default to comprehensiveness over minimalism
-- **PRACTICAL UTILITY**: Focus on operations developers actually use in production
+- **PRACTICAL UTILITY**: Focus on actions developers actually use in production
 
 ## 📚 PREREQUISITE DOCUMENTATION
 
-**Before starting, read these files for complete setup and reference information:**
+**⚠️ CRITICAL: These files contain MANDATORY rules that MUST ALWAYS be followed:**
 
-1. **YAML Structure & Connector Building**: Read `src/configs/README.md`
+1. **🚨 MANDATORY: `src/configs/README.md` - ALWAYS READ BEFORE BUILDING ANY CONFIG 🚨**
 
-   - Complete YAML structure documentation
-   - Authentication patterns (OAuth, API Key, Custom)
-   - Operations structure and step functions
-   - Field configs and type mappings
+   **YOU MUST READ THIS FILE BEFORE STEP 4 (CONFIG BUILDING). NO EXCEPTIONS.**
+
+   This file contains:
+
+   - **YAML schema structure** (actions structure, actionId, actionType, etc.)
+   - **Required fields** and their exact names
+   - **Authentication patterns** (OAuth, API Key, Custom)
+   - **Step function syntax** (request, paginated_request, map_fields, typecast)
+   - **Field config types** (string, number, boolean, datetime_string, enum, object)
+   - **Expression syntax** (JSONPath, JEXL, template strings)
+   - **Type mappings and enum patterns**
+
+   **Failure to read this file WILL result in validation errors and wasted time.**
 
 2. **Contribution Guidelines**: Read `README.md`
    - Git branching strategy and commit format
@@ -86,15 +96,19 @@ discover_actions({
 
 This parallel approach maximizes efficiency and minimizes wait time.
 
-### Step 0: Use Existing Connectors as Reference
+### Step 0: Read YAML Schema Documentation (MANDATORY)
 
-**Before starting, read a similar existing connector in `src/configs/` (same category or auth type) to understand the correct YAML structure, required fields, and file organization.**
+**🚨 ALWAYS READ `src/configs/README.md` BEFORE BUILDING ANY CONFIG 🚨**
+
+This file contains the complete YAML schema, field names, type constraints, step function syntax, and all rules that MUST be followed. Reading this file is **NON-NEGOTIABLE** and will prevent validation errors.
+
+After reading README.md, also read a similar existing connector in `src/configs/` (same category or auth type) to see practical examples of the schema in use.
 
 ### Step 1: StackOne Context
 
 ```
 1. get_stackone_categories() → Get available categories (hris, ats, crm, etc.)
-2. get_stackone_operations(category) → Get unified operations for the category
+2. get_stackone_operations(category) → Get unified actions for the category
 ```
 
 ### Step 2: Provider Action Discovery (Autonomous Subagent)
@@ -194,13 +208,26 @@ get_discover_actions_task_status({
    - [ ] Status is "complete" (not "pending" or "running")
    - [ ] Result field contains JSON action report
    - [ ] Actions parsed and organized by category
-   - [ ] Cross-referenced with StackOne operations
+   - [ ] Cross-referenced with StackOne actions
    - [ ] Identified provider-specific capabilities
-   - [ ] Ready to map to YAML operations
+   - [ ] Ready to map to YAML actions
 
 **Note:** The discover_actions subagent automatically saves results to S3, so future calls to `get_provider_actions(provider)` will return the indexed data immediately.
 
 ## ⚙️ CONFIG BUILDING
+
+### 🚨 STEP 0: READ `src/configs/README.md` FIRST 🚨
+
+**BEFORE YOU WRITE A SINGLE LINE OF YAML, YOU MUST READ `src/configs/README.md`**
+
+This is **NOT OPTIONAL**. This file contains the exact YAML schema, field names, type constraints, and syntax rules that your configuration MUST follow. Reading this file will prevent:
+
+- Using invalid types
+- Incorrect step function syntax
+- Invalid enum mapper patterns
+- Expression template errors
+
+**If you skip reading this file, your config WILL fail validation and you WILL waste time.**
 
 ### CLI Setup (If Not Already Installed)
 
@@ -229,21 +256,22 @@ Use the following naming convention and structure:
 
 ### Template Structure
 
-**For complete YAML structure, syntax, and detailed examples, see [`src/configs/README.md`](src/configs/README.md).**
+**🚨 REMINDER: You MUST have already read [`src/configs/README.md`](src/configs/README.md) before this step. If not, GO READ IT NOW. 🚨**
 
-Key sections your configuration must include:
+The README.md file contains the complete YAML structure, syntax, and detailed examples. The key sections your configuration must include are:
 
 1. **Meta Info** (`info`, `baseUrl`, `rateLimit`) - Provider identification and API endpoint
 2. **Authentication** - OAuth2, API Key, Basic, or Custom auth (defined ONCE at top level)
-3. **Context** (optional) - Documentation URLs for the connector and operations
-4. **Operations** - All discovered actions mapped to StackOne operations
-   - Each operation includes: `steps`, `fieldConfigs`, `inputs`, `result`
+3. **Context** (optional) - Documentation URLs for the connector and actions
+4. **Actions** - All discovered actions mapped to StackOne actions
+   - Each action uses `actionId`, `actionType`
+   - Each action includes: `steps`, `fieldConfigs`, `inputs`, `result`
    - See README.md for step functions: `request`, `paginated_request`, `map_fields`, `typecast`, etc.
 
 **Quick Reference:**
 
 - Authentication patterns: See [README.md - Authentication](src/configs/README.md#authentication)
-- Operations structure: See [README.md - Operations](src/configs/README.md#operations)
+- Actions structure: See [README.md - Actions](src/configs/README.md#actions)
 - Field configs & mappings: See [README.md - Field Configs](src/configs/README.md#field-configs)
 - Step functions: See [README.md - Step Functions](src/configs/README.md#step-functions)
 - Dynamic values & expressions: See [README.md - Dynamic Values](src/configs/README.md#dynamic-values)
@@ -251,15 +279,15 @@ Key sections your configuration must include:
 ### Configuration Requirements
 
 - **Action Coverage**: Map ALL actions discovered through `discover_actions` subagent
-- **StackOne Operations**: Include all relevant operations from `get_stackone_operations()`
-- **Comprehensive CRUD**: Where applicable, include create, read, update, delete operations
+- **StackOne Actions**: Include all relevant actions from `get_stackone_operations()`
+- **Comprehensive CRUD**: Where applicable, include create, read, update, delete actions
 - **Error Handling**: Include comprehensive error handling and rate limiting
 - **Context Documentation**: Add context documentation with live URLs only
 - **Credential Templating**: Use proper credential templating: `${credentials.field}`
 
 ### Descriptions (MANDATORY)
 
-- Write clear, concise, high-quality descriptions for connector, operations, steps, and fields
+- Write clear, concise, high-quality descriptions for connector, actions, steps, and fields
 - Aim for 1-2 sentences that capture purpose, key behavior, and critical constraints
 - Include only essential technical details developers need to succeed
 - Keep wording consistent and avoid redundancy; prefer active voice
@@ -288,27 +316,27 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 
 **Option 1: MINIMAL CONFIG (RECOMMENDED)**
 
-- Test individual operations with minimal YAML (header + single operation)
+- Test individual actions with minimal YAML (header + single action)
 - Avoids YAML syntax errors from incomplete configurations
 - Faster iteration during development
-- Clear error messages for individual operations
-- Example: Include only `info`, `baseUrl`, `authentication`, and one operation
+- Clear error messages for individual actions
+- Example: Include only `info`, `baseUrl`, `authentication`, and one action
 - See [README.md](src/configs/README.md) for complete YAML structure and syntax
 
 **Option 2: FULL CONFIG**
 
 - Test complete connector configurations
 - Use when you have a complete, validated YAML structure
-- Useful for integration testing across multiple operations
+- Useful for integration testing across multiple actions
 
 ### Testing Execution
 
 1. Prepare test credentials object
-2. Test EACH operation using `run_connector_operation()`
+2. Test EACH action using `run_connector_operation()`
    - connector: YAML configuration
    - account: credentials + environment details
    - category: StackOne category
-   - path: operation identifier
+   - path: action identifier
    - method: HTTP method
 3. Track testing progress
 4. Validate coverage
@@ -320,25 +348,25 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 ### Coverage Validation
 
 ```
-check_all_endpoints(discoveredActions, stackOneOperations, config)
+check_all_endpoints(discoveredActions, stackOneActions, config)
 → Must achieve ≥80% coverage of discovered actions before testing
 ```
 
 ### Test Completion
 
 ```
-check_test_completion(allOperations, testedOperations)
+check_test_completion(allActions, testedActions)
 → Must achieve 100% before task completion
 ```
 
 ### Success Criteria
 
 - [ ] All useful actions discovered via `discover_actions` subagent (autonomous research)
-- [ ] StackOne operations catalogued via `get_stackone_operations()`
+- [ ] StackOne actions catalogued via `get_stackone_operations()`
 - [ ] Competitor repos analyzed (≥2-3)
-- [ ] All discovered actions mapped to operations
+- [ ] All discovered actions mapped to StackOne actions
 - [ ] Context docs with live links
-- [ ] Every operation tested with `run_connector_operation()`
+- [ ] Every action tested with `run_connector_operation()`
 - [ ] Coverage ≥80% via `check_all_endpoints()`
 - [ ] 100% test completion via `check_test_completion()`
 - [ ] Credentials scrambled before storage
@@ -414,7 +442,7 @@ IMPROVEMENTS NEEDED:
 ### Research Tools
 
 - `get_stackone_categories()` - Get StackOne API categories
-- `get_stackone_operations(category)` - Get operations for category
+- `get_stackone_operations(category)` - Get actions for category
 - `map_provider_key(provider)` - Find correct provider key
 - `get_provider_actions(provider)` - Check S3 for indexed actions (returns data or suggests discover_actions)
 - `discover_actions(provider, apiVersion?, maxIterations?)` - **PRIMARY DISCOVERY TOOL** - Autonomous AI agent for comprehensive API research
@@ -482,8 +510,8 @@ IMPROVEMENTS NEEDED:
 A successful Falcon configuration delivers:
 
 - **Comprehensive Action Coverage**: All useful actions developers need in production
-- **Validated Functionality**: Every operation tested with real API calls
-- **Real-World Focus**: Operations that solve actual business problems
+- **Validated Functionality**: Every action tested with real API calls
+- **Real-World Focus**: Actions that solve actual business problems
 - **Competitive Advantage**: Features that differentiate StackOne
 - **Future-Proof**: Built for extensibility and maintenance
 - **Secure**: All credentials properly secured before storage
