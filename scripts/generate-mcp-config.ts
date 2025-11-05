@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+const colors = {
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    red: '\x1b[31m',
+    reset: '\x1b[0m',
+} as const;
+
 interface McpServer {
     type: string;
     url: string;
@@ -67,15 +74,26 @@ const generateMcpConfig = () => {
     fs.writeFileSync(outputPath, JSON.stringify(mcpConfig, null, 4));
 
     // biome-ignore lint/suspicious/noConsole: Script output
-    console.log('✅ Generated .mcp.json with environment variables');
+    console.log(`${colors.green}✅ Generated .mcp.json with environment variables${colors.reset}`);
 
     // Warn if required env vars are missing
     if (missingVars.length > 0) {
         // biome-ignore lint/suspicious/noConsole: Script warning
-        console.warn(`⚠️  Missing environment variables: ${missingVars.join(', ')}`);
+        console.warn(
+            `${colors.yellow}⚠️  Missing environment variables: ${missingVars.join(', ')}${colors.reset}`,
+        );
         // biome-ignore lint/suspicious/noConsole: Script warning
-        console.warn('   Create a .env file with the missing variables');
+        console.warn(
+            `${colors.yellow}   Create a .env file with the missing variables${colors.reset}`,
+        );
     }
 };
 
-generateMcpConfig();
+try {
+    generateMcpConfig();
+} catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // biome-ignore lint/suspicious/noConsole: Script error output
+    console.error(`${colors.red}❌ Failed to generate .mcp.json: ${message}${colors.reset}`);
+    process.exitCode = 1;
+}
