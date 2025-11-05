@@ -46,6 +46,4 @@ jobs:
             - name: Build connector configs
               run: npm run build
             - name: Push connectors using StackOne CLI
-              run: npx @stackone/cli push src/configs/
-              env:
-                  STACKONE_API_KEY: ${{ secrets.STACKONE_API_KEY }} ## Set in repository secrets
+              run: npx @stackone/cli push --api-key ${{ secrets.STACKONE_API_KEY }} src/configs/
