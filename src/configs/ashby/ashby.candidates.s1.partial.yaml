@@ -1,0 +1,819 @@
+actions:
+  - actionId: list_candidates
+    label: List Candidates
+    categories:
+      - ats
+    actionType: get
+    description: List all candidates in the organization with optional pagination support
+    context: https://developers.ashbyhq.com/reference/candidatelist
+    entrypointUrl: /candidate.list
+    entrypointHttpMethod: post
+    inputs:
+      - name: cursor
+        description: Pagination cursor for fetching the next set of results. Leave empty for the first page.
+        type: string
+        in: body
+        required: false
+      - name: syncToken
+        description: Token for incremental synchronization to fetch only updated records since the last sync.
+        type: string
+        in: body
+        required: false
+      - name: perPage
+        description: Number of candidates to return per page (max 100).
+        type: number
+        in: body
+        required: false
+    steps:
+      - stepId: fetch_candidates
+        description: Fetch candidates from Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.list
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: cursor
+                value: $.inputs.cursor
+                in: body
+                condition: '{{present(inputs.cursor)}}'
+              - name: syncToken
+                value: $.inputs.syncToken
+                in: body
+                condition: '{{present(inputs.syncToken)}}'
+              - name: perPage
+                value: $.inputs.perPage
+                in: body
+                condition: '{{present(inputs.perPage)}}'
+            response:
+              collection: true
+    result:
+      data: $.steps.fetch_candidates.output.data
+
+  - actionId: get_candidate
+    label: Get Candidate
+    categories:
+      - ats
+    actionType: get
+    description: Get detailed information about a specific candidate by ID
+    context: https://developers.ashbyhq.com/reference/candidateinfo
+    entrypointUrl: /candidate.info
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate to retrieve.
+        type: string
+        in: body
+        required: true
+    steps:
+      - stepId: fetch_candidate
+        description: Fetch candidate details from Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.info
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+            response:
+              collection: false
+    result:
+      data: $.steps.fetch_candidate.output.data
+
+  - actionId: search_candidates
+    label: Search Candidates
+    categories:
+      - ats
+    actionType: get
+    description: Search for candidates by email and/or name (limited to 100 results, best for autocomplete use cases)
+    context: https://developers.ashbyhq.com/reference/candidatesearch
+    entrypointUrl: /candidate.search
+    entrypointHttpMethod: post
+    inputs:
+      - name: email
+        description: Email address to search for. Can be combined with name using AND logic.
+        type: string
+        in: body
+        required: false
+      - name: name
+        description: Candidate name to search for. Can be combined with email using AND logic.
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: search_candidates
+        description: Search candidates in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.search
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: email
+                value: $.inputs.email
+                in: body
+                condition: '{{present(inputs.email)}}'
+              - name: name
+                value: $.inputs.name
+                in: body
+                condition: '{{present(inputs.name)}}'
+            response:
+              collection: true
+    result:
+      data: $.steps.search_candidates.output.data
+
+  - actionId: create_candidate
+    label: Create Candidate
+    categories:
+      - ats
+    actionType: create
+    description: Create a new candidate in the system
+    context: https://developers.ashbyhq.com/reference/candidatecreate
+    entrypointUrl: /candidate.create
+    entrypointHttpMethod: post
+    inputs:
+      - name: name
+        description: Full name of the candidate.
+        type: string
+        in: body
+        required: true
+      - name: primaryEmailAddress
+        description: Primary email address for the candidate.
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: value
+            description: Email address value.
+            type: string
+            required: true
+          - name: type
+            description: Type of email (Personal, Work, Other).
+            type: string
+            required: false
+      - name: emailAddresses
+        description: List of additional email addresses for the candidate.
+        type: object
+        in: body
+        required: false
+      - name: phoneNumbers
+        description: List of phone numbers for the candidate.
+        type: object
+        in: body
+        required: false
+      - name: socialLinks
+        description: List of social media profile links (LinkedIn, Twitter, etc.).
+        type: object
+        in: body
+        required: false
+      - name: websites
+        description: List of personal or portfolio website URLs.
+        type: object
+        in: body
+        required: false
+      - name: address
+        description: Physical address of the candidate.
+        type: object
+        in: body
+        required: false
+      - name: company
+        description: Current or most recent company name.
+        type: string
+        in: body
+        required: false
+      - name: title
+        description: Current or most recent job title.
+        type: string
+        in: body
+        required: false
+      - name: resume
+        description: Resume file content (base64 encoded).
+        type: object
+        in: body
+        required: false
+      - name: linkedInUrl
+        description: LinkedIn profile URL.
+        type: string
+        in: body
+        required: false
+      - name: githubUrl
+        description: GitHub profile URL.
+        type: string
+        in: body
+        required: false
+      - name: source
+        description: Source information for how the candidate was found.
+        type: object
+        in: body
+        required: false
+      - name: creditedToUserId
+        description: User ID to credit for sourcing this candidate.
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: create_candidate
+        description: Create candidate in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.create
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: name
+                value: $.inputs.name
+                in: body
+              - name: primaryEmailAddress
+                value: $.inputs.primaryEmailAddress
+                in: body
+                condition: '{{present(inputs.primaryEmailAddress)}}'
+              - name: emailAddresses
+                value: $.inputs.emailAddresses
+                in: body
+                condition: '{{present(inputs.emailAddresses)}}'
+              - name: phoneNumbers
+                value: $.inputs.phoneNumbers
+                in: body
+                condition: '{{present(inputs.phoneNumbers)}}'
+              - name: socialLinks
+                value: $.inputs.socialLinks
+                in: body
+                condition: '{{present(inputs.socialLinks)}}'
+              - name: websites
+                value: $.inputs.websites
+                in: body
+                condition: '{{present(inputs.websites)}}'
+              - name: address
+                value: $.inputs.address
+                in: body
+                condition: '{{present(inputs.address)}}'
+              - name: company
+                value: $.inputs.company
+                in: body
+                condition: '{{present(inputs.company)}}'
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: '{{present(inputs.title)}}'
+              - name: resume
+                value: $.inputs.resume
+                in: body
+                condition: '{{present(inputs.resume)}}'
+              - name: linkedInUrl
+                value: $.inputs.linkedInUrl
+                in: body
+                condition: '{{present(inputs.linkedInUrl)}}'
+              - name: githubUrl
+                value: $.inputs.githubUrl
+                in: body
+                condition: '{{present(inputs.githubUrl)}}'
+              - name: source
+                value: $.inputs.source
+                in: body
+                condition: '{{present(inputs.source)}}'
+              - name: creditedToUserId
+                value: $.inputs.creditedToUserId
+                in: body
+                condition: '{{present(inputs.creditedToUserId)}}'
+            response:
+              collection: false
+    result:
+      data: $.steps.create_candidate.output.data
+
+  - actionId: update_candidate
+    label: Update Candidate
+    categories:
+      - ats
+    actionType: update
+    description: Update an existing candidate's information
+    context: https://developers.ashbyhq.com/reference/candidateupdate
+    entrypointUrl: /candidate.update
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate to update.
+        type: string
+        in: body
+        required: true
+      - name: name
+        description: Updated full name of the candidate.
+        type: string
+        in: body
+        required: false
+      - name: primaryEmailAddress
+        description: Updated primary email address.
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: value
+            description: Email address value.
+            type: string
+            required: true
+          - name: type
+            description: Type of email (Personal, Work, Other).
+            type: string
+            required: false
+      - name: emailAddresses
+        description: Updated list of email addresses.
+        type: object
+        in: body
+        required: false
+      - name: phoneNumbers
+        description: Updated list of phone numbers.
+        type: object
+        in: body
+        required: false
+      - name: socialLinks
+        description: Updated list of social media profile links.
+        type: object
+        in: body
+        required: false
+      - name: websites
+        description: Updated list of website URLs.
+        type: object
+        in: body
+        required: false
+      - name: address
+        description: Updated physical address.
+        type: object
+        in: body
+        required: false
+      - name: company
+        description: Updated company name.
+        type: string
+        in: body
+        required: false
+      - name: title
+        description: Updated job title.
+        type: string
+        in: body
+        required: false
+      - name: linkedInUrl
+        description: Updated LinkedIn profile URL.
+        type: string
+        in: body
+        required: false
+      - name: githubUrl
+        description: Updated GitHub profile URL.
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: update_candidate
+        description: Update candidate in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.update
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: name
+                value: $.inputs.name
+                in: body
+                condition: '{{present(inputs.name)}}'
+              - name: primaryEmailAddress
+                value: $.inputs.primaryEmailAddress
+                in: body
+                condition: '{{present(inputs.primaryEmailAddress)}}'
+              - name: emailAddresses
+                value: $.inputs.emailAddresses
+                in: body
+                condition: '{{present(inputs.emailAddresses)}}'
+              - name: phoneNumbers
+                value: $.inputs.phoneNumbers
+                in: body
+                condition: '{{present(inputs.phoneNumbers)}}'
+              - name: socialLinks
+                value: $.inputs.socialLinks
+                in: body
+                condition: '{{present(inputs.socialLinks)}}'
+              - name: websites
+                value: $.inputs.websites
+                in: body
+                condition: '{{present(inputs.websites)}}'
+              - name: address
+                value: $.inputs.address
+                in: body
+                condition: '{{present(inputs.address)}}'
+              - name: company
+                value: $.inputs.company
+                in: body
+                condition: '{{present(inputs.company)}}'
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: '{{present(inputs.title)}}'
+              - name: linkedInUrl
+                value: $.inputs.linkedInUrl
+                in: body
+                condition: '{{present(inputs.linkedInUrl)}}'
+              - name: githubUrl
+                value: $.inputs.githubUrl
+                in: body
+                condition: '{{present(inputs.githubUrl)}}'
+            response:
+              collection: false
+    result:
+      data: $.steps.update_candidate.output.data
+
+  - actionId: add_candidate_tag
+    label: Add Candidate Tag
+    categories:
+      - ats
+    actionType: update
+    description: Add a tag to a candidate for categorization and filtering
+    context: https://developers.ashbyhq.com/reference/candidateaddtag
+    entrypointUrl: /candidate.addTag
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate.
+        type: string
+        in: body
+        required: true
+      - name: tagId
+        description: Unique identifier of the tag to add to the candidate.
+        type: string
+        in: body
+        required: true
+    steps:
+      - stepId: add_tag
+        description: Add tag to candidate in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.addTag
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: tagId
+                value: $.inputs.tagId
+                in: body
+            response:
+              collection: false
+    result:
+      data: $.steps.add_tag.output.data
+
+  - actionId: list_candidate_notes
+    label: List Candidate Notes
+    categories:
+      - ats
+    actionType: get
+    description: List all notes associated with a specific candidate
+    context: https://developers.ashbyhq.com/reference/candidatelistnotes
+    entrypointUrl: /candidate.listNotes
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate whose notes to retrieve.
+        type: string
+        in: body
+        required: true
+      - name: cursor
+        description: Pagination cursor for fetching the next set of notes.
+        type: string
+        in: body
+        required: false
+      - name: syncToken
+        description: Token for incremental synchronization of notes.
+        type: string
+        in: body
+        required: false
+      - name: perPage
+        description: Number of notes to return per page.
+        type: number
+        in: body
+        required: false
+    steps:
+      - stepId: fetch_notes
+        description: Fetch candidate notes from Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.listNotes
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: cursor
+                value: $.inputs.cursor
+                in: body
+                condition: '{{present(inputs.cursor)}}'
+              - name: syncToken
+                value: $.inputs.syncToken
+                in: body
+                condition: '{{present(inputs.syncToken)}}'
+              - name: perPage
+                value: $.inputs.perPage
+                in: body
+                condition: '{{present(inputs.perPage)}}'
+            response:
+              collection: true
+    result:
+      data: $.steps.fetch_notes.output.data
+
+  - actionId: create_candidate_note
+    label: Create Candidate Note
+    categories:
+      - ats
+    actionType: create
+    description: Create a new note for a candidate
+    context: https://developers.ashbyhq.com/reference/candidatecreatenote
+    entrypointUrl: /candidate.createNote
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate.
+        type: string
+        in: body
+        required: true
+      - name: content
+        description: Content of the note in plain text or HTML format.
+        type: string
+        in: body
+        required: true
+      - name: authorId
+        description: User ID of the note author. If not provided, uses the API key owner.
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: create_note
+        description: Create note in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.createNote
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: content
+                value: $.inputs.content
+                in: body
+              - name: authorId
+                value: $.inputs.authorId
+                in: body
+                condition: '{{present(inputs.authorId)}}'
+            response:
+              collection: false
+    result:
+      data: $.steps.create_note.output.data
+
+  - actionId: add_candidate_project
+    label: Add Candidate to Project
+    categories:
+      - ats
+    actionType: update
+    description: Add a candidate to a project for organization and tracking
+    context: https://developers.ashbyhq.com/reference/candidateaddproject
+    entrypointUrl: /candidate.addProject
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate.
+        type: string
+        in: body
+        required: true
+      - name: projectId
+        description: Unique identifier of the project to add the candidate to.
+        type: string
+        in: body
+        required: true
+    steps:
+      - stepId: add_project
+        description: Add candidate to project in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.addProject
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: projectId
+                value: $.inputs.projectId
+                in: body
+            response:
+              collection: false
+    result:
+      data: $.steps.add_project.output.data
+
+  - actionId: list_candidate_projects
+    label: List Candidate Projects
+    categories:
+      - ats
+    actionType: get
+    description: List all projects associated with a specific candidate
+    context: https://developers.ashbyhq.com/reference/candidatelistprojects
+    entrypointUrl: /candidate.listProjects
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate whose projects to retrieve.
+        type: string
+        in: body
+        required: true
+    steps:
+      - stepId: fetch_projects
+        description: Fetch candidate projects from Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.listProjects
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+            response:
+              collection: true
+    result:
+      data: $.steps.fetch_projects.output.data
+
+  - actionId: upload_candidate_file
+    label: Upload Candidate File
+    categories:
+      - ats
+    actionType: create
+    description: Upload a file to attach to a candidate's profile (resume, cover letter, portfolio, etc.)
+    context: https://developers.ashbyhq.com/reference/candidateuploadfile
+    entrypointUrl: /candidate.uploadFile
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate.
+        type: string
+        in: body
+        required: true
+      - name: file
+        description: File content to upload (multipart/form-data).
+        type: object
+        in: body
+        required: true
+      - name: fileName
+        description: Name of the file being uploaded.
+        type: string
+        in: body
+        required: true
+      - name: fileType
+        description: MIME type of the file (e.g., application/pdf, image/png).
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upload_file
+        description: Upload file to Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.uploadFile
+            method: post
+            args:
+              - name: Content-Type
+                value: multipart/form-data
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: file
+                value: $.inputs.file
+                in: body
+              - name: fileName
+                value: $.inputs.fileName
+                in: body
+              - name: fileType
+                value: $.inputs.fileType
+                in: body
+                condition: '{{present(inputs.fileType)}}'
+            response:
+              collection: false
+    result:
+      data: $.steps.upload_file.output.data
+
+  - actionId: upload_candidate_resume
+    label: Upload Candidate Resume
+    categories:
+      - ats
+    actionType: create
+    description: Upload a resume file for a candidate with automatic parsing
+    context: https://developers.ashbyhq.com/reference/candidateuploadresume
+    entrypointUrl: /candidate.uploadResume
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate.
+        type: string
+        in: body
+        required: true
+      - name: resume
+        description: Resume file content (multipart/form-data).
+        type: object
+        in: body
+        required: true
+      - name: fileName
+        description: Name of the resume file.
+        type: string
+        in: body
+        required: true
+    steps:
+      - stepId: upload_resume
+        description: Upload resume to Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.uploadResume
+            method: post
+            args:
+              - name: Content-Type
+                value: multipart/form-data
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+              - name: resume
+                value: $.inputs.resume
+                in: body
+              - name: fileName
+                value: $.inputs.fileName
+                in: body
+            response:
+              collection: false
+    result:
+      data: $.steps.upload_resume.output.data
+
+  - actionId: anonymize_candidate
+    label: Anonymize Candidate
+    categories:
+      - ats
+    actionType: delete
+    description: Anonymize a candidate's personal information for GDPR compliance
+    context: https://developers.ashbyhq.com/reference/candidateanonymize
+    entrypointUrl: /candidate.anonymize
+    entrypointHttpMethod: post
+    inputs:
+      - name: candidateId
+        description: Unique identifier of the candidate to anonymize.
+        type: string
+        in: body
+        required: true
+    steps:
+      - stepId: anonymize_candidate
+        description: Anonymize candidate in Ashby API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /candidate.anonymize
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: candidateId
+                value: $.inputs.candidateId
+                in: body
+            response:
+              collection: false
+    result:
+      data: $.steps.anonymize_candidate.output.data

@@ -1,0 +1,38 @@
+StackOne: 1.0.0
+info:
+  title: Ashby
+  key: ashby
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/ashby/filled/png
+  description: Ashby is an all-in-one recruiting software platform designed for ambitious teams, providing tools for applicant tracking, interview scheduling, and analytics.
+
+baseUrl: https://api.ashbyhq.com
+
+authentication:
+  - custom:
+      type: custom
+      label: API Key
+      support:
+        link: https://developers.ashbyhq.com/reference/authentication
+        description: You can generate an API key from your Ashby admin panel at Settings > API Keys.
+      authorization:
+        type: basic
+        username: $.credentials.apiKey
+        password: ""
+      configFields:
+        - key: apiKey
+          label: API Key
+          type: password
+          required: true
+          secret: true
+          placeholder: ashby_api_xxxxxxxxxxxxx
+          description: Generate an API key from your Ashby admin panel (Settings > API Keys). Ensure the key has the necessary permissions for the endpoints you need to access.
+          tooltip: Make sure to save your API key securely as it provides access to your Ashby data.
+      environments:
+        - key: production
+          name: Production
+
+context: "Ashby API documentation (https://developers.ashbyhq.com/reference/introduction)"
+
+$ref: ashby.candidates
