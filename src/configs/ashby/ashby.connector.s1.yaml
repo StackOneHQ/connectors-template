@@ -1,7 +1,7 @@
 StackOne: 1.0.0
 info:
-  title: Ashby
-  key: ashby
+  title: Ashby Custom Test
+  key: ashby-custom-test
   version: 1.0.0
   assets:
     icon: https://stackone-logos.com/api/ashby/filled/png
