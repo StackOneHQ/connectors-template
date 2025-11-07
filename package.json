@@ -14,7 +14,7 @@
         "postinstall": "npm run setup:hooks && npm run setup:mcp"
     },
     "dependencies": {
-        "@stackone/cli": "1.8.1",
+        "@stackone/cli": "^1.9.1",
         "@stackone/connect-sdk": "2.0.0",
         "@stackone/core": "2.0.0",
         "@stackone/expressions": "0.17.0",
