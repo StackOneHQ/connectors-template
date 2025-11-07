@@ -10,11 +10,10 @@
         "lint": "biome check ./src ./scripts",
         "lint:fix": "biome check --write ./src ./scripts",
         "setup:hooks": "sh scripts/setup-git-hooks.sh",
-        "setup:mcp": "node --import=tsx ./scripts/generate-mcp-config.ts",
-        "postinstall": "npm run setup:hooks && npm run setup:mcp"
+        "postinstall": "npm run setup:hooks"
     },
     "dependencies": {
-        "@stackone/cli": "^1.9.1",
+        "@stackone/cli": "^1.9.2",
         "@stackone/connect-sdk": "2.0.0",
         "@stackone/core": "2.0.0",
         "@stackone/expressions": "0.17.0",

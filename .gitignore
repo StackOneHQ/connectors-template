@@ -3,9 +3,6 @@
 .env.development
 .env.test
 
-# MCP configuration (generated from template)
-.mcp.json
-
 # Dependencies
 node_modules
 
