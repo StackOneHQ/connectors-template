@@ -6,13 +6,13 @@ This document provides the complete methodology for building Falcon API configur
 
 When asked to build Falcon API configurations, you MUST follow this exact sequence:
 
-1. **Research Phase (PARALLEL EXECUTION)** → Launch `discover_actions` subagent for action discovery + main agent for auth/docs/competitors
+1. **Research Phase (PARALLEL EXECUTION)** → Launch `discover_actions` subagent for action discovery + main agent for auth/docs/external repos
 2. **Synchronization** → Collect and integrate subagent results
-3. **MANDATORY: Read `src/configs/README.md`** → **ALWAYS ALWAYS ALWAYS** read this file before building ANY config - contains YAML schema rules that MUST be followed
-4. **Config Building** → Create comprehensive configuration with all discovered actions following README.md schema exactly
+3. **Version Validation** → `analyze_versioning()` → Detect and resolve API version conflicts for discovered endpoints
+4. **Config Building** → Create comprehensive configuration with all discovered actions
 5. **YAML Validation** → `stackone validate src/configs/<provider>.yaml` → Ensure valid YAML syntax
 6. **Coverage Validation** → `check_all_endpoints()` → Confirm endpoint coverage ≥80%
-7. **Testing Phase** → `run_connector_operation()` → Test EVERY action with real API calls
+7. **Testing Phase** → `run_connector_action()` → Test EVERY action with real API calls
 8. **Test Completion** → `check_test_completion()` → Verify 100% actions tested
 9. **Security** → `scramble_credentials()` → Secure all sensitive data before storage
 10. **Meta Feedback** → `meta_feedback()` → **MANDATORY** - Send feedback to third-party system for tracking
@@ -29,23 +29,14 @@ When asked to build Falcon API configurations, you MUST follow this exact sequen
 
 ## 📚 PREREQUISITE DOCUMENTATION
 
-**⚠️ CRITICAL: These files contain MANDATORY rules that MUST ALWAYS be followed:**
+**Before starting, read these files for complete setup and reference information:**
 
-1. **🚨 MANDATORY: `src/configs/README.md` - ALWAYS READ BEFORE BUILDING ANY CONFIG 🚨**
+1. **YAML Structure & Connector Building**: Read `src/configs/README.md`
 
-   **YOU MUST READ THIS FILE BEFORE STEP 4 (CONFIG BUILDING). NO EXCEPTIONS.**
-
-   This file contains:
-
-   - **YAML schema structure** (actions structure, actionId, actionType, etc.)
-   - **Required fields** and their exact names
-   - **Authentication patterns** (OAuth, API Key, Custom)
-   - **Step function syntax** (request, paginated_request, map_fields, typecast)
-   - **Field config types** (string, number, boolean, datetime_string, enum, object)
-   - **Expression syntax** (JSONPath, JEXL, template strings)
-   - **Type mappings and enum patterns**
-
-   **Failure to read this file WILL result in validation errors and wasted time.**
+   - Complete YAML structure documentation
+   - Authentication patterns (OAuth, API Key, Custom)
+   - Operations structure and step functions
+   - Field configs and type mappings
 
 2. **Contribution Guidelines**: Read `README.md`
    - Git branching strategy and commit format
@@ -89,26 +80,23 @@ discover_actions({
 **Launch discover_actions early, continue with other research:**
 
 1. **Minute 0:** Launch `discover_actions(provider)` → Get taskId
-2. **Minutes 0-5:** Complete Steps 0-4 (reference connectors, StackOne context, auth, docs, competitors)
+2. **Minutes 0-5:** Complete Steps 0-4 (reference connectors, StackOne context, auth, docs, external repos)
 3. **Minutes 5-15:** Poll `get_discover_actions_task_status(taskId, provider)` every 60-90 seconds
 4. **Minute 15:** Synchronize and integrate all research results
-5. **Begin config building with complete action inventory**
+5. **Minute 15-20:** Run `analyze_versioning()` for version validation (NEW STEP)
+6. **Begin config building with complete action inventory**
 
 This parallel approach maximizes efficiency and minimizes wait time.
 
-### Step 0: Read YAML Schema Documentation (MANDATORY)
+### Step 0: Use Existing Connectors as Reference
 
-**🚨 ALWAYS READ `src/configs/README.md` BEFORE BUILDING ANY CONFIG 🚨**
-
-This file contains the complete YAML schema, field names, type constraints, step function syntax, and all rules that MUST be followed. Reading this file is **NON-NEGOTIABLE** and will prevent validation errors.
-
-After reading README.md, also read a similar existing connector in `src/configs/` (same category or auth type) to see practical examples of the schema in use.
+**Before starting, read a similar existing connector in `src/configs/` (same category or auth type) to understand the correct YAML structure, required fields, and file organization.**
 
 ### Step 1: StackOne Context
 
 ```
 1. get_stackone_categories() → Get available categories (hris, ats, crm, etc.)
-2. get_stackone_operations(category) → Get unified actions for the category
+2. get_stackone_actions(category) → Get unified actions for the category
 ```
 
 ### Step 2: Provider Action Discovery (Autonomous Subagent)
@@ -174,13 +162,15 @@ get_discover_actions_task_status({
 3. extract_oas_operations() → Parse large OpenAPI specifications
 ```
 
-### Step 5: Competitive Analysis (MANDATORY)
+### Step 5: External Repository Analysis (MANDATORY)
 
 ```
-1. get_competitors(provider) → Find competitors
-2. get_competitor_repos() → Get open source integration examples
-3. scan_github_repo() → Analyze competitor implementations
-4. analyze_competitor() → Deep dive on specific competitors
+1. get_external_integrations(provider) → Find list of external integrations
+2. analyze_external_integration(externalIntegration, provider) → Deep dive on specific external integration
+3. analyze_external_integrations(externalIntegrations, provider) → Batch analysis of multiple external integrations
+4. get_external_repos() → Get curated open-source integration examples
+5. scan_external_repo(repo_url, search_terms) → Deep repository search
+6. search_external_repo(repo_url, description) → Research external integration implementation details
 ```
 
 ### Step 6: Synchronize Subagent Results
@@ -208,26 +198,106 @@ get_discover_actions_task_status({
    - [ ] Status is "complete" (not "pending" or "running")
    - [ ] Result field contains JSON action report
    - [ ] Actions parsed and organized by category
-   - [ ] Cross-referenced with StackOne actions
+   - [ ] Cross-referenced with StackOne operations
    - [ ] Identified provider-specific capabilities
-   - [ ] Ready to map to YAML actions
+   - [ ] Ready for version validation and YAML mapping
 
 **Note:** The discover_actions subagent automatically saves results to S3, so future calls to `get_provider_actions(provider)` will return the indexed data immediately.
 
+## 🔄 VERSION VALIDATION (NEW STEP)
+
+### API Versioning Agent
+
+**IMPORTANT**: After action discovery completes, validate API versions for discovered endpoints.
+
+**When to use:**
+
+- After `discover_actions` completes and returns endpoints
+- Before building YAML configurations
+- When encountering version-related errors during testing
+
+**Workflow:**
+
+```typescript
+// Step 1: Extract endpoints from discovered actions
+const discoveredEndpoints = discoveredActions.map(action => action.endpoints[0]);
+// Example: ["/api/v2/users", "/api/v2/departments", "/api/v3/tickets"]
+
+// Step 2: Launch versioning analysis (2-5 minutes)
+analyze_versioning({
+  provider: "provider_name",
+  endpoints: discoveredEndpoints,  // Pass discovered endpoints
+  maxIterations: 5
+})
+→ Returns: { taskId: "rpc_xxx", provider: "provider_name", message: "..." }
+
+// Step 3: Poll for status (every 30-60 seconds)
+get_analyze_versioning_task_status({
+  taskId: "rpc_xxx",
+  provider: "provider_name"
+})
+→ Status: "running", iteration: 2/5
+
+// Step 4: Extract results when complete
+get_analyze_versioning_task_status({
+  taskId: "rpc_xxx",
+  provider: "provider_name"
+})
+→ Status: "complete"
+→ Result: JSON version analysis report
+```
+
+**What you get:**
+
+```json
+{
+  "available_versions": ["v1", "v2", "v3"],
+  "recommended_version": "v3",
+  "endpoint_mapping": [
+    {
+      "endpoint": "/api/v2/departments",
+      "version": "v2",
+      "status": "deprecated",
+      "v3_equivalent": "/api/v3/organizational-units",
+      "breaking_changes": ["Endpoint renamed", "Different data structure"],
+      "recommendation": "Migrate to v3 /organizational-units endpoint"
+    }
+  ],
+  "conflicts_detected": [
+    {
+      "issue": "v2 /departments endpoint not available in v3",
+      "severity": "high",
+      "resolution": "Use v3 /organizational-units endpoint instead"
+    }
+  ],
+  "migration_guide": {
+    "v2_to_v3": {
+      "breaking_changes": ["Endpoint renames", "Schema changes"],
+      "migration_steps": [...]
+    }
+  }
+}
+```
+
+**Benefits:**
+
+- **Conflict Detection**: Identifies version mismatches and breaking changes
+- **Migration Guidance**: Provides version-specific migration paths
+- **Endpoint Validation**: Confirms which version each endpoint belongs to
+- **Focused Analysis**: Only 2-5 minutes using vector_search + summarised_search
+- **Prevention**: Catches versioning issues before config building
+
+**Version Validation Checklist:**
+
+- [ ] Discovered actions extracted from action discovery results
+- [ ] Endpoints passed to `analyze_versioning()`
+- [ ] Version analysis complete with recommendations
+- [ ] Breaking changes and conflicts reviewed
+- [ ] Recommended version identified for each endpoint
+- [ ] Migration steps documented for deprecated endpoints
+- [ ] Ready to build config with version-validated endpoints
+
 ## ⚙️ CONFIG BUILDING
-
-### 🚨 STEP 0: READ `src/configs/README.md` FIRST 🚨
-
-**BEFORE YOU WRITE A SINGLE LINE OF YAML, YOU MUST READ `src/configs/README.md`**
-
-This is **NOT OPTIONAL**. This file contains the exact YAML schema, field names, type constraints, and syntax rules that your configuration MUST follow. Reading this file will prevent:
-
-- Using invalid types
-- Incorrect step function syntax
-- Invalid enum mapper patterns
-- Expression template errors
-
-**If you skip reading this file, your config WILL fail validation and you WILL waste time.**
 
 ### CLI Setup (If Not Already Installed)
 
@@ -256,15 +326,14 @@ Use the following naming convention and structure:
 
 ### Template Structure
 
-**🚨 REMINDER: You MUST have already read [`src/configs/README.md`](src/configs/README.md) before this step. If not, GO READ IT NOW. 🚨**
+**For complete YAML structure, syntax, and detailed examples, see [`src/configs/README.md`](src/configs/README.md).**
 
-The README.md file contains the complete YAML structure, syntax, and detailed examples. The key sections your configuration must include are:
+Key sections your configuration must include:
 
 1. **Meta Info** (`info`, `baseUrl`, `rateLimit`) - Provider identification and API endpoint
 2. **Authentication** - OAuth2, API Key, Basic, or Custom auth (defined ONCE at top level)
-3. **Context** (optional) - Documentation URLs for the connector and actions
+3. **Context** (optional) - Documentation URLs for the connector and operations
 4. **Actions** - All discovered actions mapped to StackOne actions
-   - Each action uses `actionId`, `actionType`
    - Each action includes: `steps`, `fieldConfigs`, `inputs`, `result`
    - See README.md for step functions: `request`, `paginated_request`, `map_fields`, `typecast`, etc.
 
@@ -279,8 +348,9 @@ The README.md file contains the complete YAML structure, syntax, and detailed ex
 ### Configuration Requirements
 
 - **Action Coverage**: Map ALL actions discovered through `discover_actions` subagent
-- **StackOne Actions**: Include all relevant actions from `get_stackone_operations()`
-- **Comprehensive CRUD**: Where applicable, include create, read, update, delete actions
+- **Version-Validated Endpoints**: Use version analysis results to ensure correct endpoints
+- **StackOne Operations**: Include all relevant operations from `get_stackone_actions()`
+- **Comprehensive CRUD**: Where applicable, include create, read, update, delete operations
 - **Error Handling**: Include comprehensive error handling and rate limiting
 - **Context Documentation**: Add context documentation with live URLs only
 - **Credential Templating**: Use proper credential templating: `${credentials.field}`
@@ -316,11 +386,11 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 
 **Option 1: MINIMAL CONFIG (RECOMMENDED)**
 
-- Test individual actions with minimal YAML (header + single action)
+- Test individual operations with minimal YAML (header + single action)
 - Avoids YAML syntax errors from incomplete configurations
 - Faster iteration during development
-- Clear error messages for individual actions
-- Example: Include only `info`, `baseUrl`, `authentication`, and one action
+- Clear error messages for individual operations
+- Example: Include only `info`, `baseUrl`, `authentication`, and one operation
 - See [README.md](src/configs/README.md) for complete YAML structure and syntax
 
 **Option 2: FULL CONFIG**
@@ -332,7 +402,7 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 ### Testing Execution
 
 1. Prepare test credentials object
-2. Test EACH action using `run_connector_operation()`
+2. Test EACH action using `run_connector_action()`
    - connector: YAML configuration
    - account: credentials + environment details
    - category: StackOne category
@@ -348,31 +418,32 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 ### Coverage Validation
 
 ```
-check_all_endpoints(discoveredActions, stackOneActions, config)
+check_all_endpoints(discoveredActions, stackOneOperations, config)
 → Must achieve ≥80% coverage of discovered actions before testing
 ```
 
 ### Test Completion
 
 ```
-check_test_completion(allActions, testedActions)
+check_test_completion(allOperations, testedOperations)
 → Must achieve 100% before task completion
 ```
 
 ### Success Criteria
 
 - [ ] All useful actions discovered via `discover_actions` subagent (autonomous research)
-- [ ] StackOne actions catalogued via `get_stackone_operations()`
-- [ ] Competitor repos analyzed (≥2-3)
-- [ ] All discovered actions mapped to StackOne actions
+- [ ] StackOne operations catalogued via `get_stackone_actions()`
+- [ ] External repos analyzed (≥2-3)
+- [ ] **API versions validated via `analyze_versioning()` subagent**
+- [ ] All discovered actions mapped to operations with correct versions
 - [ ] Context docs with live links
-- [ ] Every action tested with `run_connector_operation()`
+- [ ] Every action tested with `run_connector_action()`
 - [ ] Coverage ≥80% via `check_all_endpoints()`
 - [ ] 100% test completion via `check_test_completion()`
 - [ ] Credentials scrambled before storage
 - [ ] **Meta feedback sent via `meta_feedback()` - MANDATORY**
 
-## 🔐 SECURITY (MANDATORY BEFORE STORAGE)
+## 🔒 SECURITY (MANDATORY BEFORE STORAGE)
 
 ### Security Workflow
 
@@ -439,46 +510,70 @@ IMPROVEMENTS NEEDED:
 
 ## 🛠️ Available Tools
 
-### Research Tools
+### Core Research Tools
 
 - `get_stackone_categories()` - Get StackOne API categories
-- `get_stackone_operations(category)` - Get actions for category
-- `map_provider_key(provider)` - Find correct provider key
-- `get_provider_actions(provider)` - Check S3 for indexed actions (returns data or suggests discover_actions)
-- `discover_actions(provider, apiVersion?, maxIterations?)` - **PRIMARY DISCOVERY TOOL** - Autonomous AI agent for comprehensive API research
+- `get_stackone_actions(category)` - Get operations for category
+- `get_docs()` - Fetch StackOne docs index with title:url dictionary
+- `map_provider_key(provider)` - Find correct provider key with fuzzy matching
+- `get_providers()` - List all available providers from S3 config
+- `get_provider_coverage(provider)` - Current StackOne coverage for provider
+
+### Action Discovery (Primary)
+
+- `discover_actions(provider, apiVersion?, maxIterations?)` - **PRIMARY DISCOVERY TOOL** - Autonomous AI agent for comprehensive API research (5-15 minutes)
 - `get_discover_actions_task_status(taskId, provider)` - Poll status and retrieve results from discover_actions
-- `vector_search(query, provider, k)` - Search StackOne knowledge base
-- `summarised_search(query)` - Web search with AI analysis
-- `concise_search(query)` - Structured web search results
-- `fetch(url)` - Get content from URLs
-- `extract_oas_operations(oasContent)` - Parse OpenAPI specs
+- `get_provider_actions(provider, focus?, previousActions?)` - Check S3 for indexed actions or fallback to Parallel AI
 
-### Competition Analysis
+### API Versioning (New)
 
-- `get_competitors(provider)` - Find competitor list
-- `get_competitor_repos()` - Get open source repos
-- `scan_github_repo(url, terms)` - Analyze repositories
-- `analyze_competitor(competitor, provider)` - Deep analysis
+- `analyze_versioning(provider, endpoints?, maxIterations?)` - **VERSION VALIDATION TOOL** - Autonomous agent for detecting API version conflicts (2-5 minutes)
+- `get_analyze_versioning_task_status(taskId, provider)` - Poll status and retrieve results from analyze_versioning
+
+### Web Search Tools
+
+- `summarised_search(query)` - Web search via Perplexity AI with natural language summaries
+- `concise_search(query)` - Structured web search via Parallel AI with JSON results
+- `vector_search(query, provider, k)` - Semantic search across StackOne knowledge base
+- `fetch(url, headers?, extractText?)` - Get content from URLs with optional text extraction
+- `extract_html_text(html)` - Extract plain text from HTML content
+
+### External Repository Analysis
+
+- `get_external_integrations(provider, count?)` - Find list of external integrations (default 10)
+- `analyze_external_integration(externalIntegration, provider)` - Deep dive on specific external integration implementation
+- `analyze_external_integrations(externalIntegrations, provider)` - Batch analysis of multiple external integrations
+- `get_external_repos()` - Get curated list of open-source integration examples
+- `scan_external_repo(repo_url, search_terms, options?)` - Deep repository search with pagination
+- `search_external_repo(repo_url, description)` - Research external integration technical implementation details
 
 ### Configuration & Templates
 
-- `get_templates(auth_type)` - Get Falcon auth templates
-- `get_provider_coverage(provider)` - Current StackOne coverage
-- `stackone validate <config_file>` - Validate YAML format using CLI (preferred method)
+- `get_templates(auth_type, auth_only?)` - Get Falcon auth templates (OAuth2, API Key, Basic, Custom)
+- `get_stackone_expressions()` - Pull full expressions package for formatting help
+- `extract_oas_operations(oasContent, hasBeenTruncated, passNumber)` - Parse large OpenAPI specs with truncation support
 
 ### Testing & Validation
 
-- `run_connector_operation()` - Execute real API calls
-- `check_all_endpoints()` - Validate endpoint coverage
-- `check_test_completion()` - Verify testing completion
+- `run_connector_operation(connector, account, category, path, method, ...)` - Execute real API calls with minimal or full configs
+- `check_all_endpoints(unifiedEndpoints, nonUnifiedEndpoints, config)` - **MANDATORY** - Validate endpoint coverage ≥80%
+- `check_test_completion(allOperations, testedOperations)` - **MANDATORY** - Verify 100% actions tested
 
-### Security
+### Description Improvement
 
-- `scramble_credentials()` - Secure credential scrambling
+- `improve_descriptions(config, maxIterations?)` - Async tool to improve YAML descriptions (2-5 minutes)
+- `get_improve_descriptions_task_status(taskId, provider)` - Poll status and retrieve improved YAML
+
+### Security (MANDATORY)
+
+- `scramble_credentials(config?, credentials?, securityLevel, customPatterns?)` - **REQUIRED** - Secure credential scrambling before storage
+  - Security levels: DEBUG, DEVELOPMENT, PRODUCTION, BALANCED
+  - Detects API keys, tokens, passwords, secrets, URL-embedded auth
+  - Must be called before ANY storage operation
 
 ### Meta Feedback (MANDATORY)
 
-- `meta_feedback()` - **REQUIRED** - Send feedback to third-party system for tracking performance and quality metrics. Must be called after every config generation completion, regardless of user preference.
+- `meta_feedback(feedback, tool_names)` - **REQUIRED** - Send harsh, critical feedback to LangSmith for tracking. Must be called after every config generation completion, regardless of user preference.
 
   **Expected Output:**
 
@@ -501,20 +596,17 @@ IMPROVEMENTS NEEDED:
   }
   ```
 
-### Formatting Support
-
-- `get_expressions_info()` - Resolve expression formatting issues by inspecting supported formats
-
 ## 💡 SUCCESS CRITERIA
 
 A successful Falcon configuration delivers:
 
 - **Comprehensive Action Coverage**: All useful actions developers need in production
+- **Version-Validated Endpoints**: Correct API versions for all endpoints, with conflict resolution
 - **Validated Functionality**: Every action tested with real API calls
-- **Real-World Focus**: Actions that solve actual business problems
-- **Competitive Advantage**: Features that differentiate StackOne
+- **Real-World Focus**: Operations that solve actual business problems
+- **Market Insight**: Features that differentiate StackOne from external integrations
 - **Future-Proof**: Built for extensibility and maintenance
 - **Secure**: All credentials properly secured before storage
 - **Documented**: Clear sources and context for all implementations
 
-Remember: **Autonomous Discovery + Maximum coverage + Real testing + Security = Customer value**
+Remember: **Autonomous Discovery + Version Validation + Maximum coverage + Real testing + Security = Customer value**
