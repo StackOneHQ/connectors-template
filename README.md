@@ -2,7 +2,7 @@
 
 ## Description
 
-This repository contains a collection of connectors for Visier.
+This repository contains a collection of connectors for and created by, Visier.
 
 ## Getting Started
 
@@ -80,7 +80,7 @@ For comprehensive guides on building and converting connectors, see:
 
 ### Development Husbandry
 
-- Development branches should be branched from `develop`. The `main` branch is reserved for production-ready code.
+- Development branches should be branched from `main`.
 - Feature branches should follow this format:  
   `eng-[ticket]/[short-description]`  
   _Example:_ `eng-1234/provider-define-location-endpoint`
