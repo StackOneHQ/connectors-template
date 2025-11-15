@@ -14,9 +14,9 @@
     },
     "dependencies": {
         "@stackone/cli": "1.9.3",
-        "@stackone/connect-sdk": "2.0.0",
-        "@stackone/core": "2.0.0",
-        "@stackone/expressions": "0.17.0",
+        "@stackone/connect-sdk": "2.1.0",
+        "@stackone/core": "2.1.0",
+        "@stackone/expressions": "0.18.0",
         "@stackone/utils": "0.13.0"
     },
     "devDependencies": {
