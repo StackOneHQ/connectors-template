@@ -5,7 +5,7 @@
   schema: time_off_policies
   label: List Time Off Policies
   description: Get all time off policies configured in the organization
-  context: https://developers.lattice.com/
+  resources: https://developers.lattice.com/
   steps:
     - stepId: get_time_off_policies
       description: Fetch all time off policies from Lattice HRIS v2 API
@@ -26,7 +26,7 @@
   schema: time_off_reports
   label: List Time Off Reports
   description: Get all time off reports configured in the organization
-  context: https://developers.lattice.com/
+  resources: https://developers.lattice.com/
   steps:
     - stepId: get_time_off_reports
       description: Fetch all time off reports from Lattice HRIS v2 API

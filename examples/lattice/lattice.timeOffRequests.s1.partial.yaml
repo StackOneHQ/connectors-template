@@ -5,7 +5,7 @@
   schema: time_off_requests
   label: List Time Off Requests
   description: Get all time off requests from employees
-  context: https://developers.lattice.com/
+  resources: https://developers.lattice.com/
   inputs:
     - name: offset
       description: Number of items to skip before starting to return results (default 0)
@@ -49,27 +49,27 @@
             - name: offset
               value: $.inputs.offset
               in: query
-              condition: '{{present($.inputs.offset)}}'
+              condition: "{{present($.inputs.offset)}}"
             - name: limit
               value: $.inputs.limit
               in: query
-              condition: '{{present($.inputs.limit)}}'
+              condition: "{{present($.inputs.limit)}}"
             - name: employee_ids[0]
               value: $.inputs.employee_id
               in: query
-              condition: '{{present($.inputs.employee_id)}}'
+              condition: "{{present($.inputs.employee_id)}}"
             - name: statuses[0]
               value: $.inputs.status
               in: query
-              condition: '{{present($.inputs.status)}}'
+              condition: "{{present($.inputs.status)}}"
             - name: start_date
               value: $.inputs.start_date
               in: query
-              condition: '{{present($.inputs.start_date)}}'
+              condition: "{{present($.inputs.start_date)}}"
             - name: end_date
               value: $.inputs.end_date
               in: query
-              condition: '{{present($.inputs.end_date)}}'
+              condition: "{{present($.inputs.end_date)}}"
           response:
             collection: true
   result:
@@ -84,7 +84,7 @@
   entrypointHttpMethod: get
   label: Get Time Off Request
   description: Retrieve detailed information for a specific time off request by ID
-  context: https://developers.lattice.com/
+  resources: https://developers.lattice.com/
   inputs:
     - name: id
       description: The unique identifier for the time off request

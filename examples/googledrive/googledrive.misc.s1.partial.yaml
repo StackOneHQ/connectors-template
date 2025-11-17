@@ -9,7 +9,7 @@
 #     Use this to clean up webhook subscriptions and prevent unwanted notifications.
 #   entrypointUrl: /channels/stop
 #   entrypointHttpMethod: post
-#   context: https://developers.google.com/workspace/drive/api/reference/rest/v3/channels/stop
+#   resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/channels/stop
 #   inputs:
 #     - name: id
 #       description: The channel ID to stop
@@ -60,7 +60,7 @@
     - App installed status
   entrypointUrl: /about
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/about/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/about/get
   inputs:
     - name: fields
       description: |
@@ -79,9 +79,9 @@
           method: get
           args:
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
-              condition: '{{present(inputs.fields)}}'
+              condition: "{{present(inputs.fields)}}"
   result:
     data: $.steps.get_about.output.data
 # Not tested
@@ -95,7 +95,7 @@
 #     Useful for monitoring async actions like bulk imports or large migrations.
 #   entrypointUrl: /actions/{name}
 #   entrypointHttpMethod: get
-#   context: https://developers.google.com/workspace/drive/api/reference/rest/v3/actions/get
+#   resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/actions/get
 #   inputs:
 #     - name: name
 #       description: The name of the action resource

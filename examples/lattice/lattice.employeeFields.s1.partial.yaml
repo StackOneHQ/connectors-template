@@ -5,7 +5,7 @@
   schema: employee_fields
   label: Get Employee Fields
   description: Get all employee fields configured in the Lattice HRIS system
-  context: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_getemployeefields
+  resources: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_getemployeefields
   inputs:
     - name: page_size
       description: Number of items to return per page. DO NOT CALL USING LARGE PAGE SIZES. Keep it under 25 to avoid overloading the context window.

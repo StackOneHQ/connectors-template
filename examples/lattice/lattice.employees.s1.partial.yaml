@@ -5,7 +5,7 @@
   schema: employees
   label: List Employees
   description: Get all employees. Use the Get employee fields endpoint to determine available fields for your organization.
-  context: https://developers.lattice.com/
+  resources: https://developers.lattice.com/
   inputs:
     - name: offset
       description: Number of items to skip before starting to return results (default 0)
@@ -29,11 +29,11 @@
             - name: offset
               value: $.inputs.offset
               in: query
-              condition: '{{present($.inputs.offset)}}'
+              condition: "{{present($.inputs.offset)}}"
             - name: limit
               value: $.inputs.limit
               in: query
-              condition: '{{present($.inputs.limit)}}'
+              condition: "{{present($.inputs.limit)}}"
           response:
             collection: true
   result:
@@ -48,7 +48,7 @@
   entrypointHttpMethod: get
   label: Get Employee
   description: Retrieve detailed information for a specific employee by ID. Use the Get employee fields endpoint to determine available fields for your organization.
-  context: https://developers.lattice.com/
+  resources: https://developers.lattice.com/
   inputs:
     - name: id
       description: The unique identifier for the employee
@@ -77,7 +77,7 @@
   entrypointHttpMethod: post
   label: Create Employee
   description: Create a new employee in the Lattice HRIS system. Use the Get employee fields endpoint to determine available fields for your organization.
-  context: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_createemployee
+  resources: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_createemployee
   inputs:
     - name: personal
       description: Personal information fields. Available fields include birthdate (string), company_employee_id (string), legal_first_name (string), legal_middle_name (string), legal_last_name (string), preferred_first_name (string), preferred_last_name (string)
@@ -126,31 +126,31 @@
             - name: personal
               value: $.inputs.personal
               in: body
-              condition: '{{present($.inputs.personal)}}'
+              condition: "{{present($.inputs.personal)}}"
             - name: contact_information
               value: $.inputs.contact_information
               in: body
-              condition: '{{present($.inputs.contact_information)}}'
+              condition: "{{present($.inputs.contact_information)}}"
             - name: employment_details
               value: $.inputs.employment_details
               in: body
-              condition: '{{present($.inputs.employment_details)}}'
+              condition: "{{present($.inputs.employment_details)}}"
             - name: role_details
               value: $.inputs.role_details
               in: body
-              condition: '{{present($.inputs.role_details)}}'
+              condition: "{{present($.inputs.role_details)}}"
             - name: pay_types
               value: $.inputs.pay_types
               in: body
-              condition: '{{present($.inputs.pay_types)}}'
+              condition: "{{present($.inputs.pay_types)}}"
             - name: demographic
               value: $.inputs.demographic
               in: body
-              condition: '{{present($.inputs.demographic)}}'
+              condition: "{{present($.inputs.demographic)}}"
             - name: sensitive_data
               value: $.inputs.sensitive_data
               in: body
-              condition: '{{present($.inputs.sensitive_data)}}'
+              condition: "{{present($.inputs.sensitive_data)}}"
           response:
             collection: false
   result:
@@ -165,7 +165,7 @@
   entrypointHttpMethod: patch
   label: Update Employee
   description: Update an existing employee's information by ID. Use the Get employee fields endpoint to determine available fields for your organization.
-  context: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_updateemployee
+  resources: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_updateemployee
   inputs:
     - name: id
       description: The unique identifier for the employee
@@ -219,34 +219,32 @@
             - name: personal
               value: $.inputs.personal
               in: body
-              condition: '{{present($.inputs.personal)}}'
+              condition: "{{present($.inputs.personal)}}"
             - name: contact_information
               value: $.inputs.contact_information
               in: body
-              condition: '{{present($.inputs.contact_information)}}'
+              condition: "{{present($.inputs.contact_information)}}"
             - name: employment_details
               value: $.inputs.employment_details
               in: body
-              condition: '{{present($.inputs.employment_details)}}'
+              condition: "{{present($.inputs.employment_details)}}"
             - name: role_details
               value: $.inputs.role_details
               in: body
-              condition: '{{present($.inputs.role_details)}}'
+              condition: "{{present($.inputs.role_details)}}"
             - name: pay_types
               value: $.inputs.pay_types
               in: body
-              condition: '{{present($.inputs.pay_types)}}'
+              condition: "{{present($.inputs.pay_types)}}"
             - name: demographic
               value: $.inputs.demographic
               in: body
-              condition: '{{present($.inputs.demographic)}}'
+              condition: "{{present($.inputs.demographic)}}"
             - name: sensitive_data
               value: $.inputs.sensitive_data
               in: body
-              condition: '{{present($.inputs.sensitive_data)}}'
+              condition: "{{present($.inputs.sensitive_data)}}"
           response:
             collection: false
   result:
     data: $.steps.update_employee.output.data
-
-

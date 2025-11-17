@@ -6,7 +6,7 @@
   description: Lists a comment's replies
   entrypointUrl: /files/{fileId}/comments/{commentId}/replies
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/list
   inputs:
     - name: fileId
       description: The ID of the file
@@ -49,16 +49,16 @@
             in: query
           args:
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
             - name: pageSize
-              value: '{{inputs.pageSize}}'
+              value: "{{inputs.pageSize}}"
               in: query
-              condition: '{{present(inputs.pageSize)}}'
+              condition: "{{present(inputs.pageSize)}}"
             - name: includeDeleted
-              value: '{{inputs.includeDeleted}}'
+              value: "{{inputs.includeDeleted}}"
               in: query
-              condition: '{{present(inputs.includeDeleted)}}'
+              condition: "{{present(inputs.includeDeleted)}}"
   result:
     data: $.steps.list_replies.output.data
 
@@ -70,7 +70,7 @@
   description: Gets a reply by ID
   entrypointUrl: /files/{fileId}/comments/{commentId}/replies/{replyId}
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/get
   inputs:
     - name: fileId
       description: The ID of the file
@@ -107,12 +107,12 @@
           method: get
           args:
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
             - name: includeDeleted
-              value: '{{inputs.includeDeleted}}'
+              value: "{{inputs.includeDeleted}}"
               in: query
-              condition: '{{present(inputs.includeDeleted)}}'
+              condition: "{{present(inputs.includeDeleted)}}"
   result:
     data: $.steps.get_reply.output.data
 
@@ -124,7 +124,7 @@
   description: Creates a reply to a comment
   entrypointUrl: /files/{fileId}/comments/{commentId}/replies
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/create
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/create
   inputs:
     - name: fileId
       description: The ID of the file
@@ -164,16 +164,16 @@
               value: application/json
               in: headers
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
-              condition: '{{present(inputs.fields)}}'
+              condition: "{{present(inputs.fields)}}"
             - name: content
               value: $.inputs.content
               in: body
             - name: action
               value: $.inputs.action
               in: body
-              condition: '{{present(inputs.action)}}'
+              condition: "{{present(inputs.action)}}"
   result:
     data: $.steps.create_reply.output.data
 
@@ -185,7 +185,7 @@
   description: Updates a reply with patch semantics
   entrypointUrl: /files/{fileId}/comments/{commentId}/replies/{replyId}
   entrypointHttpMethod: patch
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/update
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/update
   inputs:
     - name: fileId
       description: The ID of the file
@@ -225,13 +225,13 @@
               value: application/json
               in: headers
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
-              condition: '{{present(inputs.fields)}}'
+              condition: "{{present(inputs.fields)}}"
             - name: content
               value: $.inputs.content
               in: body
-              condition: '{{present(inputs.content)}}'
+              condition: "{{present(inputs.content)}}"
   result:
     data: $.steps.update_reply.output.data
 
@@ -243,7 +243,7 @@
   description: Deletes a reply
   entrypointUrl: /files/{fileId}/comments/{commentId}/replies/{replyId}
   entrypointHttpMethod: delete
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/delete
   inputs:
     - name: fileId
       description: The ID of the file

@@ -6,7 +6,7 @@
   description: Lists the user's shared drives (formerly Team Drives)
   entrypointUrl: /drives
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/list
   inputs:
     - name: pageSize
       description: Maximum number of shared drives to return (max 100)
@@ -39,17 +39,17 @@
             in: query
           args:
             - name: pageSize
-              value: '{{inputs.pageSize}}'
+              value: "{{inputs.pageSize}}"
               in: query
-              condition: '{{present(inputs.pageSize)}}'
+              condition: "{{present(inputs.pageSize)}}"
             - name: q
-              value: '{{inputs.q}}'
+              value: "{{inputs.q}}"
               in: query
-              condition: '{{present(inputs.q)}}'
+              condition: "{{present(inputs.q)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.list_drives.output.data
 
@@ -61,7 +61,7 @@
   description: Gets a shared drive's metadata by ID
   entrypointUrl: /drives/{driveId}
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/get
   inputs:
     - name: driveId
       description: The ID of the shared drive
@@ -83,9 +83,9 @@
           method: get
           args:
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.get_drive.output.data
 
@@ -97,7 +97,7 @@
   description: Creates a new shared drive
   entrypointUrl: /drives
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/create
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/create
   inputs:
     - name: requestId
       description: Required ID for creating a shared drive (for idempotency)
@@ -132,7 +132,7 @@
               value: application/json
               in: headers
             - name: requestId
-              value: '{{inputs.requestId}}'
+              value: "{{inputs.requestId}}"
               in: query
             - name: name
               value: $.inputs.name
@@ -140,11 +140,11 @@
             - name: themeId
               value: $.inputs.themeId
               in: body
-              condition: '{{present(inputs.themeId)}}'
+              condition: "{{present(inputs.themeId)}}"
             - name: colorRgb
               value: $.inputs.colorRgb
               in: body
-              condition: '{{present(inputs.colorRgb)}}'
+              condition: "{{present(inputs.colorRgb)}}"
   result:
     data: $.steps.create_drive.output.data
 
@@ -156,7 +156,7 @@
   description: Updates the metadata for a shared drive
   entrypointUrl: /drives/{driveId}
   entrypointHttpMethod: patch
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/update
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/update
   inputs:
     - name: driveId
       description: The ID of the shared drive
@@ -208,27 +208,27 @@
             - name: name
               value: $.inputs.name
               in: body
-              condition: '{{present(inputs.name)}}'
+              condition: "{{present(inputs.name)}}"
             - name: themeId
               value: $.inputs.themeId
               in: body
-              condition: '{{present(inputs.themeId)}}'
+              condition: "{{present(inputs.themeId)}}"
             - name: colorRgb
               value: $.inputs.colorRgb
               in: body
-              condition: '{{present(inputs.colorRgb)}}'
+              condition: "{{present(inputs.colorRgb)}}"
             - name: backgroundImageFile
               value: $.inputs.backgroundImageFile
               in: body
-              condition: '{{present(inputs.backgroundImageFile)}}'
+              condition: "{{present(inputs.backgroundImageFile)}}"
             - name: restrictions
               value: $.inputs.restrictions
               in: body
-              condition: '{{present(inputs.restrictions)}}'
+              condition: "{{present(inputs.restrictions)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.update_drive.output.data
 
@@ -240,7 +240,7 @@
   description: Permanently deletes a shared drive for which the user is an organizer
   entrypointUrl: /drives/{driveId}
   entrypointHttpMethod: delete
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/delete
   inputs:
     - name: driveId
       description: The ID of the shared drive to delete
@@ -262,9 +262,9 @@
           method: delete
           args:
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.delete_drive.output.data
 
@@ -276,7 +276,7 @@
   description: Hides a shared drive from the default view
   entrypointUrl: /drives/{driveId}/hide
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/hide
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/hide
   inputs:
     - name: driveId
       description: The ID of the shared drive to hide
@@ -302,7 +302,7 @@
   description: Restores a shared drive to the default view
   entrypointUrl: /drives/{driveId}/unhide
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/unhide
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/unhide
   inputs:
     - name: driveId
       description: The ID of the shared drive to unhide

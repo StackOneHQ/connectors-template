@@ -5,7 +5,7 @@ actions:
       - ats
     actionType: get
     description: List all candidates in the organization with optional pagination support
-    context: https://developers.ashbyhq.com/reference/candidatelist
+    resources: https://developers.ashbyhq.com/reference/candidatelist
     entrypointUrl: /candidate.list
     entrypointHttpMethod: post
     inputs:
@@ -39,15 +39,15 @@ actions:
               - name: cursor
                 value: $.inputs.cursor
                 in: body
-                condition: '{{present(inputs.cursor)}}'
+                condition: "{{present(inputs.cursor)}}"
               - name: syncToken
                 value: $.inputs.syncToken
                 in: body
-                condition: '{{present(inputs.syncToken)}}'
+                condition: "{{present(inputs.syncToken)}}"
               - name: perPage
                 value: $.inputs.perPage
                 in: body
-                condition: '{{present(inputs.perPage)}}'
+                condition: "{{present(inputs.perPage)}}"
             response:
               collection: true
     result:
@@ -59,7 +59,7 @@ actions:
       - ats
     actionType: get
     description: Get detailed information about a specific candidate by ID
-    context: https://developers.ashbyhq.com/reference/candidateinfo
+    resources: https://developers.ashbyhq.com/reference/candidateinfo
     entrypointUrl: /candidate.info
     entrypointHttpMethod: post
     inputs:
@@ -94,7 +94,7 @@ actions:
       - ats
     actionType: get
     description: Search for candidates by email and/or name (limited to 100 results, best for autocomplete use cases)
-    context: https://developers.ashbyhq.com/reference/candidatesearch
+    resources: https://developers.ashbyhq.com/reference/candidatesearch
     entrypointUrl: /candidate.search
     entrypointHttpMethod: post
     inputs:
@@ -123,11 +123,11 @@ actions:
               - name: email
                 value: $.inputs.email
                 in: body
-                condition: '{{present(inputs.email)}}'
+                condition: "{{present(inputs.email)}}"
               - name: name
                 value: $.inputs.name
                 in: body
-                condition: '{{present(inputs.name)}}'
+                condition: "{{present(inputs.name)}}"
             response:
               collection: true
     result:
@@ -139,7 +139,7 @@ actions:
       - ats
     actionType: create
     description: Create a new candidate in the system
-    context: https://developers.ashbyhq.com/reference/candidatecreate
+    resources: https://developers.ashbyhq.com/reference/candidatecreate
     entrypointUrl: /candidate.create
     entrypointHttpMethod: post
     inputs:
@@ -240,55 +240,55 @@ actions:
               - name: primaryEmailAddress
                 value: $.inputs.primaryEmailAddress
                 in: body
-                condition: '{{present(inputs.primaryEmailAddress)}}'
+                condition: "{{present(inputs.primaryEmailAddress)}}"
               - name: emailAddresses
                 value: $.inputs.emailAddresses
                 in: body
-                condition: '{{present(inputs.emailAddresses)}}'
+                condition: "{{present(inputs.emailAddresses)}}"
               - name: phoneNumbers
                 value: $.inputs.phoneNumbers
                 in: body
-                condition: '{{present(inputs.phoneNumbers)}}'
+                condition: "{{present(inputs.phoneNumbers)}}"
               - name: socialLinks
                 value: $.inputs.socialLinks
                 in: body
-                condition: '{{present(inputs.socialLinks)}}'
+                condition: "{{present(inputs.socialLinks)}}"
               - name: websites
                 value: $.inputs.websites
                 in: body
-                condition: '{{present(inputs.websites)}}'
+                condition: "{{present(inputs.websites)}}"
               - name: address
                 value: $.inputs.address
                 in: body
-                condition: '{{present(inputs.address)}}'
+                condition: "{{present(inputs.address)}}"
               - name: company
                 value: $.inputs.company
                 in: body
-                condition: '{{present(inputs.company)}}'
+                condition: "{{present(inputs.company)}}"
               - name: title
                 value: $.inputs.title
                 in: body
-                condition: '{{present(inputs.title)}}'
+                condition: "{{present(inputs.title)}}"
               - name: resume
                 value: $.inputs.resume
                 in: body
-                condition: '{{present(inputs.resume)}}'
+                condition: "{{present(inputs.resume)}}"
               - name: linkedInUrl
                 value: $.inputs.linkedInUrl
                 in: body
-                condition: '{{present(inputs.linkedInUrl)}}'
+                condition: "{{present(inputs.linkedInUrl)}}"
               - name: githubUrl
                 value: $.inputs.githubUrl
                 in: body
-                condition: '{{present(inputs.githubUrl)}}'
+                condition: "{{present(inputs.githubUrl)}}"
               - name: source
                 value: $.inputs.source
                 in: body
-                condition: '{{present(inputs.source)}}'
+                condition: "{{present(inputs.source)}}"
               - name: creditedToUserId
                 value: $.inputs.creditedToUserId
                 in: body
-                condition: '{{present(inputs.creditedToUserId)}}'
+                condition: "{{present(inputs.creditedToUserId)}}"
             response:
               collection: false
     result:
@@ -300,7 +300,7 @@ actions:
       - ats
     actionType: update
     description: Update an existing candidate's information
-    context: https://developers.ashbyhq.com/reference/candidateupdate
+    resources: https://developers.ashbyhq.com/reference/candidateupdate
     entrypointUrl: /candidate.update
     entrypointHttpMethod: post
     inputs:
@@ -391,47 +391,47 @@ actions:
               - name: name
                 value: $.inputs.name
                 in: body
-                condition: '{{present(inputs.name)}}'
+                condition: "{{present(inputs.name)}}"
               - name: primaryEmailAddress
                 value: $.inputs.primaryEmailAddress
                 in: body
-                condition: '{{present(inputs.primaryEmailAddress)}}'
+                condition: "{{present(inputs.primaryEmailAddress)}}"
               - name: emailAddresses
                 value: $.inputs.emailAddresses
                 in: body
-                condition: '{{present(inputs.emailAddresses)}}'
+                condition: "{{present(inputs.emailAddresses)}}"
               - name: phoneNumbers
                 value: $.inputs.phoneNumbers
                 in: body
-                condition: '{{present(inputs.phoneNumbers)}}'
+                condition: "{{present(inputs.phoneNumbers)}}"
               - name: socialLinks
                 value: $.inputs.socialLinks
                 in: body
-                condition: '{{present(inputs.socialLinks)}}'
+                condition: "{{present(inputs.socialLinks)}}"
               - name: websites
                 value: $.inputs.websites
                 in: body
-                condition: '{{present(inputs.websites)}}'
+                condition: "{{present(inputs.websites)}}"
               - name: address
                 value: $.inputs.address
                 in: body
-                condition: '{{present(inputs.address)}}'
+                condition: "{{present(inputs.address)}}"
               - name: company
                 value: $.inputs.company
                 in: body
-                condition: '{{present(inputs.company)}}'
+                condition: "{{present(inputs.company)}}"
               - name: title
                 value: $.inputs.title
                 in: body
-                condition: '{{present(inputs.title)}}'
+                condition: "{{present(inputs.title)}}"
               - name: linkedInUrl
                 value: $.inputs.linkedInUrl
                 in: body
-                condition: '{{present(inputs.linkedInUrl)}}'
+                condition: "{{present(inputs.linkedInUrl)}}"
               - name: githubUrl
                 value: $.inputs.githubUrl
                 in: body
-                condition: '{{present(inputs.githubUrl)}}'
+                condition: "{{present(inputs.githubUrl)}}"
             response:
               collection: false
     result:
@@ -443,7 +443,7 @@ actions:
       - ats
     actionType: update
     description: Add a tag to a candidate for categorization and filtering
-    context: https://developers.ashbyhq.com/reference/candidateaddtag
+    resources: https://developers.ashbyhq.com/reference/candidateaddtag
     entrypointUrl: /candidate.addTag
     entrypointHttpMethod: post
     inputs:
@@ -486,7 +486,7 @@ actions:
       - ats
     actionType: get
     description: List all notes associated with a specific candidate
-    context: https://developers.ashbyhq.com/reference/candidatelistnotes
+    resources: https://developers.ashbyhq.com/reference/candidatelistnotes
     entrypointUrl: /candidate.listNotes
     entrypointHttpMethod: post
     inputs:
@@ -528,15 +528,15 @@ actions:
               - name: cursor
                 value: $.inputs.cursor
                 in: body
-                condition: '{{present(inputs.cursor)}}'
+                condition: "{{present(inputs.cursor)}}"
               - name: syncToken
                 value: $.inputs.syncToken
                 in: body
-                condition: '{{present(inputs.syncToken)}}'
+                condition: "{{present(inputs.syncToken)}}"
               - name: perPage
                 value: $.inputs.perPage
                 in: body
-                condition: '{{present(inputs.perPage)}}'
+                condition: "{{present(inputs.perPage)}}"
             response:
               collection: true
     result:
@@ -548,7 +548,7 @@ actions:
       - ats
     actionType: create
     description: Create a new note for a candidate
-    context: https://developers.ashbyhq.com/reference/candidatecreatenote
+    resources: https://developers.ashbyhq.com/reference/candidatecreatenote
     entrypointUrl: /candidate.createNote
     entrypointHttpMethod: post
     inputs:
@@ -588,7 +588,7 @@ actions:
               - name: authorId
                 value: $.inputs.authorId
                 in: body
-                condition: '{{present(inputs.authorId)}}'
+                condition: "{{present(inputs.authorId)}}"
             response:
               collection: false
     result:
@@ -600,7 +600,7 @@ actions:
       - ats
     actionType: update
     description: Add a candidate to a project for organization and tracking
-    context: https://developers.ashbyhq.com/reference/candidateaddproject
+    resources: https://developers.ashbyhq.com/reference/candidateaddproject
     entrypointUrl: /candidate.addProject
     entrypointHttpMethod: post
     inputs:
@@ -643,7 +643,7 @@ actions:
       - ats
     actionType: get
     description: List all projects associated with a specific candidate
-    context: https://developers.ashbyhq.com/reference/candidatelistprojects
+    resources: https://developers.ashbyhq.com/reference/candidatelistprojects
     entrypointUrl: /candidate.listProjects
     entrypointHttpMethod: post
     inputs:
@@ -678,7 +678,7 @@ actions:
       - ats
     actionType: create
     description: Upload a file to attach to a candidate's profile (resume, cover letter, portfolio, etc.)
-    context: https://developers.ashbyhq.com/reference/candidateuploadfile
+    resources: https://developers.ashbyhq.com/reference/candidateuploadfile
     entrypointUrl: /candidate.uploadFile
     entrypointHttpMethod: post
     inputs:
@@ -726,7 +726,7 @@ actions:
               - name: fileType
                 value: $.inputs.fileType
                 in: body
-                condition: '{{present(inputs.fileType)}}'
+                condition: "{{present(inputs.fileType)}}"
             response:
               collection: false
     result:
@@ -738,7 +738,7 @@ actions:
       - ats
     actionType: create
     description: Upload a resume file for a candidate with automatic parsing
-    context: https://developers.ashbyhq.com/reference/candidateuploadresume
+    resources: https://developers.ashbyhq.com/reference/candidateuploadresume
     entrypointUrl: /candidate.uploadResume
     entrypointHttpMethod: post
     inputs:
@@ -789,7 +789,7 @@ actions:
       - ats
     actionType: delete
     description: Anonymize a candidate's personal information for GDPR compliance
-    context: https://developers.ashbyhq.com/reference/candidateanonymize
+    resources: https://developers.ashbyhq.com/reference/candidateanonymize
     entrypointUrl: /candidate.anonymize
     entrypointHttpMethod: post
     inputs:

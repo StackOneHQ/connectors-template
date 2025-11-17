@@ -69,7 +69,7 @@ actions:
     actionType: list
     schema: users
     description: Get list of users
-    context: https://api.provider.com/docs/users/list
+    resources: https://api.provider.com/docs/users/list
     steps:
       - stepId: fetch_users
         stepFunction:
@@ -124,7 +124,7 @@ rateLimit:
   mainRatelimit: 10 # Requests per second
 
 # Documentation context
-context: "Provider API documentation: https://api.provider.com/docs"
+resources: "Provider API documentation: https://api.provider.com/docs"
 ```
 
 ## Authentication
@@ -308,7 +308,7 @@ actions:
     actionType: get
     schema: users
     description: Get Users
-    context: https://api.provider.com/docs/users/get, https://api.provider.com/guides/user-management
+    resources: https://api.provider.com/docs/users/get, https://api.provider.com/guides/user-management
     entrypointUrl: /users/:id
     entrypointHttpMethod: get
     inputs:
