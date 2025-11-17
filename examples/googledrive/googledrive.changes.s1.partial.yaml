@@ -8,7 +8,7 @@
     Use this to initialize change tracking for sync applications.
   entrypointUrl: /changes/startPageToken
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken
   inputs:
     - name: driveId
       description: The shared drive from which changes are returned (requires supportsAllDrives)
@@ -30,13 +30,13 @@
           method: get
           args:
             - name: driveId
-              value: '{{inputs.driveId}}'
+              value: "{{inputs.driveId}}"
               in: query
-              condition: '{{present(inputs.driveId)}}'
+              condition: "{{present(inputs.driveId)}}"
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
   result:
     data: $.steps.get_start_token.output.data
 
@@ -50,7 +50,7 @@
     Use pageToken from getStartPageToken to start, then use nextPageToken for incremental updates.
   entrypointUrl: /changes
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list
   inputs:
     - name: pageToken
       description: Page token for changes (from getStartPageToken or previous list_changes response)
@@ -117,48 +117,48 @@
           method: get
           args:
             - name: pageToken
-              value: '{{inputs.pageToken}}'
+              value: "{{inputs.pageToken}}"
               in: query
             - name: driveId
-              value: '{{inputs.driveId}}'
+              value: "{{inputs.driveId}}"
               in: query
-              condition: '{{present(inputs.driveId)}}'
+              condition: "{{present(inputs.driveId)}}"
             - name: includeCorpusRemovals
-              value: '{{inputs.includeCorpusRemovals}}'
+              value: "{{inputs.includeCorpusRemovals}}"
               in: query
-              condition: '{{present(inputs.includeCorpusRemovals)}}'
+              condition: "{{present(inputs.includeCorpusRemovals)}}"
             - name: includeItemsFromAllDrives
-              value: '{{inputs.includeItemsFromAllDrives}}'
+              value: "{{inputs.includeItemsFromAllDrives}}"
               in: query
-              condition: '{{present(inputs.includeItemsFromAllDrives)}}'
+              condition: "{{present(inputs.includeItemsFromAllDrives)}}"
             - name: includeLabels
-              value: '{{inputs.includeLabels}}'
+              value: "{{inputs.includeLabels}}"
               in: query
-              condition: '{{present(inputs.includeLabels)}}'
+              condition: "{{present(inputs.includeLabels)}}"
             - name: includePermissionsForView
-              value: '{{inputs.includePermissionsForView}}'
+              value: "{{inputs.includePermissionsForView}}"
               in: query
-              condition: '{{present(inputs.includePermissionsForView)}}'
+              condition: "{{present(inputs.includePermissionsForView)}}"
             - name: includeRemoved
-              value: '{{inputs.includeRemoved}}'
+              value: "{{inputs.includeRemoved}}"
               in: query
-              condition: '{{present(inputs.includeRemoved)}}'
+              condition: "{{present(inputs.includeRemoved)}}"
             - name: pageSize
-              value: '{{inputs.pageSize}}'
+              value: "{{inputs.pageSize}}"
               in: query
-              condition: '{{present(inputs.pageSize)}}'
+              condition: "{{present(inputs.pageSize)}}"
             - name: restrictToMyDrive
-              value: '{{inputs.restrictToMyDrive}}'
+              value: "{{inputs.restrictToMyDrive}}"
               in: query
-              condition: '{{present(inputs.restrictToMyDrive)}}'
+              condition: "{{present(inputs.restrictToMyDrive)}}"
             - name: spaces
-              value: '{{inputs.spaces}}'
+              value: "{{inputs.spaces}}"
               in: query
-              condition: '{{present(inputs.spaces)}}'
+              condition: "{{present(inputs.spaces)}}"
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
   result:
     data: $.steps.list_changes.output.data
 # Not tested
@@ -172,7 +172,7 @@
 #     Requires a webhook URL to receive notifications.
 #   entrypointUrl: /changes/watch
 #   entrypointHttpMethod: post
-#   context: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/watch
+#   resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/watch
 #   inputs:
 #     - name: pageToken
 #       description: Page token for changes (from getStartPageToken)

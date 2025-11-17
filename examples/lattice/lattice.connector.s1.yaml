@@ -9,7 +9,7 @@ info:
 
 baseUrl: https://api.latticehq.com
 
-context: "Lattice HRIS API documentation: https://developers.lattice.com/v2/docs/"
+resources: "Lattice HRIS API documentation: https://developers.lattice.com/v2/docs/"
 
 authentication:
   - oauth2:

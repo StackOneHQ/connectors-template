@@ -12,7 +12,7 @@ When asked to build Falcon API configurations, you MUST follow this exact sequen
 4. **Config Building** → Create comprehensive configuration with all discovered actions
 5. **YAML Validation** → `stackone validate src/configs/<provider>.yaml` → Ensure valid YAML syntax
 6. **Coverage Validation** → `check_all_endpoints()` → Confirm endpoint coverage ≥80%
-7. **Testing Phase** → `run_connector_action()` → Test EVERY action with real API calls
+7. **Testing Phase** → `stackone run` → Test EVERY action with real API calls
 8. **Test Completion** → `check_test_completion()` → Verify 100% actions tested
 9. **Security** → `scramble_credentials()` → Secure all sensitive data before storage
 10. **Meta Feedback** → `meta_feedback()` → **MANDATORY** - Send feedback to third-party system for tracking
@@ -25,7 +25,56 @@ When asked to build Falcon API configurations, you MUST follow this exact sequen
 - **ACTION-FOCUSED**: Think: "what actions would developers commonly perform with this provider?"
 - **CUSTOMER VALUE**: Prioritize actions that solve real business problems
 - **MORE IS BETTER**: Default to comprehensiveness over minimalism
-- **PRACTICAL UTILITY**: Focus on actions developers actually use in production
+- **PRACTICAL UTILITY**: Focus on operations developers actually use in production
+
+## 🆕 BREAKING CHANGES (v2.2.0)
+
+### 1. Renamed: `context` → `resources` (BREAKING)
+
+**IMPORTANT**: The `context` field has been renamed to `resources`. Update all connectors accordingly.
+
+```yaml
+# ❌ OLD (no longer supported)
+context:
+  user_id: "123"
+
+# ✅ NEW (required)
+resources:
+  user_id: "123"
+```
+
+### 2. New: `details` Field (Optional)
+
+Add extended documentation beyond basic descriptions for both connectors and actions.
+
+```yaml
+connector:
+  name: my-connector
+  description: Brief description
+  details: |
+    Extended information about this connector,
+    special considerations, limitations, etc.
+
+actions:
+  - id: get_users
+    description: Fetch users
+    details: |
+      Additional context about this action,
+      rate limits, required permissions, etc.
+```
+
+### 3. New: `examples` Field (Optional)
+
+Demonstrate action usage with real input/output data.
+
+```yaml
+actions:
+  - id: get_user
+    description: Get user by ID
+    examples:
+      - input: { user_id: "123" }
+        output: { name: "John Doe", email: "john@example.com" }
+```
 
 ## 📚 PREREQUISITE DOCUMENTATION
 
@@ -150,8 +199,7 @@ get_discover_actions_task_status({
 
 ```
 1. vector_search("authentication", provider, 5) → Provider auth methods
-2. get_templates("auth_type") → Get Falcon auth templates
-3. summarised_search("provider authentication API") → Additional auth details
+2. web_search("provider authentication API") → Additional auth details
 ```
 
 ### Step 4: Documentation & Coverage
@@ -332,9 +380,10 @@ Key sections your configuration must include:
 
 1. **Meta Info** (`info`, `baseUrl`, `rateLimit`) - Provider identification and API endpoint
 2. **Authentication** - OAuth2, API Key, Basic, or Custom auth (defined ONCE at top level)
-3. **Context** (optional) - Documentation URLs for the connector and operations
+3. **Resources** (optional) - Context data and variables for the connector and actions
 4. **Actions** - All discovered actions mapped to StackOne actions
    - Each action includes: `steps`, `fieldConfigs`, `inputs`, `result`
+   - Optional: `details` for extended descriptions, `examples` for usage demonstrations
    - See README.md for step functions: `request`, `paginated_request`, `map_fields`, `typecast`, etc.
 
 **Quick Reference:**
@@ -352,16 +401,24 @@ Key sections your configuration must include:
 - **StackOne Operations**: Include all relevant operations from `get_stackone_actions()`
 - **Comprehensive CRUD**: Where applicable, include create, read, update, delete operations
 - **Error Handling**: Include comprehensive error handling and rate limiting
-- **Context Documentation**: Add context documentation with live URLs only
+- **Resources Field**: Use `resources` (not `context`) for context data and variables
+- **Details Field**: Add `details` field for extended information beyond basic descriptions
+- **Examples Field**: Include `examples` in actions to demonstrate usage with real data
 - **Credential Templating**: Use proper credential templating: `${credentials.field}`
 
-### Descriptions (MANDATORY)
+### Descriptions & Documentation (MANDATORY)
 
-- Write clear, concise, high-quality descriptions for connector, actions, steps, and fields
-- Aim for 1-2 sentences that capture purpose, key behavior, and critical constraints
-- Include only essential technical details developers need to succeed
-- Keep wording consistent and avoid redundancy; prefer active voice
-- When in doubt, or to quickly improve WIP connectors, run the `improve-descriptions` subagent
+- **Descriptions**: Write clear, concise, high-quality descriptions for connector, actions, steps, and fields
+  - Aim for 1-2 sentences that capture purpose, key behavior, and critical constraints
+  - Include only essential technical details developers need to succeed
+  - Keep wording consistent and avoid redundancy; prefer active voice
+- **Details Field**: Use `details` for extended information that doesn't fit in `description`
+  - Add usage notes, special considerations, limitations, rate limits, required permissions
+  - Supports multi-line text for comprehensive documentation
+- **Examples Field**: Include `examples` in actions to demonstrate real usage
+  - Provide input/output pairs showing actual API data
+  - Help developers understand expected data formats
+- **Improvement Tool**: Run `improve-descriptions` subagent to enhance WIP connectors
   - Command: `improve-descriptions <provider_name>`
   - Operates only on work-in-progress connectors (not yet merged to main)
 
@@ -386,11 +443,11 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 
 **Option 1: MINIMAL CONFIG (RECOMMENDED)**
 
-- Test individual operations with minimal YAML (header + single action)
+- Test individual actions with minimal YAML (header + single action)
 - Avoids YAML syntax errors from incomplete configurations
 - Faster iteration during development
-- Clear error messages for individual operations
-- Example: Include only `info`, `baseUrl`, `authentication`, and one operation
+- Clear error messages for individual actions
+- Example: Include only `info`, `baseUrl`, `authentication`, and one action
 - See [README.md](src/configs/README.md) for complete YAML structure and syntax
 
 **Option 2: FULL CONFIG**
@@ -399,19 +456,74 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 - Use when you have a complete, validated YAML structure
 - Useful for integration testing across multiple actions
 
-### Testing Execution
+### Testing Execution with `stackone run`
 
-1. Prepare test credentials object
-2. Test EACH action using `run_connector_action()`
-   - connector: YAML configuration
-   - account: credentials + environment details
-   - category: StackOne category
-   - path: action identifier
-   - method: HTTP method
-3. Track testing progress
-4. Validate coverage
+Execute connector actions locally using the StackOne CLI:
 
-**No Connect SDK testing = worthless config.**
+```bash
+stackone run --connector <connector-file> --account-id <account-id> --profile <profile-label>
+```
+
+**Common Testing Workflows:**
+
+1. **Test with API-fetched account:**
+
+   ```bash
+   stackone run --connector src/configs/provider/provider.connector.s1.yaml \
+     --account-id acc_123 \
+     --action-id list_users \
+     --profile production
+   ```
+
+2. **Test with local credentials file:**
+
+   ```bash
+   stackone run --connector connector.s1.yaml \
+     --account account.json \
+     --credentials credentials.json \
+     --action-id get_user \
+     --params params.json
+   ```
+
+3. **Test with inline credentials:**
+
+   ```bash
+   stackone run --connector connector.s1.yaml \
+     --account '{"auth_config_key":"api_key","credentials":{"api_key":"test_key"}}' \
+     --action-id create_employee
+   ```
+
+4. **Debug mode with output file:**
+   ```bash
+   stackone run --connector connector.s1.yaml \
+     --account-id acc_123 \
+     --profile production \
+     --action-id update_user \
+     --debug \
+     --output-file result.json
+   ```
+
+**Key Options:**
+
+- `--connector <path>` - Path to connector YAML file
+- `--action-id <id>` - Specific action to execute (defaults to last action)
+- `--account-id <id>` - Account ID from StackOne API (requires `--profile`)
+- `--account <path|json>` - Local account JSON file or inline JSON
+- `--credentials <path|json>` - Credentials file or inline JSON
+- `--params <path|json>` - Action parameters (path, query, headers, body)
+- `--profile <label>` - Configuration profile for API access
+- `--debug` - Enable detailed execution information
+- `--output-file <path>` - Save results to file
+
+**Testing Requirements:**
+
+1. Test EACH action individually
+2. Verify successful responses with expected data
+3. Test error cases and edge conditions
+4. Track testing progress for coverage validation
+5. Document any failures or unexpected behavior
+
+**No CLI testing = worthless config.**
 
 ## 📊 VALIDATION & COMPLETION
 
@@ -437,7 +549,7 @@ check_test_completion(allOperations, testedOperations)
 - [ ] **API versions validated via `analyze_versioning()` subagent**
 - [ ] All discovered actions mapped to operations with correct versions
 - [ ] Context docs with live links
-- [ ] Every action tested with `run_connector_action()`
+- [ ] Every action tested with `stackone run`
 - [ ] Coverage ≥80% via `check_all_endpoints()`
 - [ ] 100% test completion via `check_test_completion()`
 - [ ] Credentials scrambled before storage
@@ -532,8 +644,7 @@ IMPROVEMENTS NEEDED:
 
 ### Web Search Tools
 
-- `summarised_search(query)` - Web search via Perplexity AI with natural language summaries
-- `concise_search(query)` - Structured web search via Parallel AI with JSON results
+- `web_search(query)` - Web search with structured results
 - `vector_search(query, provider, k)` - Semantic search across StackOne knowledge base
 - `fetch(url, headers?, extractText?)` - Get content from URLs with optional text extraction
 - `extract_html_text(html)` - Extract plain text from HTML content
@@ -549,13 +660,20 @@ IMPROVEMENTS NEEDED:
 
 ### Configuration & Templates
 
-- `get_templates(auth_type, auth_only?)` - Get Falcon auth templates (OAuth2, API Key, Basic, Custom)
 - `get_stackone_expressions()` - Pull full expressions package for formatting help
 - `extract_oas_operations(oasContent, hasBeenTruncated, passNumber)` - Parse large OpenAPI specs with truncation support
 
 ### Testing & Validation
 
-- `run_connector_operation(connector, account, category, path, method, ...)` - Execute real API calls with minimal or full configs
+- `stackone run` - **PRIMARY TESTING TOOL** - Execute connector actions locally with full control
+  - `--connector <path>` - Connector YAML file
+  - `--action-id <id>` - Specific action to execute
+  - `--account-id <id>` - Account from StackOne API (requires `--profile`)
+  - `--account <path|json>` - Local account JSON
+  - `--credentials <path|json>` - Override credentials
+  - `--params <path|json>` - Action parameters
+  - `--debug` - Detailed execution info
+  - `--output-file <path>` - Save results to file
 - `check_all_endpoints(unifiedEndpoints, nonUnifiedEndpoints, config)` - **MANDATORY** - Validate endpoint coverage ≥80%
 - `check_test_completion(allOperations, testedOperations)` - **MANDATORY** - Verify 100% actions tested
 
@@ -602,7 +720,7 @@ A successful Falcon configuration delivers:
 
 - **Comprehensive Action Coverage**: All useful actions developers need in production
 - **Version-Validated Endpoints**: Correct API versions for all endpoints, with conflict resolution
-- **Validated Functionality**: Every action tested with real API calls
+- **Validated Functionality**: Every action tested with `stackone run` CLI
 - **Real-World Focus**: Operations that solve actual business problems
 - **Market Insight**: Features that differentiate StackOne from external integrations
 - **Future-Proof**: Built for extensibility and maintenance
@@ -627,8 +745,3 @@ This guide covers:
 - Data mapping pipeline (request → map_fields → typecast)
 - Common pitfalls and validation errors
 - Complete examples and best practices
-
----
-
-*Authenticated with StackOne • Falcon MCP Server*
-*For full workflow details, see the complete CLAUDE.md in repository*

@@ -6,7 +6,7 @@
   description: Lists a file's or shared drive's permissions
   entrypointUrl: /files/{fileId}/permissions
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/list
   inputs:
     - name: fileId
       description: The ID of the file or shared drive
@@ -49,21 +49,21 @@
             in: query
           args:
             - name: pageSize
-              value: '{{inputs.pageSize}}'
+              value: "{{inputs.pageSize}}"
               in: query
-              condition: '{{present(inputs.pageSize)}}'
+              condition: "{{present(inputs.pageSize)}}"
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
             - name: includePermissionsForView
-              value: '{{inputs.includePermissionsForView}}'
+              value: "{{inputs.includePermissionsForView}}"
               in: query
-              condition: '{{present(inputs.includePermissionsForView)}}'
+              condition: "{{present(inputs.includePermissionsForView)}}"
   result:
     data: $.steps.list_permissions.output.data
 
@@ -75,7 +75,7 @@
   description: Gets a permission by ID
   entrypointUrl: /files/{fileId}/permissions/{permissionId}
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/get
   inputs:
     - name: fileId
       description: The ID of the file or shared drive
@@ -107,13 +107,13 @@
           method: get
           args:
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.get_permission.output.data
 
@@ -140,7 +140,7 @@
     - reader: Can view only
   entrypointUrl: /files/{fileId}/permissions
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create
   inputs:
     - name: fileId
       description: The ID of the file or shared drive
@@ -223,39 +223,39 @@
             - name: emailAddress
               value: $.inputs.emailAddress
               in: body
-              condition: '{{present(inputs.emailAddress)}}'
+              condition: "{{present(inputs.emailAddress)}}"
             - name: domain
               value: $.inputs.domain
               in: body
-              condition: '{{present(inputs.domain)}}'
+              condition: "{{present(inputs.domain)}}"
             - name: allowFileDiscovery
               value: $.inputs.allowFileDiscovery
               in: body
-              condition: '{{present(inputs.allowFileDiscovery)}}'
+              condition: "{{present(inputs.allowFileDiscovery)}}"
             - name: expirationTime
               value: $.inputs.expirationTime
               in: body
-              condition: '{{present(inputs.expirationTime)}}'
+              condition: "{{present(inputs.expirationTime)}}"
             - name: sendNotificationEmail
-              value: '{{inputs.sendNotificationEmail}}'
+              value: "{{inputs.sendNotificationEmail}}"
               in: query
-              condition: '{{present(inputs.sendNotificationEmail)}}'
+              condition: "{{present(inputs.sendNotificationEmail)}}"
             - name: emailMessage
-              value: '{{inputs.emailMessage}}'
+              value: "{{inputs.emailMessage}}"
               in: query
-              condition: '{{present(inputs.emailMessage)}}'
+              condition: "{{present(inputs.emailMessage)}}"
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
             - name: transferOwnership
-              value: '{{inputs.transferOwnership}}'
+              value: "{{inputs.transferOwnership}}"
               in: query
-              condition: '{{present(inputs.transferOwnership)}}'
+              condition: "{{present(inputs.transferOwnership)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.create_permission.output.data
 
@@ -267,7 +267,7 @@
   description: Updates a permission with patch semantics (modify role, expiration time, etc.)
   entrypointUrl: /files/{fileId}/permissions/{permissionId}
   entrypointHttpMethod: patch
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/update
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/update
   inputs:
     - name: fileId
       description: The ID of the file or shared drive
@@ -324,27 +324,27 @@
             - name: role
               value: $.inputs.role
               in: body
-              condition: '{{present(inputs.role)}}'
+              condition: "{{present(inputs.role)}}"
             - name: expirationTime
               value: $.inputs.expirationTime
               in: body
-              condition: '{{present(inputs.expirationTime)}}'
+              condition: "{{present(inputs.expirationTime)}}"
             - name: removeExpiration
-              value: '{{inputs.removeExpiration}}'
+              value: "{{inputs.removeExpiration}}"
               in: query
-              condition: '{{present(inputs.removeExpiration)}}'
+              condition: "{{present(inputs.removeExpiration)}}"
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
             - name: transferOwnership
-              value: '{{inputs.transferOwnership}}'
+              value: "{{inputs.transferOwnership}}"
               in: query
-              condition: '{{present(inputs.transferOwnership)}}'
+              condition: "{{present(inputs.transferOwnership)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.update_permission.output.data
 
@@ -356,7 +356,7 @@
   description: Deletes a permission (revokes access)
   entrypointUrl: /files/{fileId}/permissions/{permissionId}
   entrypointHttpMethod: delete
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete
   inputs:
     - name: fileId
       description: The ID of the file or shared drive
@@ -388,12 +388,12 @@
           method: delete
           args:
             - name: supportsAllDrives
-              value: '{{inputs.supportsAllDrives}}'
+              value: "{{inputs.supportsAllDrives}}"
               in: query
-              condition: '{{present(inputs.supportsAllDrives)}}'
+              condition: "{{present(inputs.supportsAllDrives)}}"
             - name: useDomainAdminAccess
-              value: '{{inputs.useDomainAdminAccess}}'
+              value: "{{inputs.useDomainAdminAccess}}"
               in: query
-              condition: '{{present(inputs.useDomainAdminAccess)}}'
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
   result:
     data: $.steps.delete_permission.output.data

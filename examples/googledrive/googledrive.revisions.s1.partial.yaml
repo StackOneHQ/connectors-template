@@ -6,7 +6,7 @@
   description: Lists a file's revisions
   entrypointUrl: /files/{fileId}/revisions
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
   inputs:
     - name: fileId
       description: The ID of the file
@@ -34,9 +34,9 @@
             in: query
           args:
             - name: pageSize
-              value: '{{inputs.pageSize}}'
+              value: "{{inputs.pageSize}}"
               in: query
-              condition: '{{present(inputs.pageSize)}}'
+              condition: "{{present(inputs.pageSize)}}"
   result:
     data: $.steps.list_revisions.output.data
 
@@ -48,7 +48,7 @@
   description: Gets a revision's metadata or content by ID
   entrypointUrl: /files/{fileId}/revisions/{revisionId}
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
   inputs:
     - name: fileId
       description: The ID of the file
@@ -80,12 +80,12 @@
           method: get
           args:
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
             - name: acknowledgeAbuse
-              value: '{{inputs.acknowledgeAbuse}}'
+              value: "{{inputs.acknowledgeAbuse}}"
               in: query
-              condition: '{{present(inputs.acknowledgeAbuse)}}'
+              condition: "{{present(inputs.acknowledgeAbuse)}}"
   result:
     data: $.steps.get_revision.output.data
 
@@ -102,7 +102,7 @@
     - Publish a specific revision (publishAuto, published, publishedOutsideDomain)
   entrypointUrl: /files/{fileId}/revisions/{revisionId}
   entrypointHttpMethod: patch
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/update
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/update
   inputs:
     - name: fileId
       description: The ID of the file
@@ -149,19 +149,19 @@
             - name: keepForever
               value: $.inputs.keepForever
               in: body
-              condition: '{{present(inputs.keepForever)}}'
+              condition: "{{present(inputs.keepForever)}}"
             - name: publishAuto
               value: $.inputs.publishAuto
               in: body
-              condition: '{{present(inputs.publishAuto)}}'
+              condition: "{{present(inputs.publishAuto)}}"
             - name: published
               value: $.inputs.published
               in: body
-              condition: '{{present(inputs.published)}}'
+              condition: "{{present(inputs.published)}}"
             - name: publishedOutsideDomain
               value: $.inputs.publishedOutsideDomain
               in: body
-              condition: '{{present(inputs.publishedOutsideDomain)}}'
+              condition: "{{present(inputs.publishedOutsideDomain)}}"
   result:
     data: $.steps.update_revision.output.data
 
@@ -175,7 +175,7 @@
     Note: Only works for binary files (images, videos, etc.), not Google Docs/Sheets/Slides.
   entrypointUrl: /files/{fileId}/revisions/{revisionId}
   entrypointHttpMethod: delete
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/delete
   inputs:
     - name: fileId
       description: The ID of the file

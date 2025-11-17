@@ -6,7 +6,7 @@
   description: Lists a file's comments
   entrypointUrl: /files/{fileId}/comments
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/list
   inputs:
     - name: fileId
       description: The ID of the file
@@ -49,20 +49,20 @@
             in: query
           args:
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
             - name: pageSize
-              value: '{{inputs.pageSize}}'
+              value: "{{inputs.pageSize}}"
               in: query
-              condition: '{{present(inputs.pageSize)}}'
+              condition: "{{present(inputs.pageSize)}}"
             - name: includeDeleted
-              value: '{{inputs.includeDeleted}}'
+              value: "{{inputs.includeDeleted}}"
               in: query
-              condition: '{{present(inputs.includeDeleted)}}'
+              condition: "{{present(inputs.includeDeleted)}}"
             - name: startModifiedTime
-              value: '{{inputs.startModifiedTime}}'
+              value: "{{inputs.startModifiedTime}}"
               in: query
-              condition: '{{present(inputs.startModifiedTime)}}'
+              condition: "{{present(inputs.startModifiedTime)}}"
   result:
     data: $.steps.list_comments.output.data
 
@@ -74,7 +74,7 @@
   description: Gets a comment by ID
   entrypointUrl: /files/{fileId}/comments/{commentId}
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/get
   inputs:
     - name: fileId
       description: The ID of the file
@@ -106,12 +106,12 @@
           method: get
           args:
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
             - name: includeDeleted
-              value: '{{inputs.includeDeleted}}'
+              value: "{{inputs.includeDeleted}}"
               in: query
-              condition: '{{present(inputs.includeDeleted)}}'
+              condition: "{{present(inputs.includeDeleted)}}"
   result:
     data: $.steps.get_comment.output.data
 
@@ -129,7 +129,7 @@
     - Assigned to specific users (using @mentions in content)
   entrypointUrl: /files/{fileId}/comments
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/create
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/create
   inputs:
     - name: fileId
       description: The ID of the file
@@ -169,20 +169,20 @@
               value: application/json
               in: headers
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
-              condition: '{{present(inputs.fields)}}'
+              condition: "{{present(inputs.fields)}}"
             - name: content
               value: $.inputs.content
               in: body
             - name: anchor
               value: $.inputs.anchor
               in: body
-              condition: '{{present(inputs.anchor)}}'
+              condition: "{{present(inputs.anchor)}}"
             - name: quotedFileContent
               value: $.inputs.quotedFileContent
               in: body
-              condition: '{{present(inputs.quotedFileContent)}}'
+              condition: "{{present(inputs.quotedFileContent)}}"
   result:
     data: $.steps.create_comment.output.data
 
@@ -194,7 +194,7 @@
   description: Updates a comment with patch semantics (edit content or resolve/reopen)
   entrypointUrl: /files/{fileId}/comments/{commentId}
   entrypointHttpMethod: patch
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/update
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/update
   inputs:
     - name: fileId
       description: The ID of the file
@@ -234,17 +234,17 @@
               value: application/json
               in: headers
             - name: fields
-              value: '{{inputs.fields}}'
+              value: "{{inputs.fields}}"
               in: query
-              condition: '{{present(inputs.fields)}}'
+              condition: "{{present(inputs.fields)}}"
             - name: content
               value: $.inputs.content
               in: body
-              condition: '{{present(inputs.content)}}'
+              condition: "{{present(inputs.content)}}"
             - name: resolved
               value: $.inputs.resolved
               in: body
-              condition: '{{present(inputs.resolved)}}'
+              condition: "{{present(inputs.resolved)}}"
   result:
     data: $.steps.update_comment.output.data
 
@@ -256,7 +256,7 @@
   description: Deletes a comment
   entrypointUrl: /files/{fileId}/comments/{commentId}
   entrypointHttpMethod: delete
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/delete
   inputs:
     - name: fileId
       description: The ID of the file

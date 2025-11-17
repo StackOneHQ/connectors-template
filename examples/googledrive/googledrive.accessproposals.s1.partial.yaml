@@ -8,7 +8,7 @@
     Access proposals are created when users request access to files they don't have permission to view.
   entrypointUrl: /files/{fileId}/accessproposals
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/list
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/list
   inputs:
     - name: fileId
       description: The ID of the file
@@ -34,7 +34,7 @@
   description: Retrieves an access proposal by ID
   entrypointUrl: /files/{fileId}/accessproposals/{proposalId}
   entrypointHttpMethod: get
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/get
   inputs:
     - name: fileId
       description: The ID of the file
@@ -70,7 +70,7 @@
     - deny: Deny the requested access and notify the requester
   entrypointUrl: /files/{fileId}/accessproposals/{proposalId}:resolve
   entrypointHttpMethod: post
-  context: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/resolve
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/resolve
   inputs:
     - name: fileId
       description: The ID of the file
@@ -121,14 +121,14 @@
             - name: role
               value: $.inputs.role
               in: body
-              condition: '{{present(inputs.role)}}'
+              condition: "{{present(inputs.role)}}"
             - name: sendNotification
               value: $.inputs.sendNotification
               in: body
-              condition: '{{present(inputs.sendNotification)}}'
+              condition: "{{present(inputs.sendNotification)}}"
             - name: view
               value: $.inputs.view
               in: body
-              condition: '{{present(inputs.view)}}'
+              condition: "{{present(inputs.view)}}"
   result:
     data: $.steps.resolve_access_proposal.output.data

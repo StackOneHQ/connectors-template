@@ -33,6 +33,6 @@ authentication:
         - key: production
           name: Production
 
-context: "Ashby API documentation (https://developers.ashbyhq.com/reference/introduction)"
+resources: "Ashby API documentation (https://developers.ashbyhq.com/reference/introduction)"
 
 $ref: ashby.candidates
