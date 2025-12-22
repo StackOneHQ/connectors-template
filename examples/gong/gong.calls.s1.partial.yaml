@@ -1,0 +1,277 @@
+- actionId: search_calls
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /calls/search
+  entrypointHttpMethod: post
+  schema: custom
+  label: Search Calls with Participant
+  description: Search for calls with a specific participant within a date range
+  inputs:
+    - name: fromDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Start date for filtering calls (ISO 8601 format)
+    - name: toDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: End date for filtering calls (ISO 8601 format)
+    - name: workspaceId
+      in: body
+      type: string
+      required: false
+      description: Workspace ID to search for
+    - name: primaryUserIds
+      in: body
+      type: string
+      array: true
+      required: false
+      description: Primary User IDs to search for
+    - name: callIds
+      in: body
+      type: string
+      array: true
+      required: false
+      description: Call IDs to search for
+  steps:
+    - stepId: search_calls
+      description: Search for calls with extensive data
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: '/v2/calls/extensive'
+          method: post
+          response:
+            dataKey: calls
+            nextKey: records.cursor
+          iterator:
+            key: cursor
+            in: body
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: filter
+              value:
+                fromDateTime: $.inputs.fromDateTime
+                toDateTime: $.inputs.toDateTime
+                workspaceId: $.inputs.workspaceId
+                callIds: $.inputs.callIds
+                primaryUserIds: $.inputs.primaryUserIds
+              in: body
+            - name: contentSelector
+              value:
+                context: Extended
+                exposedFields:
+                  parties: true
+                  collaboration:
+                    publicComments: false
+                  content:
+                    topics: true
+                    trackers: false
+              in: body
+  result:
+    data: $.steps.search_calls.output.data
+- actionId: get_call
+  categories:
+    - crm
+  actionType: get
+  entrypointUrl: /calls/:id
+  entrypointHttpMethod: get
+  schema: custom
+  label: Get Call
+  description: Get detailed information about a specific call
+  inputs:
+    - name: id
+      in: path
+      type: string
+      required: true
+      description: Call ID
+  steps:
+    - stepId: get_call_details
+      description: Retrieve call details
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/calls/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_call_details.output.data
+- actionId: get_call_transcript
+  categories:
+    - crm
+  actionType: get
+  entrypointUrl: /calls/transcript
+  entrypointHttpMethod: post
+  schema: custom
+  label: Get Call Transcript
+  description: Get transcripts for calls with optional filters
+  inputs:
+    - name: callIds
+      in: body
+      type: string
+      array: true
+      required: false
+      description: Array of call IDs to get transcripts for
+    - name: fromDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Start date for filtering calls (ISO 8601 format)
+    - name: toDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: End date for filtering calls (ISO 8601 format)
+    - name: workspaceId
+      in: body
+      type: string
+      required: false
+      description: Workspace ID to filter calls from
+  steps:
+    - stepId: get_transcript
+      description: Retrieve call transcript
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/calls/transcript'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: filter
+              value:
+                callIds: $.inputs.callIds
+                fromDateTime: $.inputs.fromDateTime
+                toDateTime: $.inputs.toDateTime
+                workspaceId: $.inputs.workspaceId
+              in: body
+  result:
+    data: $.steps.get_transcript.output.data
+- actionId: add_call
+  categories:
+    - crm
+  actionType: create
+  entrypointUrl: /calls
+  entrypointHttpMethod: post
+  schema: custom
+  label: Add Call
+  description: Manually add a new call to Gong
+  inputs:
+    - name: actualStart
+      in: body
+      type: datetime_string
+      required: true
+      description: Call start time (ISO 8601 format)
+    - name: title
+      in: body
+      type: string
+      required: true
+      description: Call title
+    - name: parties
+      in: body
+      type: object
+      array: true
+      required: true
+      description: Call participants with details (name, emailAddress, userId, etc.)
+    - name: primaryUser
+      in: body
+      type: string
+      required: true
+      description: Primary user ID
+    - name: clientUniqueId
+      in: body
+      type: string
+      required: false
+      description: Client unique identifier for the call
+    - name: direction
+      in: body
+      type: string
+      required: false
+      description: Call direction (Inbound/Outbound)
+    - name: duration
+      in: body
+      type: number
+      required: false
+      description: Call duration in seconds
+    - name: callProviderCode
+      in: body
+      type: string
+      required: false
+      description: Call provider code
+    - name: downloadMediaUrl
+      in: body
+      type: string
+      required: false
+      description: URL to download call media
+    - name: customData
+      in: body
+      type: object
+      required: false
+      description: Custom data fields
+    - name: disposition
+      in: body
+      type: string
+      required: false
+      description: Call disposition
+  steps:
+    - stepId: create_call
+      description: Create a new call
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/calls'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: actualStart
+              value: $.inputs.actualStart
+              in: body
+            - name: title
+              value: $.inputs.title
+              in: body
+            - name: parties
+              value: $.inputs.parties
+              in: body
+            - name: primaryUser
+              value: $.inputs.primaryUser
+              in: body
+            - name: clientUniqueId
+              value: $.inputs.clientUniqueId
+              in: body
+              condition: '{{present($.inputs.clientUniqueId)}}'
+            - name: direction
+              value: $.inputs.direction
+              in: body
+              condition: '{{present($.inputs.direction)}}'
+            - name: duration
+              value: $.inputs.duration
+              in: body
+              condition: '{{present($.inputs.duration)}}'
+            - name: callProviderCode
+              value: $.inputs.callProviderCode
+              in: body
+              condition: '{{present($.inputs.callProviderCode)}}'
+            - name: downloadMediaUrl
+              value: $.inputs.downloadMediaUrl
+              in: body
+              condition: '{{present($.inputs.downloadMediaUrl)}}'
+            - name: customData
+              value: $.inputs.customData
+              in: body
+              condition: '{{present($.inputs.customData)}}'
+            - name: disposition
+              value: $.inputs.disposition
+              in: body
+              condition: '{{present($.inputs.disposition)}}'
+  result:
+    data: $.steps.create_call.output.data

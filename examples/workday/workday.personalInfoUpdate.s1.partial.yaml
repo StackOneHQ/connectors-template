@@ -1,0 +1,989 @@
+- actionId: initiate_worker_home_contact_change
+  categories:
+    - hris
+  actionType: create
+  label: Initiate Worker Home Contact Change
+  description: Initiate a home contact information change request for a worker using Staffing API v7. This creates a business process that allows updating home addresses, emails, phones, and web addresses.
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: effective_date
+      description: The effective date of the change (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: initiate_home_contact_change_request
+      description: Initiate home contact information change using Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/homeContactInformationChanges'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: effective_date
+              value: $.inputs.effective_date
+              in: body
+              condition: '{{present($.inputs.effective_date)}}'
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.initiate_home_contact_change_request.output.data
+
+- actionId: update_home_email_address
+  categories:
+    - hris
+  actionType: create
+  label: Update Home Email Address
+  description: Add or update a home email address for a worker as part of a home contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The home contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: email_address
+      description: The email address
+      type: string
+      in: body
+      required: true
+    - name: is_primary
+      description: Whether this is the primary email address
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this email address is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the email usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_home_email
+      description: Add home email address to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/homeContactInformationChanges/${inputs.change_id}/emailAddresses'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: emailAddress
+              value: $.inputs.email_address
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "836cf00ef5974ac08b786079866c946f"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_home_email.output.data
+
+- actionId: update_home_phone_number
+  categories:
+    - hris
+  actionType: create
+  label: Update Home Phone Number
+  description: Add or update a home phone number for a worker as part of a home contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The home contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: phone_number
+      description: The phone number (without country code)
+      type: string
+      in: body
+      required: true
+    - name: country_phone_code_id
+      description: The country phone code ID (e.g., +1 for US)
+      type: string
+      in: body
+      required: true
+    - name: phone_device_type_id
+      description: The phone device type ID (mobile, landline, etc.)
+      type: string
+      in: body
+      required: true
+    - name: extension
+      description: Phone extension number
+      type: string
+      in: body
+      required: false
+    - name: is_primary
+      description: Whether this is the primary phone number
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this phone number is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the phone usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_home_phone
+      description: Add home phone number to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/homeContactInformationChanges/${inputs.change_id}/phoneNumbers'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: phoneNumber
+              value: $.inputs.phone_number
+              in: body
+            - name: phoneExtension
+              value: $.inputs.extension
+              in: body
+              condition: '{{present($.inputs.extension)}}'
+            - name: countryPhoneCode
+              value:
+                id: $.inputs.country_phone_code_id
+              in: body
+            - name: deviceType
+              value:
+                id: $.inputs.phone_device_type_id
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "836cf00ef5974ac08b786079866c946f"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_home_phone.output.data
+
+- actionId: update_home_address
+  categories:
+    - hris
+  actionType: create
+  label: Update Home Address
+  description: Add or update a home address for a worker as part of a home contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The home contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: address_line_1
+      description: Address line 1
+      type: string
+      in: body
+      required: true
+    - name: address_line_2
+      description: Address line 2
+      type: string
+      in: body
+      required: false
+    - name: address_line_3
+      description: Address line 3
+      type: string
+      in: body
+      required: false
+    - name: city
+      description: City
+      type: string
+      in: body
+      required: true
+    - name: region_id
+      description: Region/State ID
+      type: string
+      in: body
+      required: false
+    - name: postal_code
+      description: Postal/ZIP code
+      type: string
+      in: body
+      required: false
+    - name: country_id
+      description: Country ID
+      type: string
+      in: body
+      required: true
+    - name: is_primary
+      description: Whether this is the primary address
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this address is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the address usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_home_address
+      description: Add home address to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/homeContactInformationChanges/${inputs.change_id}/addresses'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: addressLine1
+              value: $.inputs.address_line_1
+              in: body
+            - name: addressLine2
+              value: $.inputs.address_line_2
+              in: body
+              condition: '{{present($.inputs.address_line_2)}}'
+            - name: addressLine3
+              value: $.inputs.address_line_3
+              in: body
+              condition: '{{present($.inputs.address_line_3)}}'
+            - name: city
+              value: $.inputs.city
+              in: body
+            - name: countryRegion
+              value:
+                id: $.inputs.region_id
+              in: body
+              condition: '{{present($.inputs.region_id)}}'
+            - name: postalCode
+              value: $.inputs.postal_code
+              in: body
+              condition: '{{present($.inputs.postal_code)}}'
+            - name: country
+              value:
+                id: $.inputs.country_id
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "836cf00ef5974ac08b786079866c946f"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_home_address.output.data
+
+- actionId: update_home_web_address
+  categories:
+    - hris
+  actionType: create
+  label: Update Home Web Address
+  description: Add or update a home web address (website/URL) for a worker as part of a home contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The home contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: web_address
+      description: The web address/URL
+      type: string
+      in: body
+      required: true
+    - name: web_address_type_id
+      description: The web address type ID (personal website, blog, portfolio, etc.)
+      type: string
+      in: body
+      required: false
+    - name: is_primary
+      description: Whether this is the primary web address
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this web address is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the web address usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_home_web_address
+      description: Add home web address to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/homeContactInformationChanges/${inputs.change_id}/webAddresses'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: webAddress
+              value: $.inputs.web_address
+              in: body
+            - name: webAddressType
+              value:
+                id: $.inputs.web_address_type_id
+              in: body
+              condition: '{{present($.inputs.web_address_type_id)}}'
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "836cf00ef5974ac08b786079866c946f"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_home_web_address.output.data
+
+- actionId: submit_home_contact_change
+  categories:
+    - hris
+  actionType: update
+  label: Submit Home Contact Information Change
+  description: Submit the home contact information change request to finalize all updates using Person API v4
+  inputs:
+    - name: change_id
+      description: The home contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: auto_submit
+      description: Whether to automatically submit the change
+      type: boolean
+      in: body
+      required: false
+  steps:
+    - stepId: submit_change_request
+      description: Submit the home contact information change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/homeContactInformationChanges/${inputs.change_id}/submit'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: businessProcessParameters
+              value:
+                action:
+                  id: "default_submit_action"
+              in: body
+              condition: '{{present($.inputs.auto_submit) && $.inputs.auto_submit}}'
+  result:
+    data: $.steps.submit_change_request.output.data
+
+- actionId: initiate_worker_work_contact_change
+  categories:
+    - hris
+  actionType: create
+  label: Initiate Worker Work Contact Change
+  description: Initiate a work contact information change request for a worker using Staffing API v7. This creates a business process that allows updating work addresses, emails, phones, and web addresses.
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: effective_date
+      description: The effective date of the change (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: initiate_work_contact_change_request
+      description: Initiate work contact information change using Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/workContactInformationChanges'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: effective_date
+              value: $.inputs.effective_date
+              in: body
+              condition: '{{present($.inputs.effective_date)}}'
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.initiate_work_contact_change_request.output.data
+
+- actionId: update_work_email_address
+  categories:
+    - hris
+  actionType: create
+  label: Update Work Email Address
+  description: Add or update a work email address for a worker as part of a work contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The work contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: email_address
+      description: The email address
+      type: string
+      in: body
+      required: true
+    - name: is_primary
+      description: Whether this is the primary email address
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this email address is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the email usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_work_email
+      description: Add work email address to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/workContactInformationChanges/${inputs.change_id}/emailAddresses'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: emailAddress
+              value: $.inputs.email_address
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "1f27f250dfaa4724ab1e1617174281e4"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_work_email.output.data
+
+- actionId: update_work_phone_number
+  categories:
+    - hris
+  actionType: create
+  label: Update Work Phone Number
+  description: Add or update a work phone number for a worker as part of a work contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The work contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: phone_number
+      description: The phone number (without country code)
+      type: string
+      in: body
+      required: true
+    - name: country_phone_code_id
+      description: The country phone code ID (e.g., +1 for US)
+      type: string
+      in: body
+      required: true
+    - name: phone_device_type_id
+      description: The phone device type ID (mobile, landline, etc.)
+      type: string
+      in: body
+      required: true
+    - name: extension
+      description: Phone extension number
+      type: string
+      in: body
+      required: false
+    - name: is_primary
+      description: Whether this is the primary phone number
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this phone number is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the phone usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_work_phone
+      description: Add work phone number to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/workContactInformationChanges/${inputs.change_id}/phoneNumbers'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: phoneNumber
+              value: $.inputs.phone_number
+              in: body
+            - name: phoneExtension
+              value: $.inputs.extension
+              in: body
+              condition: '{{present($.inputs.extension)}}'
+            - name: countryPhoneCode
+              value:
+                id: $.inputs.country_phone_code_id
+              in: body
+            - name: deviceType
+              value:
+                id: $.inputs.phone_device_type_id
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "1f27f250dfaa4724ab1e1617174281e4"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_work_phone.output.data
+
+- actionId: update_work_address
+  categories:
+    - hris
+  actionType: create
+  label: Update Work Address
+  description: Add or update a work address for a worker as part of a work contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The work contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: address_line_1
+      description: Address line 1
+      type: string
+      in: body
+      required: true
+    - name: address_line_2
+      description: Address line 2
+      type: string
+      in: body
+      required: false
+    - name: address_line_3
+      description: Address line 3
+      type: string
+      in: body
+      required: false
+    - name: city
+      description: City
+      type: string
+      in: body
+      required: true
+    - name: region_id
+      description: Region/State ID
+      type: string
+      in: body
+      required: false
+    - name: postal_code
+      description: Postal/ZIP code
+      type: string
+      in: body
+      required: false
+    - name: country_id
+      description: Country ID
+      type: string
+      in: body
+      required: true
+    - name: is_primary
+      description: Whether this is the primary address
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this address is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the address usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_work_address
+      description: Add work address to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/workContactInformationChanges/${inputs.change_id}/addresses'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: addressLine1
+              value: $.inputs.address_line_1
+              in: body
+            - name: addressLine2
+              value: $.inputs.address_line_2
+              in: body
+              condition: '{{present($.inputs.address_line_2)}}'
+            - name: addressLine3
+              value: $.inputs.address_line_3
+              in: body
+              condition: '{{present($.inputs.address_line_3)}}'
+            - name: city
+              value: $.inputs.city
+              in: body
+            - name: countryRegion
+              value:
+                id: $.inputs.region_id
+              in: body
+              condition: '{{present($.inputs.region_id)}}'
+            - name: postalCode
+              value: $.inputs.postal_code
+              in: body
+              condition: '{{present($.inputs.postal_code)}}'
+            - name: country
+              value:
+                id: $.inputs.country_id
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "1f27f250dfaa4724ab1e1617174281e4"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_work_address.output.data
+
+- actionId: update_work_web_address
+  categories:
+    - hris
+  actionType: create
+  label: Update Work Web Address
+  description: Add or update a work web address (website/URL) for a worker as part of a work contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The work contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: web_address
+      description: The web address/URL
+      type: string
+      in: body
+      required: true
+    - name: web_address_type_id
+      description: The web address type ID (company website, LinkedIn, etc.)
+      type: string
+      in: body
+      required: false
+    - name: is_primary
+      description: Whether this is the primary web address
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this web address is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the web address usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_work_web_address
+      description: Add work web address to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/workContactInformationChanges/${inputs.change_id}/webAddresses'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: webAddress
+              value: $.inputs.web_address
+              in: body
+            - name: webAddressType
+              value:
+                id: $.inputs.web_address_type_id
+              in: body
+              condition: '{{present($.inputs.web_address_type_id)}}'
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "1f27f250dfaa4724ab1e1617174281e4"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_work_web_address.output.data
+
+- actionId: update_home_instant_messenger
+  categories:
+    - hris
+  actionType: create
+  label: Update Home Instant Messenger
+  description: Add or update a home instant messenger contact for a worker as part of a home contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The home contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: instant_messenger_address
+      description: The instant messenger address/handle
+      type: string
+      in: body
+      required: true
+    - name: instant_messenger_type_id
+      description: The instant messenger type ID (Skype, WhatsApp, etc.)
+      type: string
+      in: body
+      required: true
+    - name: is_primary
+      description: Whether this is the primary instant messenger
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this instant messenger is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the instant messenger usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_home_instant_messenger
+      description: Add home instant messenger to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/homeContactInformationChanges/${inputs.change_id}/instantMessengers'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: instantMessengerAddress
+              value: $.inputs.instant_messenger_address
+              in: body
+            - name: instantMessengerType
+              value:
+                id: $.inputs.instant_messenger_type_id
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "836cf00ef5974ac08b786079866c946f"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_home_instant_messenger.output.data
+
+- actionId: update_work_instant_messenger
+  categories:
+    - hris
+  actionType: create
+  label: Update Work Instant Messenger
+  description: Add or update a work instant messenger contact for a worker as part of a work contact information change process using Person API v4
+  inputs:
+    - name: change_id
+      description: The work contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: instant_messenger_address
+      description: The instant messenger address/handle
+      type: string
+      in: body
+      required: true
+    - name: instant_messenger_type_id
+      description: The instant messenger type ID (Skype, Microsoft Teams, etc.)
+      type: string
+      in: body
+      required: true
+    - name: is_primary
+      description: Whether this is the primary instant messenger
+      type: boolean
+      in: body
+      required: false
+    - name: is_public
+      description: Whether this instant messenger is public
+      type: boolean
+      in: body
+      required: false
+    - name: usage_comment
+      description: Comment about the instant messenger usage
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_work_instant_messenger
+      description: Add work instant messenger to the contact change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/workContactInformationChanges/${inputs.change_id}/instantMessengers'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: instantMessengerAddress
+              value: $.inputs.instant_messenger_address
+              in: body
+            - name: instantMessengerType
+              value:
+                id: $.inputs.instant_messenger_type_id
+              in: body
+            - name: usage
+              value:
+                primary: $.inputs.is_primary
+                public: $.inputs.is_public
+                usageType:
+                  id: "1f27f250dfaa4724ab1e1617174281e4"
+                comment: $.inputs.usage_comment
+              in: body
+  result:
+    data: $.steps.add_work_instant_messenger.output.data
+
+- actionId: submit_work_contact_change
+  categories:
+    - hris
+  actionType: update
+  label: Submit Work Contact Information Change
+  description: Submit the work contact information change request to finalize all updates using Person API v4
+  inputs:
+    - name: change_id
+      description: The work contact information change ID from the initiate action
+      type: string
+      in: path
+      required: true
+    - name: auto_submit
+      description: Whether to automatically submit the change
+      type: boolean
+      in: body
+      required: false
+  steps:
+    - stepId: submit_work_change_request
+      description: Submit the work contact information change request
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/workContactInformationChanges/${inputs.change_id}/submit'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: businessProcessParameters
+              value:
+                action:
+                  id: "default_submit_action"
+              in: body
+              condition: '{{present($.inputs.auto_submit) && $.inputs.auto_submit}}'
+  result:
+    data: $.steps.submit_work_change_request.output.data

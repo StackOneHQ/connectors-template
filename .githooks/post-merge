@@ -4,7 +4,9 @@
 # Git Hook: post-merge
 # -----------------------------------------------------------------------------
 # After merging/pulling changes, checks for a newer version of the SDK
-# and installs it automatically if needed.
+# and installs it automatically if needed. Additionally, 
+# it detects changes to package.json or package-lock.json and runs `npm ci` 
+# to ensure dependencies are up-to-date.
 # -----------------------------------------------------------------------------
 
 # Navigate to the root directory of the repository
@@ -23,11 +25,11 @@ OUTDATED_OUTPUT=$(npm outdated @stackone/connect-sdk 2>/dev/null)
 
 # Parse the latest version if the package is listed as outdated
 if echo "$OUTDATED_OUTPUT" | grep -q '@stackone/connect-sdk'; then
-    # Extract the version number from the output
-    LATEST_VERSION=$(echo "$OUTDATED_OUTPUT" | grep '@stackone/connect-sdk' | awk '{print $4}')
+    # Extract the version number from the output (use tail -n 1 to get only the last match)
+    LATEST_VERSION=$(echo "$OUTDATED_OUTPUT" | grep '@stackone/connect-sdk' | tail -n 1 | awk '{print $4}')
 
     echo "${green}Updating @stackone/connect-sdk to version ${yellow}${LATEST_VERSION}${reset}"
-    npm install "@stackone/connect-sdk@$LATEST_VERSION"
+    npm install --save-exact "@stackone/connect-sdk@$LATEST_VERSION"
 
     # If package.json or package-lock.json changed, stage them
     for file in package.json package-lock.json; do
@@ -38,4 +40,19 @@ if echo "$OUTDATED_OUTPUT" | grep -q '@stackone/connect-sdk'; then
     done
 else
     echo "${green}@stackone/connect-sdk is already up to date.${reset}"
+fi
+
+# Check for changes in package.json or package-lock.json
+if git diff HEAD@{1}..HEAD --name-only | grep -q -E 'package.json|package-lock.json'; then
+    echo "${yellow}Changes detected in package.json or package-lock.json. Running ${green}npm ci${yellow} to update dependencies.${reset}"
+    if command -v npm &> /dev/null; then
+        if npm ci; then
+            echo "${green}Dependencies updated successfully.${reset}"
+        else
+            echo "${red}Error: npm ci failed. Please run ${yellow}npm ci${red} manually to resolve dependency issues.${reset}"
+            exit 1
+        fi
+    else
+        echo "${red}Error: npm command not found. Please run ${yellow}npm ci${red} manually.${reset}"
+    fi
 fi

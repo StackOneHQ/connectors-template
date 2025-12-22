@@ -1,0 +1,1531 @@
+- actionId: unified_list_files
+  categories:
+    - documents
+  actionType: list
+  schema: files
+  label: List Files
+  description: |
+    List files in Google Drive with optional search via the `q` parameter. A query string has three parts: `query_term operator values`.
+    
+    **File Query Terms & Operators:**
+    - `name`: contains, =, != - Name of the file. Surround with single quotes. Example: `name = 'HelloWorld'`
+    - `fullText`: contains - Full text search of content and metadata. Example: `fullText contains 'important'`
+    - `mimeType`: contains, =, != - MIME type. Example: `mimeType = 'application/pdf'`
+    - `modifiedTime`: <=, <, =, !=, >, >= - Last modified time (RFC 3339). Example: `modifiedTime > '2012-06-04T12:00:00'`
+    - `viewedByMeTime`: <=, <, =, !=, >, >= - Last viewed time (RFC 3339). Example: `viewedByMeTime < '2012-06-04T12:00:00'`
+    - `trashed`: =, != - Whether in trash. Example: `trashed = false`
+    - `starred`: =, != - Whether starred. Example: `starred = true`
+    - `parents`: in - Parent folder ID. Example: `'1234567' in parents`
+    - `owners`: in - Users who own the file. Example: `'user@example.com' in owners`
+    - `writers`: in - Users with write permission. Example: `'user@example.com' in writers`
+    - `readers`: in - Users with read permission. Example: `'user@example.com' in readers`
+    - `sharedWithMe`: =, != - Files in "Shared with me". Example: `sharedWithMe = true`
+    - `createdTime`: <=, <, =, !=, >, >= - Creation time (RFC 3339). Example: `createdTime >= '2012-06-04T12:00:00-08:00'`
+    - `properties`: has - Public custom properties. Example: `properties has { key='mass' and value='1.3kg' }`
+    - `appProperties`: has - Private custom properties. Example: `appProperties has { key='department' and value='sales' }`
+    - `visibility`: =, != - Visibility level (anyoneCanFind, anyoneWithLink, domainCanFind, domainWithLink, limited). Example: `visibility = 'limited'`
+    - `shortcutDetails.targetId`: =, != - Shortcut target ID. Example: `shortcutDetails.targetId = '1234567'`
+    
+    **Operators:** and, or, not. Example: `name contains 'hello' and mimeType = 'application/pdf'`
+    
+    **Notes:**
+    - `contains` for `name` only does prefix matching (e.g., `name contains 'Hello'` matches "HelloWorld")
+    - `contains` for `fullText` matches entire string tokens
+    - Surround exact phrases with double quotes: `fullText contains '"Hello there"'`
+    - Escape single quotes in queries with backslash: `name = 'Valentine\'s Day'`
+  entrypointUrl: /files
+  entrypointHttpMethod: get
+  inputs:
+    - name: corpora
+      description: Bodies of items to search (user, domain, drive, allDrives)
+      type: string
+      in: query
+      required: false
+    - name: driveId
+      description: Filter by specific shared drive ID (requires corpora=drive)
+      type: string
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include in labelInfo
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include (published)
+      type: string
+      in: query
+      required: false
+    - name: orderBy
+      description: Sort order (e.g., 'modifiedTime desc', 'name', 'createdTime')
+      type: string
+      in: query
+      required: false
+    - name: pageSize
+      description: Number of results per page (max 1000)
+      type: number
+      in: query
+      required: false
+    - name: q
+      description: Search query using Google Drive query syntax
+      type: string
+      in: query
+      required: false
+    - name: spaces
+      description: Filter by spaces (drive, appDataFolder, photos)
+      type: string
+      in: query
+      required: false
+  fieldConfigs:
+    - targetFieldKey: id
+      expression: $.id
+      type: string
+    - targetFieldKey: name
+      expression: $.name
+      type: string
+    - targetFieldKey: description
+      expression: $.description
+      type: string
+    - targetFieldKey: size
+      expression: $.size
+      type: number
+    - targetFieldKey: url
+      expression: $.webViewLink
+      type: string
+    - targetFieldKey: file_format
+      expression: '{{$.fullFileExtension || $.mimeType}}'  # Fallback to mimeType if extension missing
+      type: enum
+      enumMapper:
+        matcher: 'document_file_format_from_extension'
+    # Unmapped: UpstreamUnsupported - Provider API does not expose file path
+    # - targetFieldKey: path
+    #   expression: 'null'
+    #   type: string
+    - targetFieldKey: owner_id
+      expression: $.owners[0].emailAddress
+      type: string
+    - targetFieldKey: folder_id
+      expression: $.parents[0]
+      type: string
+    # Unmapped: UpstreamUnsupported - Provider API does not expose drive_id for files
+    # - targetFieldKey: drive_id
+    #   expression: 'null'
+    #   type: string
+    # Original TS: value: (raw) => Object.keys(raw?.exportLinks ?? {})
+    # JEXL doesn't support Object.keys() - return full object, caller can extract keys
+    - targetFieldKey: export_formats
+      expression: $.exportLinks
+      type: object
+    - targetFieldKey: created_at
+      expression: $.createdTime
+      type: datetime_string
+    - targetFieldKey: updated_at
+      expression: $.modifiedTime
+      type: datetime_string
+  steps:
+    - stepId: search_files
+      description: Search files with query
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /files
+          method: get
+          response:
+            dataKey: files
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: q
+              value: '{{inputs.q}}'
+              in: query
+              condition: '{{present(inputs.q)}}'
+            - name: corpora
+              value: '{{inputs.corpora}}'
+              in: query
+              condition: '{{present(inputs.corpora)}}'
+            # If driveId is present, corpora must be drive
+            - name: corpora
+              value: 'drive'
+              in: query
+              condition: '{{missing(inputs.corpora) && present(inputs.driveId)}}'
+            - name: driveId
+              value: '{{inputs.driveId}}'
+              in: query
+              condition: '{{present(inputs.driveId)}}'
+            - name: fields
+              value: '*'
+              in: query
+            - name: includeItemsFromAllDrives
+              value: 'true'
+              in: query
+            - name: includeLabels
+              value: '{{inputs.includeLabels}}'
+              in: query
+              condition: '{{present(inputs.includeLabels)}}'
+            - name: includePermissionsForView
+              value: '{{inputs.includePermissionsForView}}'
+              in: query
+              condition: '{{present(inputs.includePermissionsForView)}}'
+            - name: orderBy
+              value: '{{inputs.orderBy}}'
+              in: query
+              condition: '{{present(inputs.orderBy)}}'
+            - name: pageSize
+              value: '{{inputs.pageSize}}'
+              in: query
+              condition: '{{present(inputs.pageSize)}}'
+            - name: spaces
+              value: '{{inputs.spaces}}'
+              in: query
+              condition: '{{present(inputs.spaces)}}'
+            - name: supportsAllDrives
+              value: 'true'
+              in: query
+    - stepId: map_search_results
+      description: Map file fields
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.search_files.output.data
+    - stepId: typecast_search_results
+      description: Typecast file data
+      stepFunction:
+        functionName: typecast
+        version: '2'
+        parameters:
+          dataSource: $.steps.map_search_results.output.data
+  result:
+    data: $.steps.typecast_search_results.output.data
+
+- actionId: list_files
+  categories: 
+    - documents
+  actionType: list
+  label: List Files (Non-Unified)
+  description: |
+    List files in Google Drive (non-unified passthrough). Returns raw Google Drive API response.
+    
+    Search via the `q` parameter using Google Drive query syntax:
+    - `name = 'HelloWorld'` - Exact name match
+    - `mimeType = 'application/pdf'` - Filter by MIME type
+    - `'parent_folder_id' in parents` - Files in specific folder
+    - `trashed = false` - Exclude trashed files
+    - `modifiedTime > '2023-01-01T00:00:00'` - Files modified after date
+    
+    Combine with `and`, `or`, `not`: `name contains 'report' and mimeType = 'application/pdf'`
+  entrypointUrl: /files
+  entrypointHttpMethod: get
+  inputs:
+    - name: corpora
+      description: Bodies of items to search (user, domain, drive, allDrives)
+      type: string
+      in: query
+      required: false
+    - name: driveId
+      description: Filter by specific shared drive ID (requires corpora=drive)
+      type: string
+      in: query
+      required: false
+    - name: includeItemsFromAllDrives
+      description: Include files from all drives user has access to
+      type: boolean
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include in labelInfo
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include (published)
+      type: string
+      in: query
+      required: false
+    - name: orderBy
+      description: Sort order (e.g., 'modifiedTime desc', 'name', 'createdTime')
+      type: string
+      in: query
+      required: false
+    - name: pageSize
+      description: Number of results per page (max 1000)
+      type: number
+      in: query
+      required: false
+    - name: q
+      description: Search query using Google Drive query syntax
+      type: string
+      in: query
+      required: false
+    - name: spaces
+      description: Filter by spaces (drive, appDataFolder, photos)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: fields
+      description: Fields to include in response (e.g., 'files(id,name,mimeType)')
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: list_files
+      description: List files from Google Drive API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /files
+          method: get
+          response:
+            dataKey: files
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: q
+              value: '{{inputs.q}}'
+              in: query
+              condition: '{{present(inputs.q)}}'
+            - name: corpora
+              value: '{{inputs.corpora}}'
+              in: query
+              condition: '{{present(inputs.corpora)}}'
+            - name: driveId
+              value: '{{inputs.driveId}}'
+              in: query
+              condition: '{{present(inputs.driveId)}}'
+            - name: includeItemsFromAllDrives
+              value: '{{inputs.includeItemsFromAllDrives}}'
+              in: query
+              condition: '{{present(inputs.includeItemsFromAllDrives)}}'
+            - name: includeLabels
+              value: '{{inputs.includeLabels}}'
+              in: query
+              condition: '{{present(inputs.includeLabels)}}'
+            - name: includePermissionsForView
+              value: '{{inputs.includePermissionsForView}}'
+              in: query
+              condition: '{{present(inputs.includePermissionsForView)}}'
+            - name: orderBy
+              value: '{{inputs.orderBy}}'
+              in: query
+              condition: '{{present(inputs.orderBy)}}'
+            - name: pageSize
+              value: '{{inputs.pageSize}}'
+              in: query
+              condition: '{{present(inputs.pageSize)}}'
+            - name: spaces
+              value: '{{inputs.spaces}}'
+              in: query
+              condition: '{{present(inputs.spaces)}}'
+            - name: supportsAllDrives
+              value: '{{inputs.supportsAllDrives}}'
+              in: query
+              condition: '{{present(inputs.supportsAllDrives)}}'
+            - name: fields
+              value: '{{inputs.fields}}'
+              in: query
+              condition: '{{present(inputs.fields)}}'
+  result:
+    data: $.steps.list_files.output.data
+
+- actionId: get_file
+  categories: 
+    - documents
+  actionType: get
+  label: Get File (Non-Unified)
+  description: Get file by ID
+  entrypointUrl: /files/{id}
+  entrypointHttpMethod: get
+  inputs:
+    - name: id
+      description: The ID of the file to retrieve
+      type: string
+      in: path
+      required: true
+    - name: fields
+      description: |
+        Specific fields to include in response. Use '*' for all fields or specify comma-separated field names.
+        Examples: 'id,name,mimeType', 'id,name,parents,owners,permissions'
+      type: string
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include in labelInfo
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include (published)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: acknowledgeAbuse
+      description: |
+        Whether to acknowledge the risk of downloading known malware or other abusive files.
+        Required when downloading files flagged as abusive.
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_file
+      description: Get file metadata from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.id}
+          method: get
+          args:
+            - name: fields
+              value: '{{inputs.fields}}'
+              in: query
+              condition: '{{present(inputs.fields)}}'
+            - name: includeLabels
+              value: '{{inputs.includeLabels}}'
+              in: query
+              condition: '{{present(inputs.includeLabels)}}'
+            - name: includePermissionsForView
+              value: '{{inputs.includePermissionsForView}}'
+              in: query
+              condition: '{{present(inputs.includePermissionsForView)}}'
+            - name: supportsAllDrives
+              value: '{{inputs.supportsAllDrives}}'
+              in: query
+              condition: '{{present(inputs.supportsAllDrives)}}'
+            - name: acknowledgeAbuse
+              value: '{{inputs.acknowledgeAbuse}}'
+              in: query
+              condition: '{{present(inputs.acknowledgeAbuse)}}'
+  result:
+    data: $.steps.get_file.output.data
+
+- actionId: copy_file
+  categories:
+    - documents
+  actionType: create
+  label: Copy File
+  description: Creates a copy of a file and applies any requested updates with patch semantics
+  entrypointUrl: /files/{fileId}/copy
+  entrypointHttpMethod: post
+  inputs:
+    - name: fileId
+      description: The ID of the file to copy
+      type: string
+      in: path
+      required: true
+    - name: name
+      description: Name for the copied file
+      type: string
+      in: body
+      required: false
+    - name: parents
+      description: Parent folder IDs for the copied file
+      type: string
+      array: true
+      in: body
+      required: false
+    - name: description
+      description: Description for the copied file
+      type: string
+      in: body
+      required: false
+    - name: mimeType
+      description: MIME type for the copied file
+      type: string
+      in: body
+      required: false
+    - name: fields
+      description: Fields to include in response
+      type: string
+      in: query
+      required: false
+    - name: ignoreDefaultVisibility
+      description: Whether to ignore the domain's default visibility settings
+      type: boolean
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include
+      type: string
+      in: query
+      required: false
+    - name: keepRevisionForever
+      description: Whether to keep the new head revision forever
+      type: boolean
+      in: query
+      required: false
+    - name: ocrLanguage
+      description: OCR language for text extraction (ISO 639-1 code)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Support files in shared drives
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: copy_file
+      description: Copy file via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/copy
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: name
+              value: $.inputs.name
+              in: body
+              condition: '{{present(inputs.name)}}'
+            - name: parents
+              value: $.inputs.parents
+              in: body
+              condition: '{{present(inputs.parents)}}'
+            - name: description
+              value: $.inputs.description
+              in: body
+              condition: '{{present(inputs.description)}}'
+            - name: mimeType
+              value: $.inputs.mimeType
+              in: body
+              condition: '{{present(inputs.mimeType)}}'
+            - name: fields
+              value: '{{inputs.fields}}'
+              in: query
+              condition: '{{present(inputs.fields)}}'
+            - name: ignoreDefaultVisibility
+              value: '{{inputs.ignoreDefaultVisibility}}'
+              in: query
+              condition: '{{present(inputs.ignoreDefaultVisibility)}}'
+            - name: includeLabels
+              value: '{{inputs.includeLabels}}'
+              in: query
+              condition: '{{present(inputs.includeLabels)}}'
+            - name: includePermissionsForView
+              value: '{{inputs.includePermissionsForView}}'
+              in: query
+              condition: '{{present(inputs.includePermissionsForView)}}'
+            - name: keepRevisionForever
+              value: '{{inputs.keepRevisionForever}}'
+              in: query
+              condition: '{{present(inputs.keepRevisionForever)}}'
+            - name: ocrLanguage
+              value: '{{inputs.ocrLanguage}}'
+              in: query
+              condition: '{{present(inputs.ocrLanguage)}}'
+            - name: supportsAllDrives
+              value: '{{inputs.supportsAllDrives}}'
+              in: query
+              condition: '{{present(inputs.supportsAllDrives)}}'
+  result:
+    data: $.steps.copy_file.output.data
+
+- actionId: create_file
+  categories:
+    - documents
+  actionType: create
+  label: Create File
+  description: |
+    Creates a new file or folder with metadata only.
+    For creating files with content, use a two-step process:
+    1. Create file metadata with this action
+    2. Use update_file or upload_file_content to add content
+    
+    Common use cases:
+    - Create empty files or folders
+    - Create Google Workspace documents (Docs, Sheets, Slides)
+    - Initialize file metadata before content upload
+  entrypointUrl: /files
+  entrypointHttpMethod: post
+  inputs:
+    - name: name
+      description: Name of the file or folder
+      type: string
+      in: body
+      required: true
+    - name: mimeType
+      description: |
+        MIME type of the file.
+        Common types:
+        - 'application/vnd.google-apps.folder' (folder)
+        - 'application/vnd.google-apps.document' (Google Doc)
+        - 'application/vnd.google-apps.spreadsheet' (Google Sheet)
+        - 'text/plain', 'application/pdf', etc.
+      type: string
+      in: body
+      required: false
+    - name: parents
+      description: Parent folder IDs
+      type: string
+      array: true
+      in: body
+      required: false
+    - name: description
+      description: Description of the file
+      type: string
+      in: body
+      required: false
+    - name: properties
+      description: Custom properties (visible to all apps)
+      type: object
+      in: body
+      required: false
+    - name: appProperties
+      description: Private properties (visible only to the requesting app)
+      type: object
+      in: body
+      required: false
+    - name: fields
+      description: Fields to include in response
+      type: string
+      in: query
+      required: false
+    - name: ignoreDefaultVisibility
+      description: Whether to ignore the domain's default visibility settings
+      type: boolean
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include
+      type: string
+      in: query
+      required: false
+    - name: keepRevisionForever
+      description: Whether to keep the new head revision forever
+      type: boolean
+      in: query
+      required: false
+    - name: ocrLanguage
+      description: OCR language for text extraction (ISO 639-1 code)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: useContentAsIndexableText
+      description: Whether to use the uploaded content as indexable text
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: create_file
+      description: Create file via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: name
+              value: $.inputs.name
+              in: body
+            - name: mimeType
+              value: $.inputs.mimeType
+              in: body
+              condition: '{{present(inputs.mimeType)}}'
+            - name: parents
+              value: $.inputs.parents
+              in: body
+              condition: '{{present(inputs.parents)}}'
+            - name: description
+              value: $.inputs.description
+              in: body
+              condition: '{{present(inputs.description)}}'
+            - name: properties
+              value: $.inputs.properties
+              in: body
+              condition: '{{present(inputs.properties)}}'
+            - name: appProperties
+              value: $.inputs.appProperties
+              in: body
+              condition: '{{present(inputs.appProperties)}}'
+            - name: uploadType
+              value: '{{inputs.uploadType}}'
+              in: query
+              condition: '{{present(inputs.uploadType)}}'
+            - name: fields
+              value: '{{inputs.fields}}'
+              in: query
+              condition: '{{present(inputs.fields)}}'
+            - name: ignoreDefaultVisibility
+              value: '{{inputs.ignoreDefaultVisibility}}'
+              in: query
+              condition: '{{present(inputs.ignoreDefaultVisibility)}}'
+            - name: includeLabels
+              value: '{{inputs.includeLabels}}'
+              in: query
+              condition: '{{present(inputs.includeLabels)}}'
+            - name: includePermissionsForView
+              value: '{{inputs.includePermissionsForView}}'
+              in: query
+              condition: '{{present(inputs.includePermissionsForView)}}'
+            - name: keepRevisionForever
+              value: '{{inputs.keepRevisionForever}}'
+              in: query
+              condition: '{{present(inputs.keepRevisionForever)}}'
+            - name: ocrLanguage
+              value: '{{inputs.ocrLanguage}}'
+              in: query
+              condition: '{{present(inputs.ocrLanguage)}}'
+            - name: supportsAllDrives
+              value: '{{inputs.supportsAllDrives}}'
+              in: query
+              condition: '{{present(inputs.supportsAllDrives)}}'
+            - name: useContentAsIndexableText
+              value: '{{inputs.useContentAsIndexableText}}'
+              in: query
+              condition: '{{present(inputs.useContentAsIndexableText)}}'
+  result:
+    data: $.steps.create_file.output.data
+
+# TODO: Waiting for supported feature in ENG-7176
+# - actionId: upload_file
+#   categories:
+#     - documents
+#   actionType: create
+#   label: Upload File
+#   description: |
+#     Uploads a file with content to Google Drive using multipart upload.
+#     This creates a new file with both metadata and content in a single request.
+    
+#     For updating existing file content, use update_file_content instead.
+    
+#     Use cases:
+#     - Upload documents, images, videos, etc.
+#     - Create files with content and metadata
+#     - Batch upload multiple files
+#   entrypointUrl: /upload/drive/v3/files
+#   entrypointHttpMethod: post
+#   inputs:
+#     - name: name
+#       description: Name of the file
+#       type: string
+#       in: body
+#       required: true
+#     - name: content
+#       description: File content (base64 encoded for binary files, or raw text)
+#       type: string
+#       in: body
+#       required: true
+#     - name: mimeType
+#       description: MIME type of the file (e.g., 'image/jpeg', 'application/pdf', 'text/plain')
+#       type: string
+#       in: body
+#       required: false
+#     - name: parents
+#       description: Parent folder IDs
+#       type: string
+#       array: true
+#       in: body
+#       required: false
+#     - name: description
+#       description: Description of the file
+#       type: string
+#       in: body
+#       required: false
+#     - name: properties
+#       description: Custom properties (visible to all apps)
+#       type: object
+#       in: body
+#       required: false
+#     - name: appProperties
+#       description: Private properties (visible only to the requesting app)
+#       type: object
+#       in: body
+#       required: false
+#     - name: uploadType
+#       description: The type of upload request (media, multipart, or resumable)
+#       type: string
+#       in: query
+#       required: false
+#     - name: fields
+#       description: Fields to include in response
+#       type: string
+#       in: query
+#       required: false
+#     - name: ignoreDefaultVisibility
+#       description: Whether to ignore the domain's default visibility settings
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: includeLabels
+#       description: Comma-separated list of label IDs to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: includePermissionsForView
+#       description: Specifies which additional view's permissions to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: keepRevisionForever
+#       description: Whether to keep the new head revision forever
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: ocrLanguage
+#       description: OCR language for text extraction (ISO 639-1 code)
+#       type: string
+#       in: query
+#       required: false
+#     - name: supportsAllDrives
+#       description: Support files in shared drives
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: useContentAsIndexableText
+#       description: Whether to use the uploaded content as indexable text
+#       type: boolean
+#       in: query
+#       required: false
+#   steps:
+#     - stepId: upload_file
+#       description: Upload file with content to Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /upload/drive/v3/files
+#           method: post
+#           args:
+#             - name: uploadType
+#               value: multipart
+#               in: query
+#             - name: Content-Type
+#               value: multipart/related
+#               in: headers
+#             - name: metadata
+#               value: |
+#                 {
+#                   "name": "{{inputs.name}}"
+#                   {{#if inputs.mimeType}}, "mimeType": "{{inputs.mimeType}}"{{/if}}
+#                   {{#if inputs.parents}}, "parents": {{inputs.parents}}{{/if}}
+#                   {{#if inputs.description}}, "description": "{{inputs.description}}"{{/if}}
+#                   {{#if inputs.properties}}, "properties": {{inputs.properties}}{{/if}}
+#                   {{#if inputs.appProperties}}, "appProperties": {{inputs.appProperties}}{{/if}}
+#                 }
+#               in: body
+#             - name: content
+#               value: $.inputs.content
+#               in: body
+#             - name: fields
+#               value: '{{inputs.fields}}'
+#               in: query
+#               condition: '{{present(inputs.fields)}}'
+#             - name: ignoreDefaultVisibility
+#               value: '{{inputs.ignoreDefaultVisibility}}'
+#               in: query
+#               condition: '{{present(inputs.ignoreDefaultVisibility)}}'
+#             - name: includeLabels
+#               value: '{{inputs.includeLabels}}'
+#               in: query
+#               condition: '{{present(inputs.includeLabels)}}'
+#             - name: includePermissionsForView
+#               value: '{{inputs.includePermissionsForView}}'
+#               in: query
+#               condition: '{{present(inputs.includePermissionsForView)}}'
+#             - name: keepRevisionForever
+#               value: '{{inputs.keepRevisionForever}}'
+#               in: query
+#               condition: '{{present(inputs.keepRevisionForever)}}'
+#             - name: ocrLanguage
+#               value: '{{inputs.ocrLanguage}}'
+#               in: query
+#               condition: '{{present(inputs.ocrLanguage)}}'
+#             - name: supportsAllDrives
+#               value: '{{inputs.supportsAllDrives}}'
+#               in: query
+#               condition: '{{present(inputs.supportsAllDrives)}}'
+#             - name: useContentAsIndexableText
+#               value: '{{inputs.useContentAsIndexableText}}'
+#               in: query
+#               condition: '{{present(inputs.useContentAsIndexableText)}}'
+#   result:
+#     data: $.steps.upload_file.output.data
+
+- actionId: delete_file
+  categories:
+    - documents
+  actionType: delete
+  label: Delete File
+  description: Permanently deletes a file owned by the user without moving it to the trash. If the file belongs to a shared drive, the user must be an organizer on the parent folder.
+  entrypointUrl: /files/{fileId}
+  entrypointHttpMethod: delete
+  inputs:
+    - name: fileId
+      description: The ID of the file to delete
+      type: string
+      in: path
+      required: true
+    - name: supportsAllDrives
+      description: Support files in shared drives
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: delete_file
+      description: Delete file via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}
+          method: delete
+          args:
+            - name: supportsAllDrives
+              value: '{{inputs.supportsAllDrives}}'
+              in: query
+              condition: '{{present(inputs.supportsAllDrives)}}'
+  result:
+    data: $.steps.delete_file.output.data
+
+# TODO: Waiting for supported feature in ENG-7175
+# - actionId: download_file
+#   categories:
+#     - documents
+#   actionType: get
+#   label: Download File
+#   description: Downloads the content of a file. Use the alt=media query parameter to download file content.
+#   entrypointUrl: /files/{fileId}
+#   entrypointHttpMethod: get
+#   inputs:
+#     - name: fileId
+#       description: The ID of the file to download
+#       type: string
+#       in: path
+#       required: true
+#     - name: acknowledgeAbuse
+#       description: Whether to acknowledge the risk of downloading known malware or other abusive files
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: includeLabels
+#       description: Comma-separated list of label IDs to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: includePermissionsForView
+#       description: Specifies which additional view's permissions to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: supportsAllDrives
+#       description: Support files in shared drives
+#       type: boolean
+#       in: query
+#       required: false
+#   steps:
+#     - stepId: download_file
+#       description: Download file content via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /files/${inputs.fileId}
+#           method: get
+#           args:
+#             - name: alt
+#               value: media
+#               in: query
+#             - name: acknowledgeAbuse
+#               value: '{{inputs.acknowledgeAbuse}}'
+#               in: query
+#               condition: '{{present(inputs.acknowledgeAbuse)}}'
+#             - name: includeLabels
+#               value: '{{inputs.includeLabels}}'
+#               in: query
+#               condition: '{{present(inputs.includeLabels)}}'
+#             - name: includePermissionsForView
+#               value: '{{inputs.includePermissionsForView}}'
+#               in: query
+#               condition: '{{present(inputs.includePermissionsForView)}}'
+#             - name: supportsAllDrives
+#               value: '{{inputs.supportsAllDrives}}'
+#               in: query
+#               condition: '{{present(inputs.supportsAllDrives)}}'
+#   result:
+#     data: $.steps.download_file.output.data
+
+- actionId: empty_trash
+  categories:
+    - documents
+  actionType: delete
+  label: Empty Trash
+  description: Permanently deletes all of the user's trashed files
+  entrypointUrl: /files/trash
+  entrypointHttpMethod: delete
+  inputs: []
+  steps:
+    - stepId: empty_trash
+      description: Empty trash via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/trash
+          method: delete
+  result:
+    data: $.steps.empty_trash.output.data
+
+# TODO: Waiting for supported feature in ENG-7175
+# - actionId: export_file
+#   categories:
+#     - documents
+#   actionType: get
+#   label: Export File
+#   description: |
+#     Exports a Google Workspace document to the requested MIME type and returns exported byte content.
+
+#     Supported export formats:
+#     - Google Docs: application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, text/html, text/plain, etc.
+#     - Google Sheets: application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, etc.
+#     - Google Slides: application/pdf, application/vnd.openxmlformats-officedocument.presentationml.presentation, text/plain, etc.
+#   entrypointUrl: /files/{fileId}/export
+#   entrypointHttpMethod: get
+#   inputs:
+#     - name: fileId
+#       description: The ID of the file to export
+#       type: string
+#       in: path
+#       required: true
+#     - name: mimeType
+#       description: The MIME type of the format requested for this export
+#       type: string
+#       in: query
+#       required: true
+#   steps:
+#     - stepId: export_file
+#       description: Export file via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /files/${inputs.fileId}/export
+#           method: get
+#           args:
+#             - name: mimeType
+#               value: '{{inputs.mimeType}}'
+#               in: query
+#   result:
+#     data: $.steps.export_file.output.data
+
+- actionId: generate_ids
+  categories:
+    - documents
+  actionType: get
+  label: Generate IDs
+  description: Generates a set of file IDs which can be provided in create or copy requests
+  entrypointUrl: /files/generateIds
+  entrypointHttpMethod: get
+  inputs:
+    - name: count
+      description: The number of IDs to return (max 1000, default 10)
+      type: number
+      in: query
+      required: false
+    - name: space
+      description: The space in which the IDs can be used (drive or appDataFolder, default drive)
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: generate_ids
+      description: Generate file IDs via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/generateIds
+          method: get
+          args:
+            - name: count
+              value: '{{inputs.count}}'
+              in: query
+              condition: '{{present(inputs.count)}}'
+            - name: space
+              value: '{{inputs.space}}'
+              in: query
+              condition: '{{present(inputs.space)}}'
+  result:
+    data: $.steps.generate_ids.output.data
+
+# TODO: Not tested, Admin required to create labels
+# - actionId: list_labels
+#   categories:
+#     - documents
+#   actionType: list
+#   label: List Labels
+#   description: Lists the labels on a file
+#   entrypointUrl: /files/{fileId}/listLabels
+#   entrypointHttpMethod: get
+#   inputs:
+#     - name: fileId
+#       description: The ID of the file
+#       type: string
+#       in: path
+#       required: true
+#     - name: maxResults
+#       description: Maximum number of labels to return (max 100, default 100)
+#       type: number
+#       in: query
+#       required: false
+#   steps:
+#     - stepId: list_labels
+#       description: List file labels via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /files/${inputs.fileId}/listLabels
+#           method: get
+#           args:
+#             - name: maxResults
+#               value: '{{inputs.maxResults}}'
+#               in: query
+#               condition: '{{present(inputs.maxResults)}}'
+#   result:
+#     data: $.steps.list_labels.output.data
+
+# - actionId: modify_labels
+#   categories:
+#     - documents
+#   actionType: update
+#   label: Modify Labels
+#   description: Modifies the set of labels applied to a file. Returns a list of the labels that were added or modified.
+#   entrypointUrl: /files/{fileId}/modifyLabels
+#   entrypointHttpMethod: post
+#   inputs:
+#     - name: fileId
+#       description: The ID of the file
+#       type: string
+#       in: path
+#       required: true
+#     - name: labelModifications
+#       description: List of label modifications to apply
+#       type: object
+#       array: true
+#       properties:
+#         - name: labelId
+#           description: The ID of the label to modify
+#           type: string
+#           required: false
+#         - name: fieldModifications
+#           description: List of field modifications
+#           type: object
+#           array: true
+#           required: false
+#         - name: removeLabel
+#           description: Whether to remove the label
+#           type: boolean
+#           required: false
+#       in: body
+#       required: true
+#   steps:
+#     - stepId: modify_labels
+#       description: Modify file labels via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /files/${inputs.fileId}/modifyLabels
+#           method: post
+#           args:
+#             - name: Content-Type
+#               value: application/json
+#               in: headers
+#             - name: labelModifications
+#               value: $.inputs.labelModifications
+#               in: body
+#   result:
+#     data: $.steps.modify_labels.output.data
+
+- actionId: update_file
+  categories:
+    - documents
+  actionType: update
+  label: Update File
+  description: |
+    Updates a file's metadata using patch semantics.
+    This action updates metadata only (name, description, properties, etc.).
+    To update file content, use upload_file_content action after creating the file.
+    
+    Supports:
+    - Updating name, description, starred, trashed status
+    - Moving files between folders (addParents/removeParents)
+    - Updating custom properties
+    - Managing sharing permissions
+  entrypointUrl: /files/{fileId}
+  entrypointHttpMethod: patch
+  inputs:
+    - name: fileId
+      description: The ID of the file to update
+      type: string
+      in: path
+      required: true
+    - name: name
+      description: Name of the file
+      type: string
+      in: body
+      required: false
+    - name: description
+      description: Description of the file
+      type: string
+      in: body
+      required: false
+    - name: mimeType
+      description: MIME type of the file
+      type: string
+      in: body
+      required: false
+    - name: starred
+      description: Whether the file is starred
+      type: boolean
+      in: body
+      required: false
+    - name: trashed
+      description: Whether the file is in trash
+      type: boolean
+      in: body
+      required: false
+    - name: parents
+      description: Parent folder IDs (replaces all existing parents)
+      type: string
+      array: true
+      in: body
+      required: false
+    - name: properties
+      description: Custom properties (visible to all apps)
+      type: object
+      in: body
+      required: false
+    - name: appProperties
+      description: Private properties (visible only to the requesting app)
+      type: object
+      in: body
+      required: false
+    - name: contentHints
+      description: Additional metadata about file content
+      type: object
+      in: body
+      required: false
+    - name: copyRequiresWriterPermission
+      description: Whether copying requires writer permission
+      type: boolean
+      in: body
+      required: false
+    - name: writersCanShare
+      description: Whether writers can share the file
+      type: boolean
+      in: body
+      required: false
+    - name: addParents
+      description: Comma-separated list of parent IDs to add
+      type: string
+      in: query
+      required: false
+    - name: removeParents
+      description: Comma-separated list of parent IDs to remove
+      type: string
+      in: query
+      required: false
+    - name: fields
+      description: Fields to include in response
+      type: string
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include
+      type: string
+      in: query
+      required: false
+    - name: keepRevisionForever
+      description: Whether to keep the new head revision forever
+      type: boolean
+      in: query
+      required: false
+    - name: ocrLanguage
+      description: OCR language for text extraction (ISO 639-1 code)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Support files in shared drives
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: update_file
+      description: Update file via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}
+          method: patch
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: name
+              value: $.inputs.name
+              in: body
+              condition: '{{present(inputs.name)}}'
+            - name: description
+              value: $.inputs.description
+              in: body
+              condition: '{{present(inputs.description)}}'
+            - name: mimeType
+              value: $.inputs.mimeType
+              in: body
+              condition: '{{present(inputs.mimeType)}}'
+            - name: starred
+              value: $.inputs.starred
+              in: body
+              condition: '{{present(inputs.starred)}}'
+            - name: trashed
+              value: $.inputs.trashed
+              in: body
+              condition: '{{present(inputs.trashed)}}'
+            - name: parents
+              value: $.inputs.parents
+              in: body
+              condition: '{{present(inputs.parents)}}'
+            - name: properties
+              value: $.inputs.properties
+              in: body
+              condition: '{{present(inputs.properties)}}'
+            - name: appProperties
+              value: $.inputs.appProperties
+              in: body
+              condition: '{{present(inputs.appProperties)}}'
+            - name: contentHints
+              value: $.inputs.contentHints
+              in: body
+              condition: '{{present(inputs.contentHints)}}'
+            - name: copyRequiresWriterPermission
+              value: $.inputs.copyRequiresWriterPermission
+              in: body
+              condition: '{{present(inputs.copyRequiresWriterPermission)}}'
+            - name: writersCanShare
+              value: $.inputs.writersCanShare
+              in: body
+              condition: '{{present(inputs.writersCanShare)}}'
+            - name: addParents
+              value: '{{inputs.addParents}}'
+              in: query
+              condition: '{{present(inputs.addParents)}}'
+            - name: removeParents
+              value: '{{inputs.removeParents}}'
+              in: query
+              condition: '{{present(inputs.removeParents)}}'
+            - name: fields
+              value: '{{inputs.fields}}'
+              in: query
+              condition: '{{present(inputs.fields)}}'
+            - name: includeLabels
+              value: '{{inputs.includeLabels}}'
+              in: query
+              condition: '{{present(inputs.includeLabels)}}'
+            - name: includePermissionsForView
+              value: '{{inputs.includePermissionsForView}}'
+              in: query
+              condition: '{{present(inputs.includePermissionsForView)}}'
+            - name: keepRevisionForever
+              value: '{{inputs.keepRevisionForever}}'
+              in: query
+              condition: '{{present(inputs.keepRevisionForever)}}'
+            - name: ocrLanguage
+              value: '{{inputs.ocrLanguage}}'
+              in: query
+              condition: '{{present(inputs.ocrLanguage)}}'
+            - name: supportsAllDrives
+              value: '{{inputs.supportsAllDrives}}'
+              in: query
+              condition: '{{present(inputs.supportsAllDrives)}}'
+  result:
+    data: $.steps.update_file.output.data
+
+# TODO: Waiting for supported feature in ENG-7176
+# - actionId: update_file_content
+#   categories:
+#     - documents
+#   actionType: update
+#   label: Update File Content
+#   description: |
+#     Updates an existing file's content using multipart upload.
+#     This replaces the file content while preserving the file ID and metadata.
+    
+#     Use cases:
+#     - Update document content
+#     - Replace file with new version
+#     - Modify existing file data
+#   entrypointUrl: /upload/drive/v3/files/{fileId}
+#   entrypointHttpMethod: patch
+#   inputs:
+#     - name: fileId
+#       description: The ID of the file to update
+#       type: string
+#       in: path
+#       required: true
+#     - name: content
+#       description: New file content (base64 encoded for binary files, or raw text)
+#       type: string
+#       in: body
+#       required: true
+#     - name: name
+#       description: Update file name (optional)
+#       type: string
+#       in: body
+#       required: false
+#     - name: mimeType
+#       description: Update MIME type (optional)
+#       type: string
+#       in: body
+#       required: false
+#     - name: description
+#       description: Update description (optional)
+#       type: string
+#       in: body
+#       required: false
+#     - name: uploadType
+#       description: The type of upload request (media, multipart, or resumable)
+#       type: string
+#       in: query
+#       required: false
+#     - name: fields
+#       description: Fields to include in response
+#       type: string
+#       in: query
+#       required: false
+#     - name: addParents
+#       description: Comma-separated list of parent IDs to add
+#       type: string
+#       in: query
+#       required: false
+#     - name: removeParents
+#       description: Comma-separated list of parent IDs to remove
+#       type: string
+#       in: query
+#       required: false
+#     - name: includeLabels
+#       description: Comma-separated list of label IDs to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: includePermissionsForView
+#       description: Specifies which additional view's permissions to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: keepRevisionForever
+#       description: Whether to keep the new head revision forever
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: ocrLanguage
+#       description: OCR language for text extraction (ISO 639-1 code)
+#       type: string
+#       in: query
+#       required: false
+#     - name: supportsAllDrives
+#       description: Support files in shared drives
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: useContentAsIndexableText
+#       description: Whether to use the uploaded content as indexable text
+#       type: boolean
+#       in: query
+#       required: false
+#   steps:
+#     - stepId: update_file_content
+#       description: Update file content via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /upload/drive/v3/files/${inputs.fileId}
+#           method: patch
+#           args:
+#             - name: uploadType
+#               value: multipart
+#               in: query
+#             - name: Content-Type
+#               value: multipart/related
+#               in: headers
+#             - name: metadata
+#               value: |
+#                 {
+#                   {{#if inputs.name}}"name": "{{inputs.name}}"{{/if}}
+#                   {{#if inputs.mimeType}}{{#if inputs.name}},{{/if}}"mimeType": "{{inputs.mimeType}}"{{/if}}
+#                   {{#if inputs.description}}{{#if (or inputs.name inputs.mimeType)}},{{/if}}"description": "{{inputs.description}}"{{/if}}
+#                 }
+#               in: body
+#               condition: '{{present(inputs.name) || present(inputs.mimeType) || present(inputs.description)}}'
+#             - name: content
+#               value: $.inputs.content
+#               in: body
+#             - name: fields
+#               value: '{{inputs.fields}}'
+#               in: query
+#               condition: '{{present(inputs.fields)}}'
+#             - name: addParents
+#               value: '{{inputs.addParents}}'
+#               in: query
+#               condition: '{{present(inputs.addParents)}}'
+#             - name: removeParents
+#               value: '{{inputs.removeParents}}'
+#               in: query
+#               condition: '{{present(inputs.removeParents)}}'
+#             - name: includeLabels
+#               value: '{{inputs.includeLabels}}'
+#               in: query
+#               condition: '{{present(inputs.includeLabels)}}'
+#             - name: includePermissionsForView
+#               value: '{{inputs.includePermissionsForView}}'
+#               in: query
+#               condition: '{{present(inputs.includePermissionsForView)}}'
+#             - name: keepRevisionForever
+#               value: '{{inputs.keepRevisionForever}}'
+#               in: query
+#               condition: '{{present(inputs.keepRevisionForever)}}'
+#             - name: ocrLanguage
+#               value: '{{inputs.ocrLanguage}}'
+#               in: query
+#               condition: '{{present(inputs.ocrLanguage)}}'
+#             - name: supportsAllDrives
+#               value: '{{inputs.supportsAllDrives}}'
+#               in: query
+#               condition: '{{present(inputs.supportsAllDrives)}}'
+#             - name: useContentAsIndexableText
+#               value: '{{inputs.useContentAsIndexableText}}'
+#               in: query
+#               condition: '{{present(inputs.useContentAsIndexableText)}}'
+#   result:
+#     data: $.steps.update_file_content.output.data

@@ -1,0 +1,114 @@
+# Not tested
+# - actionId: stop_channel
+#   categories:
+#     - documents
+#   actionType: delete
+#   label: Stop Channel
+#   description: |
+#     Stop watching resources through a channel.
+#     Use this to clean up webhook subscriptions and prevent unwanted notifications.
+#   entrypointUrl: /channels/stop
+#   entrypointHttpMethod: post
+#   resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/channels/stop
+#   inputs:
+#     - name: id
+#       description: The channel ID to stop
+#       type: string
+#       in: body
+#       required: true
+#     - name: resourceId
+#       description: An opaque ID that identifies the resource being watched
+#       type: string
+#       in: body
+#       required: true
+#   steps:
+#     - stepId: stop_channel
+#       description: Stop channel via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /channels/stop
+#           method: post
+#           args:
+#             - name: Content-Type
+#               value: application/json
+#               in: headers
+#             - name: id
+#               value: $.inputs.id
+#               in: body
+#             - name: resourceId
+#               value: $.inputs.resourceId
+#               in: body
+#   result:
+#     data: $.steps.stop_channel.output.data
+
+- actionId: get_about
+  categories:
+    - documents
+  actionType: get
+  label: Get About
+  description: |
+    Gets information about the user, the user's Drive, and system capabilities.
+
+    Returns:
+    - Storage quota information (limit, usage, usage in drive, usage in trash)
+    - User information (display name, email, permissions)
+    - Supported import/export formats
+    - Max upload file size
+    - Drive folder color palette
+    - Team drive themes
+    - App installed status
+  entrypointUrl: /about
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/about/get
+  inputs:
+    - name: fields
+      description: |
+        Specific fields to include in response. Use '*' for all fields.
+        Common fields: user, storageQuota, maxUploadSize, importFormats, exportFormats
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_about
+      description: Get about information from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /about
+          method: get
+          args:
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+              condition: "{{present(inputs.fields)}}"
+  result:
+    data: $.steps.get_about.output.data
+# Not tested
+# - actionId: get_action
+#   categories:
+#     - documents
+#   actionType: get
+#   label: Get Action
+#   description: |
+#     Gets the latest state of a long-running action.
+#     Useful for monitoring async actions like bulk imports or large migrations.
+#   entrypointUrl: /actions/{name}
+#   entrypointHttpMethod: get
+#   resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/actions/get
+#   inputs:
+#     - name: name
+#       description: The name of the action resource
+#       type: string
+#       in: path
+#       required: true
+#   steps:
+#     - stepId: get_action
+#       description: Get action status from Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /actions/${inputs.name}
+#           method: get
+#   result:
+#     data: $.steps.get_action.output.data

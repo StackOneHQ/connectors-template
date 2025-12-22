@@ -1,0 +1,199 @@
+- actionId: create_meeting
+  categories:
+    - crm
+  actionType: create
+  entrypointUrl: /meetings
+  entrypointHttpMethod: post
+  schema: custom
+  label: Create Meeting
+  description: Create a new meeting in Gong
+  inputs:
+    - name: startTime
+      in: body
+      type: datetime_string
+      required: true
+      description: Meeting start time (ISO 8601 format)
+    - name: endTime
+      in: body
+      type: datetime_string
+      required: true
+      description: Meeting end time (ISO 8601 format)
+    - name: organizerEmail
+      in: body
+      type: string
+      required: true
+      description: Email of the meeting organizer
+    - name: invitees
+      in: body
+      type: object
+      array: true
+      required: false
+      description: List of invitees' email addresses
+      properties:
+        - name: email
+          type: string
+          required: false
+          description: Email address of the invitee
+  steps:
+    - stepId: create_meeting_record
+      description: Create new meeting
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/meetings'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: startTime
+              value: $.inputs.startTime
+              in: body
+            - name: endTime
+              value: $.inputs.endTime
+              in: body
+            - name: organizerEmail
+              value: $.inputs.organizerEmail
+              in: body
+            - name: invitees
+              value: $.inputs.invitees
+              in: body
+              condition: '{{present($.inputs.invitees)}}'
+  result:
+    data: $.steps.create_meeting_record.output.data
+- actionId: update_meeting
+  categories:
+    - crm
+  actionType: update
+  entrypointUrl: /meetings/:meetingId
+  entrypointHttpMethod: put
+  schema: custom
+  label: Update Meeting
+  description: Update an existing meeting
+  inputs:
+    - name: meetingId
+      in: path
+      type: string
+      required: true
+      description: Meeting ID
+    - name: startTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Meeting start time (ISO 8601 format)
+    - name: endTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Meeting end time (ISO 8601 format)
+    - name: organizerEmail
+      in: body
+      type: string
+      required: false
+      description: Email of the meeting organizer
+    - name: invitees
+      in: body
+      type: string
+      array: true
+      required: false
+      description: List of invitees' email addresses
+  steps:
+    - stepId: update_meeting_record
+      description: Update meeting details
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/meetings/${inputs.meetingId}'
+          method: put
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: startTime
+              value: $.inputs.startTime
+              in: body
+              condition: '{{present($.inputs.startTime)}}'
+            - name: endTime
+              value: $.inputs.endTime
+              in: body
+              condition: '{{present($.inputs.endTime)}}'
+            - name: organizerEmail
+              value: $.inputs.organizerEmail
+              in: body
+              condition: '{{present($.inputs.organizerEmail)}}'
+            - name: invitees
+              value: $.inputs.invitees
+              in: body
+              condition: '{{present($.inputs.invitees)}}'
+  result:
+    data: $.steps.update_meeting_record.output.data
+- actionId: delete_meeting
+  categories:
+    - crm
+  actionType: delete
+  entrypointUrl: /meetings/:meetingId
+  entrypointHttpMethod: delete
+  schema: custom
+  label: Delete Meeting
+  description: Delete a meeting from Gong
+  inputs:
+    - name: meetingId
+      in: path
+      type: string
+      required: true
+      description: Meeting ID
+    - name: organizerEmail
+      in: body
+      type: string
+      required: true
+      description: Email of the meeting organizer
+  steps:
+    - stepId: delete_meeting_record
+      description: Delete the meeting
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/meetings/${inputs.meetingId}'
+          method: delete
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: organizerEmail
+              value: $.inputs.organizerEmail
+              in: body
+  result:
+    data: $.steps.delete_meeting_record.output.data
+- actionId: validate_meeting_integration
+  categories:
+    - crm
+  actionType: create
+  entrypointUrl: /meetings/integration/status
+  entrypointHttpMethod: post
+  schema: custom
+  label: Validate Meeting Integration
+  description: Validate the integration status of a meeting
+  inputs:
+    - name: emails
+      in: body
+      type: string
+      array: true
+      required: true
+      description: Email addresses to validate integration status for
+  steps:
+    - stepId: validate_integration
+      description: Validate meeting integration status
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/meetings/integration/status'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: emails
+              value: $.inputs.emails
+              in: body
+  result:
+    data: $.steps.validate_integration.output.data

@@ -1,0 +1,389 @@
+# Step Actions Actions - Approve, deny, send back, and complete workflow steps
+- actionId: approve_event_step
+  categories:
+    - hris
+  actionType: create
+  label: Approve Event Step
+  description: Approves a business process event step. The user must have permission to act on this step. Secured by Core Navigation and Public Business Processes permissions.
+  inputs:
+    - name: event_step_id
+      description: Required. The Workday ID (WID) of the event step to approve. Get this from list_event_steps or get_event_step actions. User must be assigned as approver for this step.
+      type: string
+      in: path
+      required: true
+    - name: comment
+      description: Optional comment for the approval. Provide context or explanation for the approval decision. Required if tenant or business process is configured to require comments.
+      type: string
+      in: body
+      required: false
+    - name: step_action_id
+      description: Optional action ID when multiple approval actions are available for the step. Usually not needed for standard approvals. Check step details to see if multiple actions exist.
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: approve_step
+      description: Approve business process event step
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps/${inputs.event_step_id}/approve'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: comment
+              value: $.inputs.comment
+              in: body
+              condition: '{{present($.inputs.comment)}}'
+            - name: stepAction
+              value:
+                id: $.inputs.step_action_id
+              in: body
+              condition: '{{present($.inputs.step_action_id)}}'
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.approve_step.output.data
+
+- actionId: deny_event_step
+  categories:
+    - hris
+  actionType: create
+  label: Deny Event Step
+  description: Denies a business process event step. Requires a comment explaining the denial reason. User must have permission to act on this step.
+  inputs:
+    - name: event_step_id
+      description: Required. The Workday ID (WID) of the event step to deny. Get this from list_event_steps or get_event_step actions. User must be assigned as approver for this step.
+      type: string
+      in: path
+      required: true
+    - name: comment
+      description: Required. Comment explaining the denial reason. Must provide clear justification for denial decision as this is mandatory for deny actions.
+      type: string
+      in: body
+      required: true
+    - name: step_action_id
+      description: Optional action ID for denial when multiple denial actions are available. Usually not needed. Check step details if multiple deny actions exist for the step.
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: deny_step
+      description: Deny business process event step
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps/${inputs.event_step_id}/deny'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: comment
+              value: $.inputs.comment
+              in: body
+            - name: stepAction
+              value:
+                id: $.inputs.step_action_id
+              in: body
+              condition: '{{present($.inputs.step_action_id)}}'
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.deny_step.output.data
+
+- actionId: send_back_event_step
+  categories:
+    - hris
+  actionType: create
+  label: Send Back Event Step
+  description: Sends back a business process event step to a previous step in the workflow. Use get_send_back_values to discover valid target steps before calling this action.
+  inputs:
+    - name: event_step_id
+      description: Required. The Workday ID (WID) of the event step to send back. Get this from list_event_steps action. User must have permission to act on this step.
+      type: string
+      in: path
+      required: true
+    - name: to_step_id
+      description: Required. The Workday ID (WID) of the target step to send back to. Use get_send_back_values action first to get list of valid destination steps this step can be sent back to.
+      type: string
+      in: body
+      required: true
+    - name: reason
+      description: Required. Explanation of why the step is being sent back. Must provide clear reason for returning to previous step, such as missing information or corrections needed.
+      type: string
+      in: body
+      required: true
+  steps:
+    - stepId: send_back_step
+      description: Send back business process event step
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps/${inputs.event_step_id}/sendBack'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: to
+              value:
+                id: $.inputs.to_step_id
+              in: body
+            - name: reason
+              value: $.inputs.reason
+              in: body
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.send_back_step.output.data
+
+- actionId: complete_todo_step
+  categories:
+    - hris
+  actionType: create
+  label: Complete To-Do Step
+  description: Completes a To-Do step in a business process. Can submit to complete or save for later. User must be assigned to the to-do task.
+  inputs:
+    - name: event_step_id
+      description: Required. The Workday ID (WID) of the To-Do event step to complete. Get this from list_event_steps action. User must be assigned this to-do task.
+      type: string
+      in: path
+      required: true
+    - name: step_action_id
+      description: Required. Action ID for the completion type - Use "133d5c88baa64136aab041c1d2e9ed53" to Submit (complete the step), or "d9e41d34446c11de98360015c5e6daf6" to Save for Later (save progress without completing).
+      type: string
+      in: body
+      required: true
+    - name: comment
+      description: Optional comment about the to-do completion. Provide notes or context about the task completion. Required if tenant or business process is configured to require comments.
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: complete_todo
+      description: Complete To-Do step in business process
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps/${inputs.event_step_id}/toDo'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: stepAction
+              value:
+                id: $.inputs.step_action_id
+              in: body
+            - name: comment
+              value: $.inputs.comment
+              in: body
+              condition: '{{present($.inputs.comment)}}'
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.complete_todo.output.data
+
+- actionId: complete_questionnaire_step
+  categories:
+    - hris
+  actionType: create
+  label: Complete Questionnaire Step
+  description: Completes a questionnaire step in a business process. Supports Submit (with answers), Save for Later (partial progress), or Skip (no answers) actions. Currently supported for Student questionnaires (as of 2021R2).
+  inputs:
+    - name: event_step_id
+      description: Required. The Workday ID (WID) of the questionnaire event step to complete. Get this from list_event_steps action where stepType indicates a questionnaire step.
+      type: string
+      in: path
+      required: true
+    - name: step_action_id
+      description: Required. Action ID determining how to complete the questionnaire - Use "133d5c88baa64136aab041c1d2e9ed53" to Submit (complete with answers), "d9e41a8c446c11de98360015c5e6daf6" to Save for Later (partial progress), or "d9e4231a446c11de98360015c5e6daf6" to Skip (no answers required).
+      type: string
+      in: body
+      required: true
+    - name: questionnaire_response
+      description: Questionnaire response data containing answers to questions. Required when step_action_id is Submit or Save for Later. Omit when step_action_id is Skip. Must include questionnaire_target, questionnaire_target_context, and answers array.
+      type: object
+      in: body
+      required: false
+      properties:
+        - name: questionnaire_target
+          description: Optional. The subject of the questionnaire (e.g., candidate for admission, student). Include the Workday ID in nested 'id' field.
+          type: object
+          required: false
+          properties:
+            - name: id
+              type: string
+              description: The Workday ID (WID) of the questionnaire target person or object.
+              required: false
+        - name: questionnaire_target_context
+          description: Optional. The applicable questionnaire or application context (e.g., Spring 2023 Application). Include the Workday ID in nested 'id' field.
+          type: object
+          required: false
+          properties:
+            - name: id
+              type: string
+              description: The Workday ID (WID) of the questionnaire target context.
+              required: false
+        - name: answers
+          description: Optional array of answers to questionnaire questions. Each answer must reference a question_item by ID. Provide the appropriate answer field (text_answer, numeric_answer, date_answer, boolean_answer, multiple_choice_answers, or attachment) based on question type.
+          type: object
+          array: true
+          required: false
+          properties:
+            - name: question_item
+              description: Required. The question being answered. Must include the Workday ID of the question in nested 'id' field. Get question IDs from the questionnaire configuration.
+              type: object
+              required: true
+              properties:
+                - name: id
+                  type: string
+                  description: Required. The Workday ID (WID) of the question item from the questionnaire.
+                  required: true
+            - name: text_answer
+              description: Optional text answer for text-type questions. Use for short answer, long answer, or text-based questions. Mutually exclusive with other answer types.
+              type: string
+              required: false
+            - name: numeric_answer
+              description: Optional numeric answer for number-type questions. Use for questions expecting numeric values. Mutually exclusive with other answer types.
+              type: number
+              required: false
+            - name: date_answer
+              description: Optional date answer for date-type questions. Must use ISO 8601 date format (YYYY-MM-DD). Mutually exclusive with other answer types.
+              type: string
+              required: false
+            - name: boolean_answer
+              description: Optional boolean answer for yes/no or true/false questions. Use true or false. Mutually exclusive with other answer types.
+              type: boolean
+              required: false
+            - name: multiple_choice_answers
+              description: Optional array of multiple choice answer IDs for multiple-choice or multi-select questions. Provide Workday IDs of the selected choices. Use for questions with predefined answer options.
+              type: string
+              array: true
+              required: false
+            - name: attachment
+              description: Optional file attachment for questions that accept file uploads. Must include filename, content_type (MIME type), and base64-encoded file_content. Common MIME types include application/pdf, image/jpeg, image/png, application/msword, etc.
+              type: object
+              required: false
+              properties:
+                - name: filename
+                  type: string
+                  description: Required. The filename for the attachment including file extension (e.g., resume.pdf, photo.jpg).
+                  required: true
+                - name: content_type
+                  type: string
+                  description: Required. MIME type of the attachment (e.g., application/pdf, image/jpeg, application/vnd.openxmlformats-officedocument.wordprocessingml.document).
+                  required: true
+                - name: file_content
+                  type: string
+                  description: Required. Base64 encoded file content. Encode the binary file data to base64 string before including in request.
+                  required: true
+  steps:
+    - stepId: complete_questionnaire
+      description: Complete questionnaire step in business process
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps/${inputs.event_step_id}/questionnaire'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: stepAction
+              value:
+                id: $.inputs.step_action_id
+              in: body
+            - name: questionnaireResponse
+              value: $.inputs.questionnaire_response
+              in: body
+              condition: '{{present($.inputs.questionnaire_response)}}'
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.complete_questionnaire.output.data
+
+- actionId: get_send_back_values
+  categories:
+    - hris
+  actionType: list
+  schema: sendBackValues
+  label: Get Send Back Values
+  description: Retrieves the list of valid steps that an event step can be sent back to. Use this before calling send_back_event_step to discover available send-back destinations. Also known as prompt values for send back targets.
+  inputs:
+    - name: event_step_id
+      description: Optional. The Workday ID (WID) of the event step to get valid send-back destinations for. If provided, returns only steps this specific step can be sent back to. If omitted, returns general send-back target values.
+      type: string
+      in: query
+      required: false
+    - name: limit
+      description: Optional maximum number of results to return. Default is 1000, maximum allowed is 1000. Higher than other endpoints since this is a lookup action.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination if more than 1000 possible send-back targets exist.
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_send_back_prompt_values
+      description: Get send back prompt values from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/values/sendBack/to/'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: eventStep
+              value: $.inputs.event_step_id
+              in: query
+              condition: '{{present($.inputs.event_step_id)}}'
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_send_back_prompt_values.output.data

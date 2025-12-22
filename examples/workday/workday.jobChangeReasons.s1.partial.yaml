@@ -1,0 +1,70 @@
+- actionId: list_job_change_reasons
+  categories:
+    - hris
+  actionType: list
+  label: List Job Change Reasons
+  description: Retrieve all job change reasons from Workday Common API v1
+  inputs:
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_job_change_reasons
+      description: Get job change reasons collection from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/jobChangeReasons'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_job_change_reasons.output.data
+- actionId: get_job_change_reason
+  categories:
+    - hris
+  actionType: get
+  label: Get Job Change Reason
+  description: Retrieve a specific job change reason by ID from Workday Common API v1
+  inputs:
+    - name: id
+      description: The Workday ID of the job change reason
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_job_change_reason
+      description: Get job change reason instance from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/jobChangeReasons/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_job_change_reason.output.data

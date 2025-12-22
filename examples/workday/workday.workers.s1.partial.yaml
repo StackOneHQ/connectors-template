@@ -1,0 +1,813 @@
+- actionId: list_workers
+  categories:
+    - hris
+  actionType: list
+  schema: employees
+  label: List Workers
+  description: List all workers from Workday Staffing API v7
+  inputs:
+    # Pagination
+    - name: limit
+      description: The maximum number of objects in a single response. The default is 20. The maximum is 100.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection. The default is 0.
+      type: number
+      in: query
+      required: false
+    # Basic Search
+    - name: search
+      description: Searches workers by name or employee ID
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_workers
+      description: Get workers data from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            # Pagination
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+            # Basic Search - search by worker name or ID
+            - name: search
+              value: $.inputs.search
+              in: query
+              condition: '{{present($.inputs.search)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_workers.output.data
+    
+- actionId: get_worker
+  categories:
+    - hris
+  actionType: get
+  schema: employees
+  label: Get Worker
+  description: Get details of a specific worker from Workday Staffing API v7
+  inputs:
+    - name: id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_worker
+      description: Get worker details from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_worker.output.data
+
+- actionId: list_worker_skills
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Skills
+  description: Get all skill items for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: The maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_worker_skills
+      description: Get worker skill items from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/skillItems'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_worker_skills.output.data
+
+- actionId: create_worker_skill_items
+  categories:
+    - hris
+  actionType: create
+  label: Create Worker Skill Items
+  description: Create skill items for a worker using Workday Staffing API v7. This is a bulk action that can create multiple skill items at once.
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: skillItems
+      description: Array of skill items to create with skill name, skill item reference, and optional remote ID
+      type: object
+      array: true
+      properties:
+        - name: skillName
+          description: The skill name that Workday bases similar skill suggestions on
+          type: string
+          required: false
+        - name: skillItem
+          description: The skill item reference object containing the ID
+          type: object
+          properties:
+            - name: id
+              description: The Workday ID of the skill item (WID, numeric ID, or reference ID)
+              type: string
+              required: true
+          required: true
+        - name: remoteId
+          description: The remote skill ID of a skill
+          type: string
+          required: false
+        - name: id
+          description: Id of the instance
+          type: string
+          required: false
+      in: body
+      required: true
+  steps:
+    - stepId: create_skill_items
+      description: Create worker skill items in Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/skillItems'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: skillItems
+              value: $.inputs.skill_items
+              in: body
+  result:
+    data: $.steps.create_skill_items.output.data
+
+- actionId: initiate_job_change
+  categories:
+    - hris
+  actionType: create
+  label: Initiate Job Change (New Hire/Transfer)
+  description: Initiate a job change request for a worker which can handle new hires, job changes, or transfers using Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: body
+      required: true
+    - name: job_id
+      description: The Workday ID of the job/position
+      type: string
+      in: body
+      required: true
+    - name: reason_id
+      description: The reason for the job change
+      type: string
+      in: body
+      required: true
+    - name: effective_date
+      description: The effective date of the job change (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: true
+    - name: first_day_of_work
+      description: The first day of work (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: false
+    - name: location_id
+      description: The location ID for the new position
+      type: string
+      in: body
+      required: false
+    - name: supervisory_organization_id
+      description: The supervisory organization ID
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: initiate_job_change_request
+      description: Initiate a job change request in Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/jobChanges'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: date
+              value: $.inputs.effective_date
+              in: body
+            - name: worker
+              value:
+                id: $.inputs.worker_id
+              in: body
+            - name: job
+              value:
+                id: $.inputs.job_id
+              in: body
+            - name: reason
+              value:
+                id: $.inputs.reason_id
+              in: body
+            - name: firstDayOfWork
+              value: $.inputs.first_day_of_work
+              in: body
+              condition: '{{present($.inputs.first_day_of_work)}}'
+            - name: location
+              value:
+                id: $.inputs.location_id
+              in: body
+              condition: '{{present($.inputs.location_id)}}'
+            - name: supervisoryOrganization
+              value:
+                id: $.inputs.supervisory_organization_id
+              in: body
+              condition: '{{present($.inputs.supervisory_organization_id)}}'
+  result:
+    data: $.steps.initiate_job_change_request.output.data
+
+- actionId: list_worker_service_dates
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Service Dates
+  description: Retrieve all service dates (hire date, continuous service date, seniority date, etc.) for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: The maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_service_dates
+      description: Get worker service dates from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/serviceDates'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_service_dates.output.data
+
+- actionId: get_worker_service_date
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Service Date
+  description: Get a specific service date record for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: service_date_id
+      description: Service Date ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_service_date
+      description: Get specific service date from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/serviceDates/${inputs.service_date_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_service_date.output.data
+
+- actionId: list_worker_check_ins
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Check-Ins
+  description: Retrieve all performance check-ins for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: The maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_check_ins
+      description: Get worker check-ins from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/checkIns'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_check_ins.output.data
+
+- actionId: get_worker_check_in
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Check-In
+  description: Get a specific performance check-in record for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: check_in_id
+      description: Check-In ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_check_in
+      description: Get specific check-in from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/checkIns/${inputs.check_in_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_check_in.output.data
+
+- actionId: create_worker_check_in
+  categories:
+    - hris
+  actionType: create
+  label: Create Worker Check-In
+  description: Create a new performance check-in for a worker using Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: date
+      description: The date of the check-in (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: true
+    - name: notes
+      description: Notes or comments for the check-in
+      type: string
+      in: body
+      required: false
+    - name: check_in_type_id
+      description: The check-in type ID
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: create_check_in
+      description: Create check-in in Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/checkIns'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: date
+              value: $.inputs.date
+              in: body
+            - name: notes
+              value: $.inputs.notes
+              in: body
+              condition: '{{present($.inputs.notes)}}'
+            - name: checkInType
+              value:
+                id: $.inputs.check_in_type_id
+              in: body
+              condition: '{{present($.inputs.check_in_type_id)}}'
+  result:
+    data: $.steps.create_check_in.output.data
+
+- actionId: list_worker_check_in_topics
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Check-In Topics
+  description: Retrieve all check-in topics for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: The maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_check_in_topics
+      description: Get worker check-in topics from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/checkInTopics'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_check_in_topics.output.data
+
+- actionId: get_worker_check_in_topic
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Check-In Topic
+  description: Get a specific check-in topic for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: topic_id
+      description: Check-In Topic ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_check_in_topic
+      description: Get specific check-in topic from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/checkInTopics/${inputs.topic_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_check_in_topic.output.data
+
+- actionId: list_worker_explicit_skills
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Explicit Skills
+  description: Get all explicit skills for a worker from Workday Staffing API v7. Explicit skills are skills explicitly assigned to the worker.
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: The maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection
+      type: number
+      in: query
+      required: false
+    - name: skill
+      description: Filter by skill name
+      type: string
+      in: query
+      required: false
+    - name: skill_source_id
+      description: Filter by skill source ID
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_explicit_skills
+      description: Get worker explicit skills from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/explicitSkills'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+            - name: skill
+              value: $.inputs.skill
+              in: query
+              condition: '{{present($.inputs.skill)}}'
+            - name: skillSource
+              value: $.inputs.skill_source_id
+              in: query
+              condition: '{{present($.inputs.skill_source_id)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_explicit_skills.output.data
+
+- actionId: create_worker_explicit_skill
+  categories:
+    - hris
+  actionType: create
+  label: Create Worker Explicit Skill
+  description: Create an explicit skill for a worker using Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: skill_id
+      description: The Workday ID of the skill
+      type: string
+      in: body
+      required: true
+    - name: proficiency_level_id
+      description: The proficiency level ID for this skill
+      type: string
+      in: body
+      required: false
+    - name: skill_source_id
+      description: The skill source ID
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: create_explicit_skill
+      description: Create explicit skill in Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/explicitSkills'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: skill
+              value:
+                id: $.inputs.skill_id
+              in: body
+            - name: proficiencyLevel
+              value:
+                id: $.inputs.proficiency_level_id
+              in: body
+              condition: '{{present($.inputs.proficiency_level_id)}}'
+            - name: skillSource
+              value:
+                id: $.inputs.skill_source_id
+              in: body
+              condition: '{{present($.inputs.skill_source_id)}}'
+  result:
+    data: $.steps.create_explicit_skill.output.data
+
+- actionId: get_worker_explicit_skill
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Explicit Skill
+  description: Get a specific explicit skill record for a worker from Workday Staffing API v7
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: skill_id
+      description: Explicit Skill ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_explicit_skill
+      description: Get specific explicit skill from Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/explicitSkills/${inputs.skill_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_explicit_skill.output.data
+
+- actionId: initiate_organization_assignment_change
+  categories:
+    - hris
+  actionType: create
+  label: Initiate Organization Assignment Change
+  description: Initiate an organization assignment change request for a worker using Workday Staffing API v7. This allows changing the worker's organization assignments.
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: effective_date
+      description: The effective date of the change (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: true
+    - name: job_id
+      description: The Workday ID of the job/position
+      type: string
+      in: body
+      required: true
+    - name: reason_id
+      description: The reason for the organization assignment change
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: initiate_org_assignment_change
+      description: Initiate organization assignment change in Workday Staffing API v7
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/staffing/v7/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/organizationAssignmentChanges'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: date
+              value: $.inputs.effective_date
+              in: body
+            - name: worker
+              value:
+                id: $.inputs.worker_id
+              in: body
+            - name: job
+              value:
+                id: $.inputs.job_id
+              in: body
+            - name: reason
+              value:
+                id: $.inputs.reason_id
+              in: body
+              condition: '{{present($.inputs.reason_id)}}'
+  result:
+    data: $.steps.initiate_org_assignment_change.output.data

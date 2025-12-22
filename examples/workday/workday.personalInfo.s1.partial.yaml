@@ -1,0 +1,264 @@
+- actionId: get_worker_personal_info
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Personal Information
+  description: Get comprehensive personal information for a worker including contact details, addresses, and profile information using Person API v4
+  inputs:
+    - name: person_id
+      description: The Workday ID of the person
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_basic_info
+      description: Get basic personal information from Person API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+    - stepId: get_work_emails
+      description: Get work email addresses
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/workEmails'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_home_emails
+      description: Get home email addresses
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/homeEmails'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_work_phones
+      description: Get work phone numbers
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/workPhones'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_home_phones
+      description: Get home phone numbers
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/homePhones'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_work_addresses
+      description: Get work addresses
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/workAddresses'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_home_addresses
+      description: Get home addresses
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/homeAddresses'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_work_instant_messengers
+      description: Get work instant messengers
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/workInstantMessengers'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_home_instant_messengers
+      description: Get home instant messengers
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/homeInstantMessengers'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+
+    - stepId: get_detailed_personal_info
+      description: Get detailed personal information
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/personalInformation'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+    - stepId: get_legal_name
+      description: Get legal name information
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/legalName'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+    - stepId: get_preferred_name
+      description: Get preferred name
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/preferredName'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+    - stepId: get_work_web_addresses
+      description: Get work web addresses
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/workWebAddresses'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: get_home_web_addresses
+      description: Get home web addresses
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/person/v4/${credentials.tenant}"
+          url: '/people/${inputs.person_id}/homeWebAddresses'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+    - stepId: combine_personal_data
+      description: Combine all personal information into a comprehensive response
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps
+          fields:
+            - targetFieldKey: basicInfo
+              expression: $.get_basic_info.output.data
+              type: object
+            - targetFieldKey: workEmails
+              expression: $.get_work_emails.output.data
+              type: object
+            - targetFieldKey: homeEmails
+              expression: $.get_home_emails.output.data
+              type: object
+            - targetFieldKey: workPhones
+              expression: $.get_work_phones.output.data
+              type: object
+            - targetFieldKey: homePhones
+              expression: $.get_home_phones.output.data
+              type: object
+            - targetFieldKey: workAddresses
+              expression: $.get_work_addresses.output.data
+              type: object
+            - targetFieldKey: homeAddresses
+              expression: $.get_home_addresses.output.data
+              type: object
+            - targetFieldKey: workInstantMessengers
+              expression: $.get_work_instant_messengers.output.data
+              type: object
+            - targetFieldKey: homeInstantMessengers
+              expression: $.get_home_instant_messengers.output.data
+              type: object
+            - targetFieldKey: personalInformation
+              expression: $.get_detailed_personal_info.output.data
+              type: object
+            - targetFieldKey: legalName
+              expression: $.get_legal_name.output.data
+              type: object
+            - targetFieldKey: preferredName
+              expression: $.get_preferred_name.output.data
+              type: object
+            - targetFieldKey: workWebAddresses
+              expression: $.get_work_web_addresses.output.data
+              type: object
+            - targetFieldKey: homeWebAddresses
+              expression: $.get_home_web_addresses.output.data
+              type: object
+  result:
+    data: $.steps.get_work_emails.output.data

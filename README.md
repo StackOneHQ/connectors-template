@@ -2,7 +2,7 @@
 
 ## Description
 
-This repository contains a collection of connectors for Visier.
+This repository contains a collection of connectors for and created by, Visier.
 
 ## Getting Started
 
@@ -14,39 +14,57 @@ This repository contains a collection of connectors for Visier.
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd visier-connectors
    ```
 
-2. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   ```
+2. Install dependencies:
 
-3. Edit `.env` and add your credentials:
-   - `FALCON_SERVER_API_KEY` - Get from 1Password falcon http secret
-
-4. Install dependencies:
    ```bash
-   npm install
+   npm ci
    ```
 
    This will automatically:
+
    - Install all required packages
    - Set up Git hooks
-   - Generate `.mcp.json` with your environment variables
+
+3. Set up authentication:
+
+   ```bash
+   npx @stackone/cli agent setup --local
+   ```
+
+   This command will:
+
+   - Authenticate via OAuth with StackOne
+   - Securely store your access token as `STACKONE_FALCON_MCP_TOKEN` environment variable
+   - Generate `.mcp.json` configuration for MCP servers
+   - Configure the project for local development
+
+   **Global setup (optional):**
+
+   ```bash
+   npx @stackone/cli agent setup --global
+   ```
+
+   Use this to configure authentication once across all StackOne projects.
 
 ### MCP Configuration
 
-This project uses MCP (Model Context Protocol) servers for enhanced AI capabilities. The `.mcp.json` configuration file is automatically generated from your `.env` file.
+This project uses MCP (Model Context Protocol) servers for enhanced AI capabilities. The `.mcp.json` configuration file is automatically generated using the `@stackone/cli` tool.
 
-**Manual regeneration:**
+**Security:** Your access token is stored as an environment variable reference in `.mcp.json`, making it safe to commit. The actual token is never stored in the repository.
+
+**Cleanup credentials:**
+
 ```bash
-npm run setup:mcp
+npx @stackone/cli agent cleanup
 ```
 
-The generated `.mcp.json` is gitignored and will contain your actual API keys. The template is stored in `.mcp.json.template` for reference.
+This removes all stored credentials and generated configuration files.
 
 ## Building Connectors
 
@@ -62,7 +80,7 @@ For comprehensive guides on building and converting connectors, see:
 
 ### Development Husbandry
 
-- Development branches should be branched from `develop`. The `main` branch is reserved for production-ready code.
+- Development branches should be branched from `main`.
 - Feature branches should follow this format:  
   `eng-[ticket]/[short-description]`  
   _Example:_ `eng-1234/provider-define-location-endpoint`

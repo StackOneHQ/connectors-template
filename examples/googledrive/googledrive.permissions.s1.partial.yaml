@@ -1,0 +1,399 @@
+- actionId: list_permissions
+  categories:
+    - documents
+  actionType: list
+  label: List Permissions
+  description: Lists a file's or shared drive's permissions
+  entrypointUrl: /files/{fileId}/permissions
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/list
+  inputs:
+    - name: fileId
+      description: The ID of the file or shared drive
+      type: string
+      in: path
+      required: true
+    - name: pageSize
+      description: Maximum number of permissions to return per page (max 100)
+      type: number
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include (published)
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: list_permissions
+      description: List permissions from Google Drive API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /files/${inputs.fileId}/permissions
+          method: get
+          response:
+            dataKey: permissions
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: pageSize
+              value: "{{inputs.pageSize}}"
+              in: query
+              condition: "{{present(inputs.pageSize)}}"
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+            - name: includePermissionsForView
+              value: "{{inputs.includePermissionsForView}}"
+              in: query
+              condition: "{{present(inputs.includePermissionsForView)}}"
+  result:
+    data: $.steps.list_permissions.output.data
+
+- actionId: get_permission
+  categories:
+    - documents
+  actionType: get
+  label: Get Permission
+  description: Gets a permission by ID
+  entrypointUrl: /files/{fileId}/permissions/{permissionId}
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/get
+  inputs:
+    - name: fileId
+      description: The ID of the file or shared drive
+      type: string
+      in: path
+      required: true
+    - name: permissionId
+      description: The ID of the permission
+      type: string
+      in: path
+      required: true
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_permission
+      description: Get permission from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/permissions/${inputs.permissionId}
+          method: get
+          args:
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.get_permission.output.data
+
+- actionId: create_permission
+  categories:
+    - documents
+  actionType: create
+  label: Create Permission
+  description: |
+    Creates a permission for a file or shared drive.
+
+    Permission types:
+    - user: A specific user's email address
+    - group: A Google Group's email address
+    - domain: Everyone in a Google Workspace domain
+    - anyone: Anyone on the internet (public link)
+
+    Permission roles:
+    - owner: Full control (cannot be set via API for some resources)
+    - organizer: For shared drives only
+    - fileOrganizer: For shared drives only
+    - writer: Can edit and comment
+    - commenter: Can view and comment
+    - reader: Can view only
+  entrypointUrl: /files/{fileId}/permissions
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create
+  inputs:
+    - name: fileId
+      description: The ID of the file or shared drive
+      type: string
+      in: path
+      required: true
+    - name: type
+      description: The type of the grantee (user, group, domain, anyone)
+      type: string
+      in: body
+      required: true
+    - name: role
+      description: The role granted by this permission (owner, organizer, fileOrganizer, writer, commenter, reader)
+      type: string
+      in: body
+      required: true
+    - name: emailAddress
+      description: Email address of the user or group (required for type=user or type=group)
+      type: string
+      in: body
+      required: false
+    - name: domain
+      description: The domain (required for type=domain)
+      type: string
+      in: body
+      required: false
+    - name: allowFileDiscovery
+      description: Whether to allow file discovery for type=domain or type=anyone
+      type: boolean
+      in: body
+      required: false
+    - name: expirationTime
+      description: Expiration time for the permission (RFC 3339 date-time)
+      type: string
+      in: body
+      required: false
+    - name: sendNotificationEmail
+      description: Whether to send a notification email when sharing (default true)
+      type: boolean
+      in: query
+      required: false
+    - name: emailMessage
+      description: Custom message to include in the notification email
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: transferOwnership
+      description: Whether to transfer ownership to the specified user (type=user, role=owner)
+      type: boolean
+      in: query
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: create_permission
+      description: Create permission via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/permissions
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: type
+              value: $.inputs.type
+              in: body
+            - name: role
+              value: $.inputs.role
+              in: body
+            - name: emailAddress
+              value: $.inputs.emailAddress
+              in: body
+              condition: "{{present(inputs.emailAddress)}}"
+            - name: domain
+              value: $.inputs.domain
+              in: body
+              condition: "{{present(inputs.domain)}}"
+            - name: allowFileDiscovery
+              value: $.inputs.allowFileDiscovery
+              in: body
+              condition: "{{present(inputs.allowFileDiscovery)}}"
+            - name: expirationTime
+              value: $.inputs.expirationTime
+              in: body
+              condition: "{{present(inputs.expirationTime)}}"
+            - name: sendNotificationEmail
+              value: "{{inputs.sendNotificationEmail}}"
+              in: query
+              condition: "{{present(inputs.sendNotificationEmail)}}"
+            - name: emailMessage
+              value: "{{inputs.emailMessage}}"
+              in: query
+              condition: "{{present(inputs.emailMessage)}}"
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+            - name: transferOwnership
+              value: "{{inputs.transferOwnership}}"
+              in: query
+              condition: "{{present(inputs.transferOwnership)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.create_permission.output.data
+
+- actionId: update_permission
+  categories:
+    - documents
+  actionType: update
+  label: Update Permission
+  description: Updates a permission with patch semantics (modify role, expiration time, etc.)
+  entrypointUrl: /files/{fileId}/permissions/{permissionId}
+  entrypointHttpMethod: patch
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/update
+  inputs:
+    - name: fileId
+      description: The ID of the file or shared drive
+      type: string
+      in: path
+      required: true
+    - name: permissionId
+      description: The ID of the permission to update
+      type: string
+      in: path
+      required: true
+    - name: role
+      description: The new role (organizer, fileOrganizer, writer, commenter, reader)
+      type: string
+      in: body
+      required: false
+    - name: expirationTime
+      description: New expiration time for the permission (RFC 3339 date-time)
+      type: string
+      in: body
+      required: false
+    - name: removeExpiration
+      description: Whether to remove the expiration date
+      type: boolean
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: transferOwnership
+      description: Whether to transfer ownership (role=owner)
+      type: boolean
+      in: query
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: update_permission
+      description: Update permission via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/permissions/${inputs.permissionId}
+          method: patch
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: role
+              value: $.inputs.role
+              in: body
+              condition: "{{present(inputs.role)}}"
+            - name: expirationTime
+              value: $.inputs.expirationTime
+              in: body
+              condition: "{{present(inputs.expirationTime)}}"
+            - name: removeExpiration
+              value: "{{inputs.removeExpiration}}"
+              in: query
+              condition: "{{present(inputs.removeExpiration)}}"
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+            - name: transferOwnership
+              value: "{{inputs.transferOwnership}}"
+              in: query
+              condition: "{{present(inputs.transferOwnership)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.update_permission.output.data
+
+- actionId: delete_permission
+  categories:
+    - documents
+  actionType: delete
+  label: Delete Permission
+  description: Deletes a permission (revokes access)
+  entrypointUrl: /files/{fileId}/permissions/{permissionId}
+  entrypointHttpMethod: delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete
+  inputs:
+    - name: fileId
+      description: The ID of the file or shared drive
+      type: string
+      in: path
+      required: true
+    - name: permissionId
+      description: The ID of the permission to delete
+      type: string
+      in: path
+      required: true
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: delete_permission
+      description: Delete permission via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/permissions/${inputs.permissionId}
+          method: delete
+          args:
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.delete_permission.output.data

@@ -1,0 +1,61 @@
+
+- actionId: list_library_folders
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /library/folders
+  entrypointHttpMethod: get
+  schema: custom
+  label: List Library Folders
+  description: Retrieve a list of public library folders (excludes private and archived folders)
+  inputs:
+    - name: workspaceId
+      description: Optional workspace ID to filter library folders
+      type: string
+      in: query
+      required: true
+  steps:
+    - stepId: get_library_folders
+      description: Retrieve public library folders
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/library/folders'
+          method: get
+          args:
+            - name: workspaceId
+              value: $.inputs.workspaceId
+              in: query
+              condition: '{{present($.inputs.workspaceId)}}'
+  result:
+    data: $.steps.get_library_folders.output.data.folders
+
+- actionId: list_library_folder_content
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /library/folder-content
+  entrypointHttpMethod: get
+  schema: custom
+  label: List Library Folder Content
+  description: Retrieve calls in a specific folder
+  inputs:
+    - name: folderId
+      description: Gong's unique numeric identifier for the folder (up to 20 digits)
+      type: string
+      in: query
+      required: true
+  steps:
+    - stepId: get_folder_content
+      description: Retrieve calls in the specified folder
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/library/folder-content'
+          method: get
+          args:
+            - name: folderId
+              value: $.inputs.folderId
+              in: query
+  result:
+    data: $.steps.get_folder_content.output.data.calls

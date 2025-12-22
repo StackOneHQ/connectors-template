@@ -1,0 +1,125 @@
+StackOne: 1.0.0
+info:
+  title: Google Drive
+  key: googledrive
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/google-drive/filled/png
+  description: Google Drive connector for document management
+baseUrl: https://www.googleapis.com/drive/v3
+authentication:
+  - oauth2:
+      type: oauth2
+      label: OAuth2 - Partner Credentials
+      support:
+        link: https://hub.stackone.com/connection-guides/documents/googledrive
+        description: The steps in this guide require Admin or Owner privileges within Google Cloud.
+      setupFields:
+        - key: clientId
+          label: Client ID
+          type: text
+          required: true
+          secret: false
+          placeholder: ab34cd72-56c6-4841-809e-81fbc6310939
+          description: You can generate or view an OAuth Client ID by going to Settings > Apps & Integrations > App development in your Google Cloud account
+        - key: clientSecret
+          label: Client Secret
+          type: password
+          required: true
+          secret: true
+          placeholder: bbgPbXDhXQt7zBgtnq9uFe81FIgmJfWnXutbnRS3U
+          description: You can generate or view an OAuth Client Secret by going to Settings > Apps & Integrations > App development in your Google Cloud account
+        - key: scopes
+          label: Application Scopes
+          type: text
+          required: false
+          secret: false
+          placeholder: https://www.googleapis.com/auth/drive
+          description: The list of scopes (permissions) associated with the credentials above
+      authorization:
+        type: oauth2
+        authorizationUrl: https://accounts.google.com/o/oauth2/v2/auth
+        authorizationParams:
+          response_type: code
+          client_id: $.credentials.clientId
+          redirect_uri: ${apiHostUri}/connect/oauth2/googledrive/callback
+          scope: $.credentials.scopes
+          access_type: offline
+          prompt: consent
+          include_granted_scopes: 'true'
+        tokenUrl: https://oauth2.googleapis.com/token
+        token: $.credentials.accessToken
+        includeBearer: true
+      refreshAuthentication:
+        action:
+          actionId: refresh_token_googledrive
+          categories:
+            - internal
+          actionType: refresh_token
+          label: Refresh Token
+          description: Refresh Google Drive OAuth2 token
+          steps:
+            - stepId: refresh_token_request
+              description: Get new access token
+              stepFunction:
+                functionName: request
+                parameters:
+                  baseUrl: https://oauth2.googleapis.com
+                  url: /token
+                  method: post
+                  authorization:
+                    type: none
+                  args:
+                    - name: Content-Type
+                      value: application/x-www-form-urlencoded
+                      in: headers
+                    - name: grant_type
+                      value: refresh_token
+                      in: body
+                    - name: refresh_token
+                      value: $.credentials.refreshToken
+                      in: body
+                    - name: client_id
+                      value: $.credentials.clientId
+                      in: body
+                    - name: client_secret
+                      value: $.credentials.clientSecret
+                      in: body
+                    - name: redirect_uri
+                      value: ${apiHostUri}/connect/oauth2/googledrive/callback
+                      in: body
+            - stepId: map_tokens
+              description: Map tokens data
+              stepFunction:
+                functionName: map_fields
+                version: '2'
+                parameters:
+                  fields:
+                    - targetFieldKey: accessToken
+                      expression: $.access_token
+                      type: string
+                    - targetFieldKey: refreshToken
+                      expression: $.refresh_token
+                      type: string
+                    - targetFieldKey: expiresIn
+                      expression: $.expires_in
+                      type: number
+                  dataSource: $.steps.refresh_token_request.output.data
+          result:
+            data: $.steps.map_tokens.output.data
+      environments:
+        - key: production
+          name: Production
+      testActions:
+        - action: list_files
+          required: true
+actions:
+  $ref: googledrive.files
+  $ref: googledrive.drives
+  $ref: googledrive.permissions
+  $ref: googledrive.comments
+  $ref: googledrive.replies
+  $ref: googledrive.revisions
+  $ref: googledrive.changes
+  $ref: googledrive.accessproposals
+  $ref: googledrive.misc

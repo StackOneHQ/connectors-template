@@ -1,0 +1,199 @@
+- actionId: list_revisions
+  categories:
+    - documents
+  actionType: list
+  label: List Revisions
+  description: Lists a file's revisions
+  entrypointUrl: /files/{fileId}/revisions
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/list
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: pageSize
+      description: Maximum number of revisions to return per page (max 1000)
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: list_revisions
+      description: List revisions from Google Drive API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /files/${inputs.fileId}/revisions
+          method: get
+          response:
+            dataKey: revisions
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: pageSize
+              value: "{{inputs.pageSize}}"
+              in: query
+              condition: "{{present(inputs.pageSize)}}"
+  result:
+    data: $.steps.list_revisions.output.data
+
+- actionId: get_revision
+  categories:
+    - documents
+  actionType: get
+  label: Get Revision
+  description: Gets a revision's metadata or content by ID
+  entrypointUrl: /files/{fileId}/revisions/{revisionId}
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/get
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: revisionId
+      description: The ID of the revision
+      type: string
+      in: path
+      required: true
+    - name: fields
+      description: The fields parameter to return the exact fields you need (e.g., 'id,modifiedTime,size,keepForever')
+      type: string
+      in: query
+      required: true
+    - name: acknowledgeAbuse
+      description: Whether to acknowledge the risk of downloading known malware or other abusive files
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_revision
+      description: Get revision from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/revisions/${inputs.revisionId}
+          method: get
+          args:
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+            - name: acknowledgeAbuse
+              value: "{{inputs.acknowledgeAbuse}}"
+              in: query
+              condition: "{{present(inputs.acknowledgeAbuse)}}"
+  result:
+    data: $.steps.get_revision.output.data
+
+- actionId: update_revision
+  categories:
+    - documents
+  actionType: update
+  label: Update Revision
+  description: |
+    Updates a revision with patch semantics.
+
+    Common uses:
+    - Set keepForever=true to prevent automatic deletion of important versions
+    - Publish a specific revision (publishAuto, published, publishedOutsideDomain)
+  entrypointUrl: /files/{fileId}/revisions/{revisionId}
+  entrypointHttpMethod: patch
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/update
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: revisionId
+      description: The ID of the revision to update
+      type: string
+      in: path
+      required: true
+    - name: keepForever
+      description: Whether to keep this revision forever (prevents automatic cleanup)
+      type: boolean
+      in: body
+      required: false
+    - name: publishAuto
+      description: Whether to automatically publish subsequent revisions
+      type: boolean
+      in: body
+      required: false
+    - name: published
+      description: Whether this revision is published
+      type: boolean
+      in: body
+      required: false
+    - name: publishedOutsideDomain
+      description: Whether this revision is published outside the domain
+      type: boolean
+      in: body
+      required: false
+  steps:
+    - stepId: update_revision
+      description: Update revision via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/revisions/${inputs.revisionId}
+          method: patch
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: keepForever
+              value: $.inputs.keepForever
+              in: body
+              condition: "{{present(inputs.keepForever)}}"
+            - name: publishAuto
+              value: $.inputs.publishAuto
+              in: body
+              condition: "{{present(inputs.publishAuto)}}"
+            - name: published
+              value: $.inputs.published
+              in: body
+              condition: "{{present(inputs.published)}}"
+            - name: publishedOutsideDomain
+              value: $.inputs.publishedOutsideDomain
+              in: body
+              condition: "{{present(inputs.publishedOutsideDomain)}}"
+  result:
+    data: $.steps.update_revision.output.data
+
+- actionId: delete_revision
+  categories:
+    - documents
+  actionType: delete
+  label: Delete Revision
+  description: |
+    Permanently deletes a file version.
+    Note: Only works for binary files (images, videos, etc.), not Google Docs/Sheets/Slides.
+  entrypointUrl: /files/{fileId}/revisions/{revisionId}
+  entrypointHttpMethod: delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/revisions/delete
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: revisionId
+      description: The ID of the revision to delete
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: delete_revision
+      description: Delete revision via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/revisions/${inputs.revisionId}
+          method: delete
+  result:
+    data: $.steps.delete_revision.output.data

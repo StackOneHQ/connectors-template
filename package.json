@@ -6,24 +6,33 @@
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
+        "clean": "rimraf dist",
         "build": "node --import=tsx ./scripts/build.ts",
+        "prebuild:watch": "npm run clean && npm run build",
+        "build:watch": "node --import=tsx ./scripts/build-watch.ts",
         "lint": "biome check ./src ./scripts",
         "lint:fix": "biome check --write ./src ./scripts",
+        "loop-claude": "bash claude-iterations/run.sh",
         "setup:hooks": "sh scripts/setup-git-hooks.sh",
         "setup:mcp": "node --import=tsx ./scripts/generate-mcp-config.ts",
-        "postinstall": "npm run setup:hooks && npm run setup:mcp"
+        "postinstall": "npm run setup:hooks"
     },
     "dependencies": {
-        "@stackone/cli": "^1.9.2",
-        "@stackone/connect-sdk": "2.0.0",
-        "@stackone/core": "2.0.0",
-        "@stackone/expressions": "0.17.0",
+        "@stackone/agent-config": "^1.3.0",
+        "@stackone/cli": "1.11.0",
+        "@stackone/connect-sdk": "2.3.0",
+        "@stackone/core": "2.1.0",
+        "@stackone/expressions": "0.18.0",
         "@stackone/utils": "0.13.0"
     },
     "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@biomejs/js-api": "0.7.1",
-        "@types/node": "22.18.6",
+        "@biomejs/biome": "2.3.7",
+        "@biomejs/js-api": "4.0.0",
+        "@types/node": "22.14.1",
+        "chalk": "5.6.2",
+        "chokidar": "4.0.3",
+        "ora": "9.0.0",
+        "rimraf": "6.1.2",
         "tsx": "4.20.6"
     }
 }

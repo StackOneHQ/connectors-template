@@ -1,0 +1,526 @@
+- actionId: list_absence_balances
+  categories:
+    - hris
+  actionType: list
+  label: List Absence Balances
+  description: List all absence plan and leave of absence balances from Workday Absence Management API v3
+  inputs:
+    - name: worker_id
+      description: Filter balances by worker ID
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_balances
+      description: Get absence balances from Workday Absence Management API v3
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/absenceManagement/v3/${credentials.tenant}"
+          url: '/balances'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: worker
+              value: $.inputs.worker_id
+              in: query
+              condition: '{{present($.inputs.worker_id)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_balances.output.data
+- actionId: apply_time_off
+  categories:
+    - hris
+  actionType: create
+  label: Apply Time Off
+  description: Submit a time off request for a worker using Workday Absence Management API v3
+  inputs:
+    - name: id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: time_off_type_id
+      description: ID of the time off type from eligible absence types
+      type: string
+      in: body
+      required: true
+    - name: start_date
+      description: Start date for time off (YYYY-MM-DD)
+      type: string
+      in: body
+      required: true
+    - name: end_date
+      description: End date for time off (YYYY-MM-DD). If not provided, defaults to start_date
+      type: string
+      in: body
+      required: false
+    - name: quantity
+      description: Number of days or hours for time off (default 1)
+      type: number
+      in: body
+      required: false
+    - name: comment
+      description: Comment on the time off entry
+      type: string
+      in: body
+      required: false
+    - name: reason_id
+      description: ID of the reason for the time off entry
+      type: string
+      in: body
+      required: false
+    - name: position_id
+      description: ID of the position if worker has multiple positions
+      type: string
+      in: body
+      required: false
+    - name: auto_submit
+      description: Automatically submit the request (true) or save as draft (false)
+      type: boolean
+      in: body
+      required: false
+    - name: business_process_action_id
+      description: Business process action ID for workflow control (defaults to submit action when auto_submit=true)
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: submit_time_off_request
+      description: Submit time off request using Workday Absence Management API v3
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/absenceManagement/v3/${credentials.tenant}"
+          url: '/workers/${inputs.id}/requestTimeOff'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: businessProcessParameters
+              value:
+                action:
+                  id: '{{$.inputs.business_process_action_id || "d9e4223e446c11de98360015c5e6daf6"}}'
+              in: body
+              condition: '{{(present($.inputs.auto_submit) && $.inputs.auto_submit) || present($.inputs.business_process_action_id)}}'
+            - name: days
+              value:
+                - date: $.inputs.start_date
+                  timeOffType:
+                    id: $.inputs.time_off_type_id
+                  dailyQuantity: '{{$.inputs.quantity || "1"}}'
+                  start: $.inputs.start_date
+                  end: '{{$.inputs.end_date || $.inputs.start_date}}'
+              in: body
+            - name: comment
+              value: $.inputs.comment
+              in: body
+              condition: '{{present($.inputs.comment)}}'
+            - name: reason
+              value:
+                id: $.inputs.reason_id
+              in: body
+              condition: '{{present($.inputs.reason_id)}}'
+            - name: position
+              value:
+                id: $.inputs.position_id
+              in: body
+              condition: '{{present($.inputs.position_id)}}'
+
+  result:
+    data: $.steps.submit_time_off_request.output.data
+- actionId: list_time_off_details
+  categories:
+    - hris
+  actionType: list
+  label: List Time Off Details
+  description: Retrieve time off entries for a specified worker using Workday Absence Management API v3
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: from_date
+      description: Start of date range filter (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+    - name: to_date
+      description: End of date range filter (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_time_off_details
+      description: Get time off details from Workday Absence Management API v3
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/absenceManagement/v3/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/timeOffDetails'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: fromDate
+              value: $.inputs.from_date
+              in: query
+              condition: '{{present($.inputs.from_date)}}'
+            - name: toDate
+              value: $.inputs.to_date
+              in: query
+              condition: '{{present($.inputs.to_date)}}'
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_time_off_details.output.data
+- actionId: get_time_off_detail
+  categories:
+    - hris
+  actionType: get
+  label: Get Time Off Detail
+  description: Retrieve details of a specific time off entry for a worker using Workday Absence Management API v3
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: time_off_id
+      description: The Workday ID of the time off entry
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_time_off_detail
+      description: Get specific time off detail from Workday Absence Management API v3
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/absenceManagement/v3/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/timeOffDetails/${inputs.time_off_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_time_off_detail.output.data
+- actionId: list_eligible_absence_types
+  categories:
+    - hris
+  actionType: list
+  label: List Eligible Absence Types
+  description: Retrieve eligible absence types for a worker using Workday Absence Management API v3
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: category
+      description: Filter by absence type category (Time Off, Leave of Absence Type, Absence Table)
+      type: string
+      in: query
+      required: false
+    - name: effective_date
+      description: Effective date for eligible absence types (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_eligible_absence_types
+      description: Get eligible absence types from Workday Absence Management API v3
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/absenceManagement/v3/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/eligibleAbsenceTypes'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: category
+              value: $.inputs.category
+              in: query
+              condition: '{{present($.inputs.category)}}'
+            - name: effective
+              value: $.inputs.effective_date
+              in: query
+              condition: '{{present($.inputs.effective_date)}}'
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_eligible_absence_types.output.data
+- actionId: list_leaves_of_absence
+  categories:
+    - hris
+  actionType: list
+  label: List Leaves of Absence
+  description: Retrieve leaves of absence for a worker using Workday Absence Management API v3
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: from_date
+      description: Start of date range filter (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+    - name: to_date
+      description: End of date range filter (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_leaves_of_absence
+      description: Get leaves of absence from Workday Absence Management API v3
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/absenceManagement/v3/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/leavesOfAbsence'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: fromDate
+              value: $.inputs.from_date
+              in: query
+              condition: '{{present($.inputs.from_date)}}'
+            - name: toDate
+              value: $.inputs.to_date
+              in: query
+              condition: '{{present($.inputs.to_date)}}'
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_leaves_of_absence.output.data
+- actionId: list_worker_time_off_plans
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Time Off Plans
+  description: Retrieve all time off plans for a specific worker from Workday Common API v1
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_worker_time_off_plans
+      description: Get worker time off plans from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/timeOffPlans'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_worker_time_off_plans.output.data
+- actionId: get_worker_time_off_plan
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Time Off Plan
+  description: Retrieve a specific time off plan for a worker from Workday Common API v1
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: plan_id
+      description: The Workday ID of the time off plan
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_worker_time_off_plan
+      description: Get worker time off plan from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/timeOffPlans/${inputs.plan_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_worker_time_off_plan.output.data
+- actionId: list_worker_time_off_entries
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Time Off Entries
+  description: Retrieve all time off entries for a specific worker from Workday Common API v1
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_worker_time_off_entries
+      description: Get worker time off entries from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/timeOffEntries'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_worker_time_off_entries.output.data
+- actionId: get_worker_time_off_entry
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Time Off Entry
+  description: Retrieve a specific time off entry for a worker from Workday Common API v1
+  inputs:
+    - name: worker_id
+      description: The Workday ID of the worker
+      type: string
+      in: path
+      required: true
+    - name: entry_id
+      description: The Workday ID of the time off entry
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_worker_time_off_entry
+      description: Get worker time off entry from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/timeOffEntries/${inputs.entry_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_worker_time_off_entry.output.data

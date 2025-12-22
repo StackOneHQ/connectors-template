@@ -1,0 +1,121 @@
+StackOne: 1.0.0
+info:
+  title: Lattice HRIS
+  key: lattice_hris
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/lattice/filled/png
+  description: Lattice is a people management platform for performance reviews, engagement surveys, goal tracking, and employee data management
+
+baseUrl: https://api.latticehq.com
+
+resources: "Lattice HRIS API documentation: https://developers.lattice.com/v2/docs/"
+
+authentication:
+  - oauth2:
+      type: oauth2
+      label: OAuth 2.0
+      support:
+        link: https://developers.lattice.com/v2/docs/authentication-1
+        description: OAuth2 authentication for Lattice HRIS v2 API with partner integration support
+      setupFields:
+        - key: clientId
+          label: Client ID
+          type: text
+          required: true
+          secret: false
+          placeholder: your_partner_client_id
+          description: Partner Client ID provided by Lattice. Contact [email protected] to register as a partner.
+          tooltip: The Client ID from your Lattice Partner API registration
+        - key: clientSecret
+          label: Client Secret
+          type: password
+          required: true
+          secret: true
+          placeholder: your_partner_client_secret
+          description: Partner Client Secret provided by Lattice during registration
+          tooltip: The Client Secret from your Lattice Partner API registration
+        - key: scopes
+          label: Scopes
+          type: text
+          required: false
+          secret: false
+          placeholder: openid offline employees:personal.read employees:demographic.read
+          description: Space-separated list of OAuth2 scopes. Available scopes include employees:personal.read/write, employees:demographic.read/write, employees:contact_information.read/write, employees:employment_details.read/write, employees:role_details.read/write, employees:custom_fields.read/write
+      authorization:
+        type: oauth2
+        authorizationUrl: https://api-auth.latticehq.com/oauth2/auth
+        authorizationParams:
+          response_type: code
+          client_id: $.credentials.clientId
+          redirect_uri: ${apiHostUri}/connect/oauth2/lattice/callback
+          # scope: $.credentials.scopes
+          state: stackone
+        tokenUrl: https://api-auth.latticehq.com/oauth2/token
+        tokenExpiresIn: 3600
+        tokenRefreshExpiresIn: 7200
+        token: $.credentials.accessToken
+        includeBearer: true
+      refreshAuthentication:
+        action:
+          actionId: refresh_token_lattice
+          categories:
+            - internal
+          actionType: refresh_token
+          label: Refresh Token
+          description: Refresh Lattice OAuth2 access token using refresh token
+          steps:
+            - stepId: refresh_token_request
+              description: Request new access token using refresh token
+              stepFunction:
+                functionName: request
+                parameters:
+                  baseUrl: https://api-auth.latticehq.com
+                  url: /oauth2/token
+                  method: post
+                  authorization:
+                    type: none
+                  args:
+                    - name: Content-Type
+                      value: application/x-www-form-urlencoded
+                      in: headers
+                    - name: grant_type
+                      value: refresh_token
+                      in: body
+                    - name: refresh_token
+                      value: $.credentials.refreshToken
+                      in: body
+                    - name: client_id
+                      value: $.credentials.clientId
+                      in: body
+                    - name: client_secret
+                      value: $.credentials.clientSecret
+                      in: body
+            - stepId: map_tokens
+              description: Map token credentials
+              stepFunction:
+                functionName: map_fields
+                version: '2'
+                parameters:
+                  fields:
+                    - targetFieldKey: accessToken
+                      expression: $.access_token
+                      type: string
+                    - targetFieldKey: refreshToken
+                      expression: $.refresh_token
+                      type: string
+                    - targetFieldKey: expiresIn
+                      expression: $.expires_in
+                      type: number
+                  dataSource: $.steps.refresh_token_request.output.data
+          result:
+            data: $.steps.map_tokens.output.data
+      environments:
+        - key: production
+          name: Production
+
+actions:
+  $ref: lattice.employees
+  $ref: lattice.employeeFields
+  $ref: lattice.timeOffPolicies
+  $ref: lattice.timeOffRequests

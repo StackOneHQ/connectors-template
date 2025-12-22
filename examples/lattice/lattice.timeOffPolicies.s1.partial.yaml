@@ -1,0 +1,41 @@
+- actionId: list_time_off_policies
+  categories:
+    - hris
+  actionType: get
+  schema: time_off_policies
+  label: List Time Off Policies
+  description: Get all time off policies configured in the organization
+  resources: https://developers.lattice.com/
+  steps:
+    - stepId: get_time_off_policies
+      description: Fetch all time off policies from Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/time-off/policies
+          method: get
+          response:
+            collection: true
+  result:
+    data: $.steps.get_time_off_policies.output.data
+
+- actionId: list_time_off_reports
+  categories:
+    - hris
+  actionType: get
+  schema: time_off_reports
+  label: List Time Off Reports
+  description: Get all time off reports configured in the organization
+  resources: https://developers.lattice.com/
+  steps:
+    - stepId: get_time_off_reports
+      description: Fetch all time off reports from Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/time-off/reports
+          method: get
+          response:
+            collection: true
+  result:
+    data: $.steps.get_time_off_reports.output.data

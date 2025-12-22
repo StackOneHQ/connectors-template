@@ -1,0 +1,150 @@
+- actionId: list_users
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /users
+  entrypointHttpMethod: get
+  schema: custom
+  label: List Users
+  description: List all users in the Gong workspace
+  steps:
+    - stepId: get_users
+      description: Retrieve all users
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: '/v2/users'
+          method: get
+          response:
+            dataKey: users
+            nextKey: records.cursor
+          iterator:
+            key: cursor
+            in: query
+  result:
+    data: $.steps.get_users.output.data
+- actionId: get_user
+  categories:
+    - crm
+  actionType: get
+  entrypointUrl: /users/:id
+  entrypointHttpMethod: get
+  schema: custom
+  label: Get User
+  description: Get a specific user by ID
+  inputs:
+    - name: id
+      in: path
+      type: string
+      required: true
+      description: User ID
+  steps:
+    - stepId: get_user_by_id
+      description: Retrieve user by ID
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/users/${inputs.id}'
+          method: get
+  result:
+    data: $.steps.get_user_by_id.output.data
+- actionId: get_user_settings_history
+  categories:
+    - crm
+  actionType: get
+  entrypointUrl: /users/:id/settings-history
+  entrypointHttpMethod: get
+  schema: custom
+  label: Get User Settings History
+  description: Get the settings history for a specific user
+  inputs:
+    - name: id
+      in: path
+      type: string
+      required: true
+      description: User ID
+    - name: fromDateTime
+      in: query
+      type: datetime_string
+      required: false
+      description: Start date for filtering settings history (ISO 8601 format)
+    - name: toDateTime
+      in: query
+      type: datetime_string
+      required: false
+      description: End date for filtering settings history (ISO 8601 format)
+  steps:
+    - stepId: get_settings_history
+      description: Retrieve user settings history
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/users/${inputs.id}/settings-history'
+          method: get
+          args:
+            - name: fromDateTime
+              value: $.inputs.fromDateTime
+              in: query
+              condition: '{{present($.inputs.fromDateTime)}}'
+            - name: toDateTime
+              value: $.inputs.toDateTime
+              in: query
+              condition: '{{present($.inputs.toDateTime)}}'
+  result:
+    data: $.steps.get_settings_history.output.data
+- actionId: get_users_extensive
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /users/extensive
+  entrypointHttpMethod: post
+  schema: custom
+  label: Get Users Extensive
+  description: Get detailed user information with extensive data
+  inputs:
+    - name: userIds
+      in: body
+      type: string
+      array: true
+      required: false
+      description: Array of user IDs to retrieve
+    - name: fromDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Start date for filtering users (ISO 8601 format)
+    - name: toDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: End date for filtering users (ISO 8601 format)
+  steps:
+    - stepId: get_extensive_users
+      description: Retrieve extensive user data
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: '/v2/users/extensive'
+          method: post
+          response:
+            dataKey: users
+            nextKey: records.cursor
+          iterator:
+            key: cursor
+            in: body
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: filter
+              value:
+                userIds: $.inputs.userIds
+                fromDateTime: $.inputs.fromDateTime
+                toDateTime: $.inputs.toDateTime
+              in: body
+            - name: contentSelector
+              value:
+                context: Extended
+              in: body
+  result:
+    data: $.steps.get_extensive_users.output.data

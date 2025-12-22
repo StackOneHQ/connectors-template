@@ -1,0 +1,64 @@
+- actionId: get_activity_stats
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /stats/activity
+  entrypointHttpMethod: post
+  schema: custom
+  label: Get Activity Statistics
+  description: Get aggregated activity statistics for users
+  inputs:
+    - name: fromDate
+      in: body
+      type: string
+      required: true
+      description: Start date (inclusive) in company time zone (YYYY-MM-DD format)
+    - name: toDate
+      in: body
+      type: string
+      required: true
+      description: End date (exclusive) in company time zone (YYYY-MM-DD format)
+    - name: createdFromDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Created from date-time filter
+    - name: createdToDateTime
+      in: body
+      type: datetime_string
+      required: false
+      description: Created to date-time filter
+    - name: userIds
+      in: body
+      type: string
+      array: true
+      required: false
+      description: Gong's unique numeric identifiers for users (up to 20 digits)
+  steps:
+    - stepId: get_stats
+      description: Retrieve activity statistics
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: '/v2/stats/activity/aggregate'
+          method: post
+          response:
+            dataKey: usersAggregateActivityStats
+            nextKey: records.cursor
+          iterator:
+            key: cursor
+            in: body
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: filter
+              value:
+                fromDate: $.inputs.fromDate
+                toDate: $.inputs.toDate
+                createdFromDateTime: $.inputs.createdFromDateTime
+                createdToDateTime: $.inputs.createdToDateTime
+                userIds: $.inputs.userIds
+              in: body
+  result:
+    data: $.steps.get_stats.output.data

@@ -1,0 +1,280 @@
+- actionId: list_comments
+  categories:
+    - documents
+  actionType: list
+  label: List Comments
+  description: Lists a file's comments
+  entrypointUrl: /files/{fileId}/comments
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/list
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: fields
+      description: The fields parameter must be set to return the exact fields you need (e.g., 'comments(id,content,author)')
+      type: string
+      in: query
+      required: true
+    - name: includeDeleted
+      description: Whether to include deleted comments. Deleted comments will not include their original content.
+      type: boolean
+      in: query
+      required: false
+    - name: pageSize
+      description: The maximum number of comments to return per page
+      type: number
+      in: query
+      required: false
+    - name: startModifiedTime
+      description: The minimum value of 'modifiedTime' for the result comments (RFC 3339 date-time)
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: list_comments
+      description: List comments from Google Drive API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /files/${inputs.fileId}/comments
+          method: get
+          response:
+            dataKey: comments
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+            - name: pageSize
+              value: "{{inputs.pageSize}}"
+              in: query
+              condition: "{{present(inputs.pageSize)}}"
+            - name: includeDeleted
+              value: "{{inputs.includeDeleted}}"
+              in: query
+              condition: "{{present(inputs.includeDeleted)}}"
+            - name: startModifiedTime
+              value: "{{inputs.startModifiedTime}}"
+              in: query
+              condition: "{{present(inputs.startModifiedTime)}}"
+  result:
+    data: $.steps.list_comments.output.data
+
+- actionId: get_comment
+  categories:
+    - documents
+  actionType: get
+  label: Get Comment
+  description: Gets a comment by ID
+  entrypointUrl: /files/{fileId}/comments/{commentId}
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/get
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment
+      type: string
+      in: path
+      required: true
+    - name: fields
+      description: The fields parameter to return the exact fields you need (e.g., 'id,content,author,createdTime')
+      type: string
+      in: query
+      required: true
+    - name: includeDeleted
+      description: Whether to return deleted comments
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_comment
+      description: Get comment from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}
+          method: get
+          args:
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+            - name: includeDeleted
+              value: "{{inputs.includeDeleted}}"
+              in: query
+              condition: "{{present(inputs.includeDeleted)}}"
+  result:
+    data: $.steps.get_comment.output.data
+
+- actionId: create_comment
+  categories:
+    - documents
+  actionType: create
+  label: Create Comment
+  description: |
+    Creates a comment on a file.
+
+    Comments can be:
+    - Regular comments on the file
+    - Anchored to specific text in the document (using anchor and quotedFileContent)
+    - Assigned to specific users (using @mentions in content)
+  entrypointUrl: /files/{fileId}/comments
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/create
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: content
+      description: The plain text content of the comment (use @email to mention users)
+      type: string
+      in: body
+      required: true
+    - name: anchor
+      description: Region of the document to anchor comment (e.g., "kix.r.1234" for Docs)
+      type: string
+      in: body
+      required: false
+    - name: quotedFileContent
+      description: Quoted text from the file when anchoring
+      type: object
+      in: body
+      required: false
+    - name: fields
+      description: The fields to return in the response (e.g., 'id,content,author,createdTime')
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: create_comment
+      description: Create comment via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+              condition: "{{present(inputs.fields)}}"
+            - name: content
+              value: $.inputs.content
+              in: body
+            - name: anchor
+              value: $.inputs.anchor
+              in: body
+              condition: "{{present(inputs.anchor)}}"
+            - name: quotedFileContent
+              value: $.inputs.quotedFileContent
+              in: body
+              condition: "{{present(inputs.quotedFileContent)}}"
+  result:
+    data: $.steps.create_comment.output.data
+
+- actionId: update_comment
+  categories:
+    - documents
+  actionType: update
+  label: Update Comment
+  description: Updates a comment with patch semantics (edit content or resolve/reopen)
+  entrypointUrl: /files/{fileId}/comments/{commentId}
+  entrypointHttpMethod: patch
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/update
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment to update
+      type: string
+      in: path
+      required: true
+    - name: content
+      description: The new plain text content of the comment
+      type: string
+      in: body
+      required: false
+    - name: resolved
+      description: Whether the comment is resolved
+      type: boolean
+      in: body
+      required: false
+    - name: fields
+      description: The fields to return in the response (e.g., 'id,content,resolved,modifiedTime')
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: update_comment
+      description: Update comment via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}
+          method: patch
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+              condition: "{{present(inputs.fields)}}"
+            - name: content
+              value: $.inputs.content
+              in: body
+              condition: "{{present(inputs.content)}}"
+            - name: resolved
+              value: $.inputs.resolved
+              in: body
+              condition: "{{present(inputs.resolved)}}"
+  result:
+    data: $.steps.update_comment.output.data
+
+- actionId: delete_comment
+  categories:
+    - documents
+  actionType: delete
+  label: Delete Comment
+  description: Deletes a comment
+  entrypointUrl: /files/{fileId}/comments/{commentId}
+  entrypointHttpMethod: delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/comments/delete
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment to delete
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: delete_comment
+      description: Delete comment via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}
+          method: delete
+  result:
+    data: $.steps.delete_comment.output.data

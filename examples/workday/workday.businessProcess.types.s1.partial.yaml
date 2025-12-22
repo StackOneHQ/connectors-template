@@ -1,0 +1,83 @@
+# Business Process Types Actions - Discovery and configuration of process types
+- actionId: list_business_process_types
+  categories:
+    - hris
+  actionType: list
+  schema: businessProcessTypes
+  label: List Business Process Types
+  description: Retrieves all available business process types in Workday. Use this to discover valid business process type IDs for filtering events and steps in other actions.
+  inputs:
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_business_process_types
+      description: Get business process types from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/types'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: ${inputs.limit}
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: ${inputs.offset}
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_business_process_types.output.data
+
+- actionId: get_business_process_type
+  categories:
+    - hris
+  actionType: get
+  schema: businessProcessType
+  label: Get Business Process Type
+  description: Retrieves a specific business process type by ID with configuration details including help text and settings. Secured by Public Business Processes permission.
+  inputs:
+    - name: type_id
+      description: Required. The Workday ID (WID) of the business process type to retrieve. Get this from list_business_process_types action.
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_type_details
+      description: Get business process type details from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/types/${inputs.type_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.get_type_details.output.data

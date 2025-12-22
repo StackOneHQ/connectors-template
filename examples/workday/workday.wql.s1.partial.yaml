@@ -1,0 +1,48 @@
+- actionId: wql_query
+  categories:
+    - hris
+  actionType: list
+  label: WQL Query
+  description: Execute a Workday WQL query to retrieve data
+  inputs:
+    - name: wql_query
+      description: The WQL query string to execute, Example - "SELECT workdayID, employee, leaveOfAbsenceRequests{workdayID, worker, firstDayOfLeave, lastDayOfLeave_Actual, lastDayOfLeave_Estimated, comments, leaveType, status, cf_LeaveRequestDurationInDaysActual, leaveReason, createdMoment, lastFunctionallyUpdated, approvedByWorkers} as leaveOfAbsenceRequests, timeOffDetails{workdayID, timeOff, timeOffEvent, worker2, timeOffDate, comment, timeOffTypeForTimeOffEntry, timeOffEntryApprovedByWorkers, status, unitOfTime,  totalUnits,  timeOffReason, enteredOn, latestTimeOffEntry, createdMoment, lastFunctionallyUpdated} as timeOffDetails FROM allWorkers WHERE ON timeOffDetails latestTimeOffEntry = true WHERE employee = (3aa5550b7fe348b98d7b5741afc65534)"
+      type: string
+      in: query
+      required: true
+    - name: limit
+      description: The maximum number of objects in a single response. The default is 20. The maximum is 100.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: The zero-based index of the first object in a response collection. The default is 0. Use offset with the limit parameter to control paging of a response collection. Example- If limit is 5 and offset is 9, the response returns a collection of 5 objects starting with the 10th object.
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: execute_wql_query
+      description: Execute WQL query against Workday
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/wql/v1/${credentials.tenant}"
+          url: '/data'
+          method: get
+          args:
+            - name: query
+              value: $.inputs.wql_query
+              in: query
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.execute_wql_query.output.data

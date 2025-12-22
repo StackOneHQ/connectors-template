@@ -1,0 +1,218 @@
+- actionId: list_organizations
+  categories:
+    - hris
+  actionType: list
+  label: List Organizations
+  description: Retrieve organizations by organization type from Workday Common API v1. Must provide organization type as query parameter
+  inputs:
+    - name: organization_type_id
+      description: Organization Type ID (required). Use list_organization_types to discover available types
+      type: string
+      in: query
+      required: true
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_organizations
+      description: Get organizations collection from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/organizations'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: organizationType
+              value: $.inputs.organization_type_id
+              in: query
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_organizations.output.data
+- actionId: get_organization
+  categories:
+    - hris
+  actionType: get
+  label: Get Organization
+  description: Retrieve a specific organization by ID from Workday Common API v1
+  inputs:
+    - name: id
+      description: The Workday ID of the organization
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_organization
+      description: Get organization instance from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/organizations/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_organization.output.data
+- actionId: list_organization_types
+  categories:
+    - hris
+  actionType: list
+  label: List Organization Types
+  description: Retrieve all organization types from Workday Common API v1. Use this to discover types for list_organizations action
+  inputs:
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_organization_types
+      description: Get organization types collection from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/organizationTypes'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_organization_types.output.data
+- actionId: get_organization_type
+  categories:
+    - hris
+  actionType: get
+  label: Get Organization Type
+  description: Retrieve a specific organization type by ID from Workday Common API v1
+  inputs:
+    - name: id
+      description: The Workday ID of the organization type
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_organization_type
+      description: Get organization type instance from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/organizationTypes/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_organization_type.output.data
+- actionId: list_supervisory_organizations
+  categories:
+    - hris
+  actionType: list
+  label: List Supervisory Organizations
+  description: Retrieve all supervisory organizations from Workday Common API v1
+  inputs:
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_supervisory_organizations
+      description: Get supervisory organizations collection from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/supervisoryOrganizations'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_supervisory_organizations.output.data
+- actionId: get_supervisory_organization
+  categories:
+    - hris
+  actionType: get
+  label: Get Supervisory Organization
+  description: Retrieve a specific supervisory organization by ID from Workday Common API v1
+  inputs:
+    - name: id
+      description: The Workday ID of the supervisory organization
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_supervisory_organization
+      description: Get supervisory organization instance from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/supervisoryOrganizations/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_supervisory_organization.output.data

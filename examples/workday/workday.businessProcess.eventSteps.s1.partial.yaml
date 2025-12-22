@@ -1,0 +1,138 @@
+# Event Steps Actions - List and retrieve workflow steps
+- actionId: list_event_steps
+  categories:
+    - hris
+  actionType: list
+  schema: eventSteps
+  label: List Event Steps
+  description: Retrieves business process event steps that are awaiting action. These are tasks/to-do items assigned to users in Workday business processes.
+  inputs:
+    - name: businessProcess
+      description: Optional filter by business process type ID. Use to retrieve steps only for specific process types (e.g., hiring, compensation changes). Leave empty to get all event steps.
+      type: string
+      in: query
+      required: false
+    - name: stepType
+      description: Optional filter by step type ID(s). Narrows results to specific step types like approval, to-do, or questionnaire steps. Can specify multiple values as array.
+      type: string
+      array: true
+      in: query
+      required: false
+    - name: createdOnOrAfter
+      description: Optional filter for steps created on or after this date. Use ISO 8601 date format (YYYY-MM-DD). Useful for retrieving recently created steps.
+      type: string
+      in: query
+      required: false
+    - name: createdOnOrBefore
+      description: Optional filter for steps created on or before this date. Use ISO 8601 date format (YYYY-MM-DD). Combine with createdOnOrAfter for date range queries.
+      type: string
+      in: query
+      required: false
+    - name: dueDateOnOrAfter
+      description: Optional filter for steps with due date on or after this date. Use ISO 8601 date format (YYYY-MM-DD). Helps identify upcoming or overdue tasks.
+      type: string
+      in: query
+      required: false
+    - name: dueDateOnOrBefore
+      description: Optional filter for steps with due date on or before this date. Use ISO 8601 date format (YYYY-MM-DD). Combine with dueDateOnOrAfter for due date ranges.
+      type: string
+      in: query
+      required: false
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_event_steps
+      description: Get business process event steps from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: businessProcess
+              value: ${inputs.businessProcess}
+              in: query
+              condition: '{{present($.inputs.businessProcess)}}'
+            - name: stepType
+              value: ${inputs.stepType}
+              in: query
+              condition: '{{present($.inputs.stepType)}}'
+            - name: createdOnOrAfter
+              value: ${inputs.createdOnOrAfter}
+              in: query
+              condition: '{{present($.inputs.createdOnOrAfter)}}'
+            - name: createdOnOrBefore
+              value: ${inputs.createdOnOrBefore}
+              in: query
+              condition: '{{present($.inputs.createdOnOrBefore)}}'
+            - name: dueDateOnOrAfter
+              value: ${inputs.dueDateOnOrAfter}
+              in: query
+              condition: '{{present($.inputs.dueDateOnOrAfter)}}'
+            - name: dueDateOnOrBefore
+              value: ${inputs.dueDateOnOrBefore}
+              in: query
+              condition: '{{present($.inputs.dueDateOnOrBefore)}}'
+            - name: limit
+              value: ${inputs.limit}
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: ${inputs.offset}
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_event_steps.output.data
+
+- actionId: get_event_step
+  categories:
+    - hris
+  actionType: get
+  schema: eventStep
+  label: Get Event Step
+  description: Retrieves a specific business process event step by ID. Returns task details including status, assignments, and due dates. User must have view access to the event that owns this step.
+  inputs:
+    - name: event_step_id
+      description: Required. The Workday ID (WID) of the event step to retrieve. This is the unique identifier returned in list_event_steps or other step-related actions.
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_event_step_details
+      description: Get event step details from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/eventSteps/${inputs.event_step_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.get_event_step_details.output.data

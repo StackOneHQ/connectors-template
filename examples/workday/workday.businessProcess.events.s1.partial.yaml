@@ -1,0 +1,242 @@
+# Events Actions - Retrieval and management of business process events
+- actionId: list_business_process_events
+  categories:
+    - hris
+  actionType: list
+  schema: events
+  label: List Business Process Events
+  description: Retrieves business process events filtered by worker or initiator. IMPORTANT - You must specify either worker OR initiator parameter, otherwise API returns empty response. Results sorted by creation date descending (most recent first).
+  inputs:
+    - name: worker
+      description: Worker ID to filter events for a specific worker. Required if initiator not specified. Use this to get all events where a worker is involved (as subject or participant). Mutually exclusive with initiator in practice - specify one or the other.
+      type: string
+      in: query
+      required: false
+    - name: initiator
+      description: Worker ID(s) to filter events by initiator. Required if worker not specified. Returns events started by specific worker(s). Can specify multiple initiator IDs as array. Mutually exclusive with worker in practice.
+      type: string
+      array: true
+      in: query
+      required: false
+    - name: businessProcess
+      description: Optional filter by business process type ID(s). Narrows results to specific process types (e.g., only hiring processes or compensation changes). Can specify multiple IDs as array.
+      type: string
+      array: true
+      in: query
+      required: false
+    - name: status
+      description: Optional filter by event status(es). Valid statuses include "In Progress", "Successfully Completed", "Denied", "Terminated". Can specify multiple statuses as array to get events in any of those states.
+      type: string
+      array: true
+      in: query
+      required: false
+    - name: initiatedOnOrAfter
+      description: Optional filter for events initiated on or after this date. Use ISO 8601 date format (YYYY-MM-DD). Useful for retrieving recent events.
+      type: string
+      in: query
+      required: false
+    - name: initiatedOnOrBefore
+      description: Optional filter for events initiated on or before this date. Use ISO 8601 date format (YYYY-MM-DD). Combine with initiatedOnOrAfter for date range queries.
+      type: string
+      in: query
+      required: false
+    - name: completedOnOrAfter
+      description: Optional filter for events completed on or after this date. Use ISO 8601 date format (YYYY-MM-DD). Only returns completed events within specified range.
+      type: string
+      in: query
+      required: false
+    - name: completedOnOrBefore
+      description: Optional filter for events completed on or before this date. Use ISO 8601 date format (YYYY-MM-DD). Combine with completedOnOrAfter for completion date ranges.
+      type: string
+      in: query
+      required: false
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_business_process_events
+      description: Get business process events from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: worker
+              value: ${inputs.worker}
+              in: query
+              condition: '{{present($.inputs.worker)}}'
+            - name: initiator
+              value: ${inputs.initiator}
+              in: query
+              condition: '{{present($.inputs.initiator)}}'
+            - name: businessProcess
+              value: ${inputs.businessProcess}
+              in: query
+              condition: '{{present($.inputs.businessProcess)}}'
+            - name: status
+              value: ${inputs.status}
+              in: query
+              condition: '{{present($.inputs.status)}}'
+            - name: initiatedOnOrAfter
+              value: ${inputs.initiatedOnOrAfter}
+              in: query
+              condition: '{{present($.inputs.initiatedOnOrAfter)}}'
+            - name: initiatedOnOrBefore
+              value: ${inputs.initiatedOnOrBefore}
+              in: query
+              condition: '{{present($.inputs.initiatedOnOrBefore)}}'
+            - name: completedOnOrAfter
+              value: ${inputs.completedOnOrAfter}
+              in: query
+              condition: '{{present($.inputs.completedOnOrAfter)}}'
+            - name: completedOnOrBefore
+              value: ${inputs.completedOnOrBefore}
+              in: query
+              condition: '{{present($.inputs.completedOnOrBefore)}}'
+            - name: limit
+              value: ${inputs.limit}
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: ${inputs.offset}
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_business_process_events.output.data
+
+- actionId: get_business_process_event
+  categories:
+    - hris
+  actionType: get
+  schema: event
+  label: Get Business Process Event
+  description: Retrieves a specific business process event by ID with full details including status, initiator, and related workers. Access secured by Business Process Security Policy for the event.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the business process event to retrieve. This is the unique identifier returned in list_business_process_events action.
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_event_details
+      description: Get business process event details from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.get_event_details.output.data
+
+- actionId: cancel_event
+  categories:
+    - hris
+  actionType: create
+  label: Cancel Event
+  description: Cancels a business process event that is in progress or in error state. Requires a comment explaining the cancellation reason. User must have security access to cancel events.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the event to cancel. Get this from list_business_process_events action. Event must be in "In Progress" or "In Error" state to be cancelled.
+      type: string
+      in: path
+      required: true
+    - name: comment
+      description: Required. Comment explaining why the event is being cancelled. Must provide clear business justification as this is mandatory for cancel actions. Cancelled events cannot be restarted.
+      type: string
+      in: body
+      required: true
+  steps:
+    - stepId: cancel_business_process_event
+      description: Cancel business process event
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/cancel'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: comment
+              value: $.inputs.comment
+              in: body
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.cancel_business_process_event.output.data
+
+- actionId: rescind_event
+  categories:
+    - hris
+  actionType: create
+  label: Rescind Event
+  description: Rescinds a successfully completed business process event, reverting its effects. Requires a comment explaining the rescind reason. Cannot rescind delegated events or events with active subevents.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the event to rescind. Get this from list_business_process_events action. Event must be in "Successfully Completed" state and not have active sub-processes.
+      type: string
+      in: path
+      required: true
+    - name: comment
+      description: Required. Comment explaining why the completed event is being rescinded. Must provide clear business justification as rescinding reverses the completed process effects.
+      type: string
+      in: body
+      required: true
+  steps:
+    - stepId: rescind_business_process_event
+      description: Rescind business process event
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/rescind'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: comment
+              value: $.inputs.comment
+              in: body
+          response:
+            collection: false
+            dataKey: data
+  result:
+    data: $.steps.rescind_business_process_event.output.data

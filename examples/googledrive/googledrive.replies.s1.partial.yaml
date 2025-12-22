@@ -1,0 +1,272 @@
+- actionId: list_replies
+  categories:
+    - documents
+  actionType: list
+  label: List Replies
+  description: Lists a comment's replies
+  entrypointUrl: /files/{fileId}/comments/{commentId}/replies
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/list
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment
+      type: string
+      in: path
+      required: true
+    - name: fields
+      description: The fields parameter must be set to return the exact fields you need (e.g., 'replies(id,content,author)')
+      type: string
+      in: query
+      required: true
+    - name: pageSize
+      description: Maximum number of replies to return per page (max 100)
+      type: number
+      in: query
+      required: false
+    - name: includeDeleted
+      description: Whether to include deleted replies
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: list_replies
+      description: List replies from Google Drive API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}/replies
+          method: get
+          response:
+            dataKey: replies
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+            - name: pageSize
+              value: "{{inputs.pageSize}}"
+              in: query
+              condition: "{{present(inputs.pageSize)}}"
+            - name: includeDeleted
+              value: "{{inputs.includeDeleted}}"
+              in: query
+              condition: "{{present(inputs.includeDeleted)}}"
+  result:
+    data: $.steps.list_replies.output.data
+
+- actionId: get_reply
+  categories:
+    - documents
+  actionType: get
+  label: Get Reply
+  description: Gets a reply by ID
+  entrypointUrl: /files/{fileId}/comments/{commentId}/replies/{replyId}
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/get
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment
+      type: string
+      in: path
+      required: true
+    - name: replyId
+      description: The ID of the reply
+      type: string
+      in: path
+      required: true
+    - name: fields
+      description: The fields parameter to return the exact fields you need (e.g., 'id,content,author,createdTime')
+      type: string
+      in: query
+      required: true
+    - name: includeDeleted
+      description: Whether to return deleted replies
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_reply
+      description: Get reply from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}/replies/${inputs.replyId}
+          method: get
+          args:
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+            - name: includeDeleted
+              value: "{{inputs.includeDeleted}}"
+              in: query
+              condition: "{{present(inputs.includeDeleted)}}"
+  result:
+    data: $.steps.get_reply.output.data
+
+- actionId: create_reply
+  categories:
+    - documents
+  actionType: create
+  label: Create Reply
+  description: Creates a reply to a comment
+  entrypointUrl: /files/{fileId}/comments/{commentId}/replies
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/create
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment
+      type: string
+      in: path
+      required: true
+    - name: content
+      description: The plain text content of the reply (use @email to mention users)
+      type: string
+      in: body
+      required: true
+    - name: action
+      description: Action to perform (resolve or reopen the parent comment)
+      type: string
+      in: body
+      required: false
+    - name: fields
+      description: The fields to return in the response (e.g., 'id,content,author,createdTime')
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: create_reply
+      description: Create reply via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}/replies
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+              condition: "{{present(inputs.fields)}}"
+            - name: content
+              value: $.inputs.content
+              in: body
+            - name: action
+              value: $.inputs.action
+              in: body
+              condition: "{{present(inputs.action)}}"
+  result:
+    data: $.steps.create_reply.output.data
+
+- actionId: update_reply
+  categories:
+    - documents
+  actionType: update
+  label: Update Reply
+  description: Updates a reply with patch semantics
+  entrypointUrl: /files/{fileId}/comments/{commentId}/replies/{replyId}
+  entrypointHttpMethod: patch
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/update
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment
+      type: string
+      in: path
+      required: true
+    - name: replyId
+      description: The ID of the reply to update
+      type: string
+      in: path
+      required: true
+    - name: content
+      description: The new plain text content of the reply
+      type: string
+      in: body
+      required: false
+    - name: fields
+      description: The fields to return in the response (e.g., 'id,content,modifiedTime')
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: update_reply
+      description: Update reply via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}/replies/${inputs.replyId}
+          method: patch
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: fields
+              value: "{{inputs.fields}}"
+              in: query
+              condition: "{{present(inputs.fields)}}"
+            - name: content
+              value: $.inputs.content
+              in: body
+              condition: "{{present(inputs.content)}}"
+  result:
+    data: $.steps.update_reply.output.data
+
+- actionId: delete_reply
+  categories:
+    - documents
+  actionType: delete
+  label: Delete Reply
+  description: Deletes a reply
+  entrypointUrl: /files/{fileId}/comments/{commentId}/replies/{replyId}
+  entrypointHttpMethod: delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/replies/delete
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: commentId
+      description: The ID of the comment
+      type: string
+      in: path
+      required: true
+    - name: replyId
+      description: The ID of the reply to delete
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: delete_reply
+      description: Delete reply via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/comments/${inputs.commentId}/replies/${inputs.replyId}
+          method: delete
+  result:
+    data: $.steps.delete_reply.output.data

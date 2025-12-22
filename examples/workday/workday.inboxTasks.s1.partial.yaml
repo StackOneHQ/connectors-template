@@ -1,0 +1,87 @@
+- actionId: list_worker_inbox_tasks
+  categories:
+    - hris
+  actionType: list
+  label: List Worker Inbox Tasks
+  description: Retrieves all inbox tasks (pending approvals, reviews, and business process steps) for a specific worker. Inbox tasks represent action items that require worker attention, such as time off approvals, expense report reviews, or business process approvals.
+  inputs:
+    - name: worker_id
+      description: Worker ID to get inbox tasks for
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in a single response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of the first object in response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_inbox_tasks
+      description: Get inbox tasks from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/inboxTasks'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_inbox_tasks.output.data
+
+- actionId: get_worker_inbox_task
+  categories:
+    - hris
+  actionType: get
+  label: Get Worker Inbox Task
+  description: Retrieves details of a specific inbox task for a worker. Returns information about the task including assigned date, due date, status, step type, initiator, subject, and overall business process.
+  inputs:
+    - name: worker_id
+      description: Worker ID
+      type: string
+      in: path
+      required: true
+    - name: task_id
+      description: Inbox Task ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_inbox_task_details
+      description: Get inbox task details from Workday Common API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/common/v1/${credentials.tenant}"
+          url: '/workers/${inputs.worker_id}/inboxTasks/${inputs.task_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_inbox_task_details.output.data

@@ -1,0 +1,134 @@
+- actionId: list_access_proposals
+  categories:
+    - documents
+  actionType: list
+  label: List Access Proposals
+  description: |
+    Lists access proposals on a file.
+    Access proposals are created when users request access to files they don't have permission to view.
+  entrypointUrl: /files/{fileId}/accessproposals
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/list
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: list_access_proposals
+      description: List access proposals from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/accessproposals
+          method: get
+  result:
+    data: $.steps.list_access_proposals.output.data
+
+- actionId: get_access_proposal
+  categories:
+    - documents
+  actionType: get
+  label: Get Access Proposal
+  description: Retrieves an access proposal by ID
+  entrypointUrl: /files/{fileId}/accessproposals/{proposalId}
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/get
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: proposalId
+      description: The ID of the access proposal
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_access_proposal
+      description: Get access proposal from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/accessproposals/${inputs.proposalId}
+          method: get
+  result:
+    data: $.steps.get_access_proposal.output.data
+
+- actionId: resolve_access_proposal
+  categories:
+    - documents
+  actionType: create
+  label: Resolve Access Proposal
+  description: |
+    Approves or denies an access proposal.
+
+    Actions:
+    - accept: Grant the requested access and notify the requester
+    - deny: Deny the requested access and notify the requester
+  entrypointUrl: /files/{fileId}/accessproposals/{proposalId}:resolve
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/accessproposals/resolve
+  inputs:
+    - name: fileId
+      description: The ID of the file
+      type: string
+      in: path
+      required: true
+    - name: proposalId
+      description: The ID of the access proposal
+      type: string
+      in: path
+      required: true
+    - name: action
+      description: The action to take (accept or deny)
+      type: string
+      in: body
+      required: true
+    - name: role
+      description: The role to grant if accepting (reader, commenter, writer)
+      type: string
+      array: true
+      in: body
+      required: false
+    - name: sendNotification
+      description: Whether to send a notification email to the requester
+      type: boolean
+      in: body
+      required: false
+    - name: view
+      description: Indicates view type for permissions (BASIC or FULL)
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: resolve_access_proposal
+      description: Resolve access proposal via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /files/${inputs.fileId}/accessproposals/${inputs.proposalId}:resolve
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: action
+              value: $.inputs.action
+              in: body
+            - name: role
+              value: $.inputs.role
+              in: body
+              condition: "{{present(inputs.role)}}"
+            - name: sendNotification
+              value: $.inputs.sendNotification
+              in: body
+              condition: "{{present(inputs.sendNotification)}}"
+            - name: view
+              value: $.inputs.view
+              in: body
+              condition: "{{present(inputs.view)}}"
+  result:
+    data: $.steps.resolve_access_proposal.output.data

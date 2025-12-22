@@ -1,0 +1,749 @@
+- actionId: create_prospect
+  categories:
+    - ats
+  actionType: create
+  label: Create Prospect
+  description: Creates a new prospect (job candidate) in Workday Recruiting. Prospects represent potential employees in the talent pipeline. Required fields include candidate name and country, with at least email or phone number for contact.
+  inputs:
+    # Required: Candidate Name
+    - name: first_name
+      description: Candidate's first/given name
+      type: string
+      in: body
+      required: true
+    - name: last_name
+      description: Candidate's last/family name
+      type: string
+      in: body
+      required: true
+    - name: country_id
+      description: Country ID for the candidate name (required by Workday)
+      type: string
+      in: body
+      required: true
+    # Required: Contact Information (at least one)
+    - name: email
+      description: Candidate's email address (required if phone not provided)
+      type: string
+      in: body
+      required: false
+    - name: phone_number
+      description: Candidate's phone number (required if email not provided)
+      type: string
+      in: body
+      required: false
+    - name: country_phone_code_id
+      description: Country phone code ID (required if phone_number provided)
+      type: string
+      in: body
+      required: false
+    - name: phone_device_type_id
+      description: Phone device type ID (required if phone_number provided)
+      type: string
+      in: body
+      required: false
+    # Optional: Additional Name Components
+    - name: middle_name
+      description: Candidate's middle name
+      type: string
+      in: body
+      required: false
+    - name: prefix
+      description: Name prefix (e.g., Mr., Mrs., Dr.)
+      type: string
+      in: body
+      required: false
+    # Optional: Recruiting Metadata
+    - name: source_id
+      description: Source of the candidate (e.g., job board, referral)
+      type: string
+      in: body
+      required: false
+    - name: referred_by_worker_id
+      description: Worker ID of the person who referred this candidate
+      type: string
+      in: body
+      required: false
+    - name: contact_consent
+      description: Whether candidate agrees to be contacted (true/false)
+      type: boolean
+      in: body
+      required: false
+    - name: candidate_pool_ids
+      description: Array of candidate pool IDs to assign the prospect to
+      type: string
+      array: true
+      in: body
+      required: false
+    - name: candidate_tag_ids
+      description: Array of candidate tag IDs to categorize the prospect
+      type: string
+      array: true
+      in: body
+      required: false
+  steps:
+    - stepId: create_prospect_record
+      description: Create a new prospect in Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: candidate
+              value:
+                name:
+                  country:
+                    id: $.inputs.country_id
+                  firstName: $.inputs.first_name
+                  lastName: $.inputs.last_name
+                  middleName: $.inputs.middle_name
+                  prefix: $.inputs.prefix
+                email:
+                  - emailAddress: $.inputs.email
+              in: body
+              condition: '{{present($.inputs.email)}}'
+            - name: candidate
+              value:
+                name:
+                  country:
+                    id: $.inputs.country_id
+                  firstName: $.inputs.first_name
+                  lastName: $.inputs.last_name
+                  middleName: $.inputs.middle_name
+                  prefix: $.inputs.prefix
+                phone:
+                  - phoneNumber: $.inputs.phone_number
+                    countryPhoneCode:
+                      id: $.inputs.country_phone_code_id
+                    deviceType:
+                      id: $.inputs.phone_device_type_id
+              in: body
+              condition: '{{present($.inputs.phone_number) && !present($.inputs.email)}}'
+            - name: source
+              value:
+                id: $.inputs.source_id
+              in: body
+              condition: '{{present($.inputs.source_id)}}'
+            - name: referredBy
+              value:
+                id: $.inputs.referred_by_worker_id
+              in: body
+              condition: '{{present($.inputs.referred_by_worker_id)}}'
+            - name: contactConsent
+              value: $.inputs.contact_consent
+              in: body
+              condition: '{{present($.inputs.contact_consent)}}'
+            - name: candidatePools
+              value: $.inputs.candidate_pool_ids
+              in: body
+              condition: '{{present($.inputs.candidate_pool_ids)}}'
+            - name: candidateTags
+              value: $.inputs.candidate_tag_ids
+              in: body
+              condition: '{{present($.inputs.candidate_tag_ids)}}'
+  result:
+    data: $.steps.create_prospect_record.output.data
+
+- actionId: get_prospect
+  categories:
+    - ats
+  actionType: get
+  label: Get Prospect
+  description: Retrieves details of a specific prospect (job candidate) from Workday Recruiting by their ID
+  inputs:
+    - name: id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_prospect_details
+      description: Get prospect details from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_prospect_details.output.data
+
+- actionId: list_prospect_languages
+  categories:
+    - ats
+  actionType: list
+  label: List Prospect Languages
+  description: Retrieves all language skills for a specific prospect from Workday Recruiting
+  inputs:
+    - name: prospect_id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in a single response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of the first object in response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_prospect_languages
+      description: Get prospect language skills from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.prospect_id}/languages'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_prospect_languages.output.data
+
+- actionId: create_prospect_language
+  categories:
+    - ats
+  actionType: create
+  label: Add Prospect Language
+  description: Adds a language skill to a prospect's profile in Workday Recruiting. Specify language proficiency levels for reading, writing, speaking, and listening.
+  inputs:
+    - name: prospect_id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+    - name: language_id
+      description: Language ID (e.g., English, Spanish, French)
+      type: string
+      in: body
+      required: true
+    # Ability Types: reading, writing, speaking, listening
+    - name: reading_ability_id
+      description: Reading proficiency level ID
+      type: string
+      in: body
+      required: false
+    - name: writing_ability_id
+      description: Writing proficiency level ID
+      type: string
+      in: body
+      required: false
+    - name: speaking_ability_id
+      description: Speaking proficiency level ID
+      type: string
+      in: body
+      required: false
+    - name: listening_ability_id
+      description: Listening proficiency level ID
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_language_skill
+      description: Add language skill to prospect in Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.prospect_id}/languages'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: language
+              value:
+                id: $.inputs.language_id
+              in: body
+            - name: abilities
+              value:
+                - abilityType:
+                    id: reading
+                  ability:
+                    id: $.inputs.reading_ability_id
+                - abilityType:
+                    id: writing
+                  ability:
+                    id: $.inputs.writing_ability_id
+                - abilityType:
+                    id: speaking
+                  ability:
+                    id: $.inputs.speaking_ability_id
+                - abilityType:
+                    id: listening
+                  ability:
+                    id: $.inputs.listening_ability_id
+              in: body
+  result:
+    data: $.steps.add_language_skill.output.data
+
+- actionId: list_prospect_skills
+  categories:
+    - ats
+  actionType: list
+  label: List Prospect Skills
+  description: Retrieves all skills for a specific prospect from Workday Recruiting
+  inputs:
+    - name: prospect_id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of the first object in response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_prospect_skills
+      description: Get prospect skills from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.prospect_id}/skillItems'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_prospect_skills.output.data
+
+- actionId: create_prospect_skill
+  categories:
+    - ats
+  actionType: create
+  label: Add Prospect Skill
+  description: Adds a skill to a prospect's profile in Workday Recruiting with optional proficiency rating and last used date
+  inputs:
+    - name: prospect_id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+    - name: skill_id
+      description: Skill ID
+      type: string
+      in: body
+      required: true
+    - name: rating_id
+      description: Skill proficiency rating ID (optional)
+      type: string
+      in: body
+      required: false
+    - name: last_used_date
+      description: Date the skill was last used (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_skill_item
+      description: Add skill item to prospect in Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.prospect_id}/skillItems'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: skill
+              value:
+                id: $.inputs.skill_id
+              in: body
+            - name: rating
+              value:
+                id: $.inputs.rating_id
+              in: body
+              condition: '{{present($.inputs.rating_id)}}'
+            - name: lastUsedDate
+              value: $.inputs.last_used_date
+              in: body
+              condition: '{{present($.inputs.last_used_date)}}'
+  result:
+    data: $.steps.add_skill_item.output.data
+
+- actionId: list_prospect_education
+  categories:
+    - ats
+  actionType: list
+  label: List Prospect Education
+  description: Retrieves all education records for a specific prospect from Workday Recruiting
+  inputs:
+    - name: prospect_id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of the first object in response collection
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_prospect_education
+      description: Get prospect education records from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.prospect_id}/education'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_prospect_education.output.data
+
+- actionId: create_prospect_education
+  categories:
+    - ats
+  actionType: create
+  label: Add Prospect Education
+  description: Adds an education record to a prospect's profile in Workday Recruiting including school name, degree, field of study, and dates
+  inputs:
+    - name: prospect_id
+      description: Prospect ID
+      type: string
+      in: path
+      required: true
+    - name: school_name
+      description: Name of the educational institution
+      type: string
+      in: body
+      required: true
+    - name: degree_id
+      description: Degree ID (e.g., Bachelor's, Master's, PhD)
+      type: string
+      in: body
+      required: false
+    - name: field_of_study_id
+      description: Field of study ID (e.g., Computer Science, Business)
+      type: string
+      in: body
+      required: false
+    - name: start_date
+      description: Education start date (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: false
+    - name: end_date
+      description: Education end date (YYYY-MM-DD format)
+      type: string
+      in: body
+      required: false
+    - name: grade_average
+      description: Grade point average or equivalent
+      type: string
+      in: body
+      required: false
+    - name: country_id
+      description: Country ID where the school is located
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: add_education_record
+      description: Add education record to prospect in Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/prospects/${inputs.prospect_id}/education'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: schoolName
+              value: $.inputs.school_name
+              in: body
+            - name: degree
+              value:
+                id: $.inputs.degree_id
+              in: body
+              condition: '{{present($.inputs.degree_id)}}'
+            - name: fieldOfStudy
+              value:
+                id: $.inputs.field_of_study_id
+              in: body
+              condition: '{{present($.inputs.field_of_study_id)}}'
+            - name: startDate
+              value: $.inputs.start_date
+              in: body
+              condition: '{{present($.inputs.start_date)}}'
+            - name: endDate
+              value: $.inputs.end_date
+              in: body
+              condition: '{{present($.inputs.end_date)}}'
+            - name: gradeAverage
+              value: $.inputs.grade_average
+              in: body
+              condition: '{{present($.inputs.grade_average)}}'
+            - name: country
+              value:
+                id: $.inputs.country_id
+              in: body
+              condition: '{{present($.inputs.country_id)}}'
+  result:
+    data: $.steps.add_education_record.output.data
+
+- actionId: list_job_postings
+  categories:
+    - ats
+  actionType: list
+  label: List Job Postings
+  description: Retrieves all active job postings from Workday Recruiting. Job postings represent open positions available for application by prospects.
+  inputs:
+    - name: limit
+      description: Maximum number of objects in a single response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of the first object in response collection
+      type: number
+      in: query
+      required: false
+    - name: search
+      description: Search term to filter job postings by title or description
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_job_postings
+      description: Get job postings from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/jobPostings'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+            - name: search
+              value: $.inputs.search
+              in: query
+              condition: '{{present($.inputs.search)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_job_postings.output.data
+
+- actionId: get_job_posting
+  categories:
+    - ats
+  actionType: get
+  label: Get Job Posting
+  description: Retrieves details of a specific job posting from Workday Recruiting by its ID
+  inputs:
+    - name: id
+      description: Job Posting ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_job_posting_details
+      description: Get job posting details from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/jobPostings/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_job_posting_details.output.data
+
+- actionId: list_interviews
+  categories:
+    - ats
+  actionType: list
+  label: List Interviews
+  description: Retrieves all interview events from Workday Recruiting with optional filtering by status
+  inputs:
+    - name: limit
+      description: Maximum number of objects in a single response
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of the first object in response collection
+      type: number
+      in: query
+      required: false
+    - name: status
+      description: Filter by interview status (e.g., SCHEDULED, PENDING_FEEDBACK, COMPLETED)
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_interviews
+      description: Get interview events from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/interviews'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+            - name: status
+              value: $.inputs.status
+              in: query
+              condition: '{{present($.inputs.status)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_interviews.output.data
+
+- actionId: get_interview
+  categories:
+    - ats
+  actionType: get
+  label: Get Interview
+  description: Retrieves details of a specific interview event from Workday Recruiting by its ID
+  inputs:
+    - name: id
+      description: Interview ID
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_interview_details
+      description: Get interview details from Workday Recruiting API v4
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/recruiting/v4/${credentials.tenant}"
+          url: '/interviews/${inputs.id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_interview_details.output.data

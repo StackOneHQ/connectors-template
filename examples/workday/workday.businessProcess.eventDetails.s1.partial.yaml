@@ -1,0 +1,265 @@
+# Event Details Actions - Comments, attachments, and step collections for events
+- actionId: list_event_completed_steps
+  categories:
+    - hris
+  actionType: list
+  schema: completedSteps
+  label: List Event Completed Steps
+  description: Retrieves all completed steps for a specific business process event showing which steps have been finished and by whom. Useful for audit trails and process tracking.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the business process event whose completed steps to retrieve. Get this from list_business_process_events or get_business_process_event actions.
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_completed_steps
+      description: Get completed steps for event from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/completedSteps'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_completed_steps.output.data
+
+- actionId: list_event_in_progress_steps
+  categories:
+    - hris
+  actionType: list
+  schema: inProgressSteps
+  label: List Event In-Progress Steps
+  description: Retrieves all in-progress steps for a specific business process event showing which steps are currently being worked on. Includes awaiting persons and due dates for active tasks.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the business process event whose in-progress steps to retrieve. Get this from list_business_process_events or get_business_process_event actions.
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_in_progress_steps
+      description: Get in-progress steps for event from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/inProgressSteps'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_in_progress_steps.output.data
+
+- actionId: list_event_remaining_steps
+  categories:
+    - hris
+  actionType: list
+  schema: remainingSteps
+  label: List Event Remaining Steps
+  description: Retrieves all remaining steps for a specific business process event showing what steps are yet to be completed. Includes step order and security group assignments.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the business process event whose remaining steps to retrieve. Get this from list_business_process_events or get_business_process_event actions.
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_remaining_steps
+      description: Get remaining steps for event from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/remainingSteps'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_remaining_steps.output.data
+
+- actionId: list_event_comments
+  categories:
+    - hris
+  actionType: list
+  schema: comments
+  label: List Event Comments
+  description: Retrieves all comments added to a specific business process event including commenter details and timestamps. Provides audit trail of communication during process execution.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the business process event whose comments to retrieve. Get this from list_business_process_events or get_business_process_event actions.
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_event_comments
+      description: Get comments for event from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/comments'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_event_comments.output.data
+
+- actionId: list_event_attachments
+  categories:
+    - hris
+  actionType: list
+  schema: attachments
+  label: List Event Attachments
+  description: Retrieves all attachments for a specific business process event that the user has permission to view. Includes file metadata, content type, and uploader information.
+  inputs:
+    - name: event_id
+      description: Required. The Workday ID (WID) of the business process event whose attachments to retrieve. Get this from list_business_process_events or get_business_process_event actions.
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Optional maximum number of results to return. Default is 20, maximum allowed is 100. Use for pagination control.
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Optional zero-based index of first result. Use with limit for pagination (e.g., offset=20 with limit=20 gets results 21-40).
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_event_attachments
+      description: Get attachments for event from Workday Business Process API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/businessProcess/v1/${credentials.tenant}"
+          url: '/events/${inputs.event_id}/attachments'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: Accept
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_event_attachments.output.data

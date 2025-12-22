@@ -1,5 +1,5 @@
 {
-    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
     "vcs": {
         "enabled": false,
         "clientKind": "git",
@@ -7,7 +7,7 @@
     },
     "files": {
         "ignoreUnknown": false,
-        "ignore": ["**/node_modules/**", "**/dist/**", "**/__snapshots__/**"],
+        "includes": ["**", "!**/node_modules/**", "!**/dist/**", "!**/__snapshots__/**"],
         "maxSize": 31457280
     },
     "formatter": {
@@ -20,9 +20,7 @@
         "lineWidth": 100,
         "bracketSpacing": false
     },
-    "organizeImports": {
-        "enabled": true
-    },
+    "assist": { "actions": { "source": { "organizeImports": "on" } } },
     "linter": {
         "enabled": true,
         "rules": {
@@ -35,14 +33,14 @@
             "correctness": {
                 "noPrecisionLoss": "error",
                 "noUnusedImports": "error",
-                "noUnusedVariables": "error",
-                "useArrayLiterals": "off"
+                "noUnusedVariables": "error"
             },
             "style": {
                 "noNamespace": "error",
                 "useAsConstAssertion": "error",
                 "useBlockStatements": "off",
-                "noNonNullAssertion": "warn"
+                "noNonNullAssertion": "warn",
+                "useArrayLiterals": "off"
             },
             "suspicious": {
                 "noExplicitAny": "error",
@@ -76,28 +74,26 @@
     },
     "overrides": [
         {
-            "include": ["*.json"],
+            "includes": ["**/*.json"],
             "formatter": {
                 "lineWidth": 100
             }
         },
         {
-            "include": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+            "includes": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
             "linter": {
                 "rules": {
                     "correctness": {
                         "noConstAssign": "error",
                         "noGlobalObjectCalls": "off",
                         "noInvalidConstructorSuper": "off",
-                        "noNewSymbol": "off",
                         "noSetterReturn": "off",
                         "noUndeclaredVariables": "off",
                         "noUnreachable": "off",
-                        "noUnreachableSuper": "off"
+                        "noUnreachableSuper": "off",
+                        "noInvalidBuiltinInstantiation": "off"
                     },
                     "style": {
-                        "noArguments": "error",
-                        "noVar": "error",
                         "useConst": "error",
                         "useBlockStatements": "error"
                     },
@@ -109,19 +105,23 @@
                         "noImportAssign": "off",
                         "noRedeclare": "off",
                         "noUnsafeNegation": "off",
-                        "useGetterReturn": "off"
+                        "useGetterReturn": "off",
+                        "noVar": "error"
+                    },
+                    "complexity": {
+                        "noArguments": "error"
                     }
                 }
             }
         },
         {
-            "include": ["*.yaml", "*.yml"],
+            "includes": ["**/*.yaml", "**/*.yml"],
             "formatter": {
                 "indentWidth": 2
             }
         },
         {
-            "include": ["**/*.spec.ts", "**/*.e2e-spec.ts", "test/", "scripts/"],
+            "includes": ["**/*.spec.ts", "**/*.e2e-spec.ts", "**/test/**", "**/scripts/**"],
             "javascript": {
                 "globals": [
                     "expect",

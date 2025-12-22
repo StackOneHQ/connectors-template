@@ -1,0 +1,250 @@
+- actionId: list_employees
+  categories:
+    - hris
+  actionType: get
+  schema: employees
+  label: List Employees
+  description: Get all employees. Use the Get employee fields endpoint to determine available fields for your organization.
+  resources: https://developers.lattice.com/
+  inputs:
+    - name: offset
+      description: Number of items to skip before starting to return results (default 0)
+      type: number
+      in: query
+      required: false
+    - name: limit
+      description: Maximum number of items to return per page (max 100, default 25)
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_employees
+      description: Fetch all employees from Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/employees
+          method: get
+          args:
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: "{{present($.inputs.offset)}}"
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: "{{present($.inputs.limit)}}"
+          response:
+            collection: true
+  result:
+    data: $.steps.get_employees.output.data
+
+- actionId: get_employee
+  categories:
+    - hris
+  actionType: get
+  schema: employees
+  entrypointUrl: /employees/:id
+  entrypointHttpMethod: get
+  label: Get Employee
+  description: Retrieve detailed information for a specific employee by ID. Use the Get employee fields endpoint to determine available fields for your organization.
+  resources: https://developers.lattice.com/
+  inputs:
+    - name: id
+      description: The unique identifier for the employee
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_employee
+      description: Fetch specific employee from Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/employees/${inputs.id}
+          method: get
+          response:
+            collection: false
+  result:
+    data: $.steps.get_employee.output.data
+
+- actionId: create_employee
+  categories:
+    - hris
+  actionType: create
+  schema: employees
+  entrypointUrl: /employees
+  entrypointHttpMethod: post
+  label: Create Employee
+  description: Create a new employee in the Lattice HRIS system. Use the Get employee fields endpoint to determine available fields for your organization.
+  resources: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_createemployee
+  inputs:
+    - name: personal
+      description: Personal information fields. Available fields include birthdate (string), company_employee_id (string), legal_first_name (string), legal_middle_name (string), legal_last_name (string), preferred_first_name (string), preferred_last_name (string)
+      type: object
+      in: body
+      required: false
+    - name: contact_information
+      description: Contact information fields. Available fields include personal_email (string), phone_number (string), work_email (string), address_line_1 (string), address_line_2 (string), address_city (string), address_state (object), address_country (object), address_postal_code (string)
+      type: object
+      in: body
+      required: false
+    - name: employment_details
+      description: Employment details fields. Available fields include employment_status (string), employment_type (object), start_date (string), termination_date (string), termination_reason (object), termination_type (object)
+      type: object
+      in: body
+      required: false
+    - name: role_details
+      description: Role details fields. Available fields include department (object), manager (object), effective_at (string), job_title (string)
+      type: object
+      in: body
+      required: false
+    - name: pay_types
+      description: Pay type information fields. Available fields include base_pay_amount (number), base_pay_currency (object), base_pay_effective_at (string), base_pay_schedule (object), base_pay_payment_type (object)
+      type: object
+      in: body
+      required: false
+    - name: demographic
+      description: Demographic information fields. Available fields include gender_identity (object), binary_sex (object)
+      type: object
+      in: body
+      required: false
+    - name: sensitive_data
+      description: Sensitive data fields. Available fields include ssn (string)
+      type: object
+      in: body
+      required: false
+  steps:
+    - stepId: create_employee
+      description: Create new employee in Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/employees
+          method: post
+          args:
+            - name: personal
+              value: $.inputs.personal
+              in: body
+              condition: "{{present($.inputs.personal)}}"
+            - name: contact_information
+              value: $.inputs.contact_information
+              in: body
+              condition: "{{present($.inputs.contact_information)}}"
+            - name: employment_details
+              value: $.inputs.employment_details
+              in: body
+              condition: "{{present($.inputs.employment_details)}}"
+            - name: role_details
+              value: $.inputs.role_details
+              in: body
+              condition: "{{present($.inputs.role_details)}}"
+            - name: pay_types
+              value: $.inputs.pay_types
+              in: body
+              condition: "{{present($.inputs.pay_types)}}"
+            - name: demographic
+              value: $.inputs.demographic
+              in: body
+              condition: "{{present($.inputs.demographic)}}"
+            - name: sensitive_data
+              value: $.inputs.sensitive_data
+              in: body
+              condition: "{{present($.inputs.sensitive_data)}}"
+          response:
+            collection: false
+  result:
+    data: $.steps.create_employee.output.data
+
+- actionId: update_employee
+  categories:
+    - hris
+  actionType: update
+  schema: employees
+  entrypointUrl: /employees/:id
+  entrypointHttpMethod: patch
+  label: Update Employee
+  description: Update an existing employee's information by ID. Use the Get employee fields endpoint to determine available fields for your organization.
+  resources: https://developers.lattice.com/v2/reference/restapiv2employeescontroller_updateemployee
+  inputs:
+    - name: id
+      description: The unique identifier for the employee
+      type: string
+      in: path
+      required: true
+    - name: personal
+      description: Personal information fields. Available fields include birthdate (string), company_employee_id (string), legal_first_name (string), legal_middle_name (string), legal_last_name (string), preferred_first_name (string), preferred_last_name (string)
+      type: object
+      in: body
+      required: false
+    - name: contact_information
+      description: Contact information fields. Available fields include personal_email (string), phone_number (string), work_email (string), address_line_1 (string), address_line_2 (string), address_city (string), address_state (object), address_country (object), address_postal_code (string)
+      type: object
+      in: body
+      required: false
+    - name: employment_details
+      description: Employment details fields. Available fields include employment_status (string), employment_type (object), start_date (string), termination_date (string), termination_reason (object), termination_type (object)
+      type: object
+      in: body
+      required: false
+    - name: role_details
+      description: Role details fields. Available fields include department (object), manager (object), effective_at (string), job_title (string)
+      type: object
+      in: body
+      required: false
+    - name: pay_types
+      description: Pay type information fields. Available fields include base_pay_amount (number), base_pay_currency (object), base_pay_effective_at (string), base_pay_schedule (object), base_pay_payment_type (object)
+      type: object
+      in: body
+      required: false
+    - name: demographic
+      description: Demographic information fields. Available fields include gender_identity (object), binary_sex (object)
+      type: object
+      in: body
+      required: false
+    - name: sensitive_data
+      description: Sensitive data fields. Available fields include ssn (string)
+      type: object
+      in: body
+      required: false
+  steps:
+    - stepId: update_employee
+      description: Update employee in Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/employees/${inputs.id}
+          method: patch
+          args:
+            - name: personal
+              value: $.inputs.personal
+              in: body
+              condition: "{{present($.inputs.personal)}}"
+            - name: contact_information
+              value: $.inputs.contact_information
+              in: body
+              condition: "{{present($.inputs.contact_information)}}"
+            - name: employment_details
+              value: $.inputs.employment_details
+              in: body
+              condition: "{{present($.inputs.employment_details)}}"
+            - name: role_details
+              value: $.inputs.role_details
+              in: body
+              condition: "{{present($.inputs.role_details)}}"
+            - name: pay_types
+              value: $.inputs.pay_types
+              in: body
+              condition: "{{present($.inputs.pay_types)}}"
+            - name: demographic
+              value: $.inputs.demographic
+              in: body
+              condition: "{{present($.inputs.demographic)}}"
+            - name: sensitive_data
+              value: $.inputs.sensitive_data
+              in: body
+              condition: "{{present($.inputs.sensitive_data)}}"
+          response:
+            collection: false
+  result:
+    data: $.steps.update_employee.output.data

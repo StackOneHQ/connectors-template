@@ -1,0 +1,676 @@
+- actionId: list_custom_object_definitions
+  categories:
+    - hris
+  actionType: list
+  label: List Custom Object Definitions
+  description: Retrieve all custom object definitions for both multi-instance and single-instance custom objects from Workday Custom Object Definition API v1
+  inputs:
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_custom_object_definitions
+      description: Get custom object definitions from Workday Custom Object Definition API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObjectDefinition/v1/${credentials.tenant}"
+          url: '/definitions'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_custom_object_definitions.output.data
+- actionId: get_custom_object_definition
+  categories:
+    - hris
+  actionType: get
+  label: Get Custom Object Definition
+  description: Retrieve a specific custom object definition for a multi-instance or single-instance custom object from Workday Custom Object Definition API v1
+  inputs:
+    - name: definition_id
+      description: The Workday ID of the custom object definition
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_custom_object_definition
+      description: Get custom object definition from Workday Custom Object Definition API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObjectDefinition/v1/${credentials.tenant}"
+          url: '/definitions/${inputs.definition_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_custom_object_definition.output.data
+- actionId: list_custom_field_types
+  categories:
+    - hris
+  actionType: list
+  label: List Custom Field Types
+  description: Retrieve all custom field types from Workday Custom Object Definition API v1
+  inputs:
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_custom_field_types
+      description: Get custom field types from Workday Custom Object Definition API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObjectDefinition/v1/${credentials.tenant}"
+          url: '/fieldTypes'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_custom_field_types.output.data
+- actionId: get_custom_field_type
+  categories:
+    - hris
+  actionType: get
+  label: Get Custom Field Type
+  description: Retrieve a specific custom field type from Workday Custom Object Definition API v1
+  inputs:
+    - name: field_type_id
+      description: The Workday ID of the custom field type
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_custom_field_type
+      description: Get custom field type from Workday Custom Object Definition API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObjectDefinition/v1/${credentials.tenant}"
+          url: '/fieldTypes/${inputs.field_type_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_custom_field_type.output.data
+- actionId: list_custom_object_fields
+  categories:
+    - hris
+  actionType: list
+  label: List Custom Object Fields
+  description: Retrieve all fields in a custom object definition from Workday Custom Object Definition API v1
+  inputs:
+    - name: definition_id
+      description: The Workday ID of the custom object definition
+      type: string
+      in: path
+      required: true
+    - name: limit
+      description: Maximum number of objects in response (default 20, max 100)
+      type: number
+      in: query
+      required: false
+    - name: offset
+      description: Zero-based index of first object in response
+      type: number
+      in: query
+      required: false
+  steps:
+    - stepId: get_custom_object_fields
+      description: Get custom object fields from Workday Custom Object Definition API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObjectDefinition/v1/${credentials.tenant}"
+          url: '/definitions/${inputs.definition_id}/fields'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: '{{present($.inputs.limit)}}'
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: '{{present($.inputs.offset)}}'
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.get_custom_object_fields.output.data
+- actionId: get_custom_object_field
+  categories:
+    - hris
+  actionType: get
+  label: Get Custom Object Field
+  description: Retrieve a specific field in a custom object definition from Workday Custom Object Definition API v1
+  inputs:
+    - name: definition_id
+      description: The Workday ID of the custom object definition
+      type: string
+      in: path
+      required: true
+    - name: field_id
+      description: The Workday ID of the custom field
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_custom_object_field
+      description: Get custom object field from Workday Custom Object Definition API v1
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObjectDefinition/v1/${credentials.tenant}"
+          url: '/definitions/${inputs.definition_id}/fields/${inputs.field_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_custom_object_field.output.data
+- actionId: get_single_instance_custom_object
+  categories:
+    - hris
+  actionType: get
+  label: Get Single-Instance Custom Object
+  description: Retrieve a single-instance custom object instance with custom field data from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: custom_object_id
+      description: The Workday ID of the extended Workday object instance or the custom object instance
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_single_instance_custom_object
+      description: Get single-instance custom object with field data from Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}/${inputs.custom_object_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_single_instance_custom_object.output.data
+- actionId: create_single_instance_custom_object
+  categories:
+    - hris
+  actionType: create
+  label: Create Single-Instance Custom Object
+  description: Create or update a single-instance custom object with custom field data from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: update_if_exists
+      description: If true, updates the custom object instance if it exists (default false)
+      type: boolean
+      in: query
+      required: false
+    - name: bulk
+      description: If true, creates or updates multiple custom object instances as an array (default false)
+      type: boolean
+      in: query
+      required: false
+    - name: custom_object_data
+      description: The custom object data including extended business object ID and custom fields
+      type: object
+      in: body
+      required: true
+      properties:
+        - name: worker
+          description: Worker reference object with ID (or other extended business object type)
+          type: object
+          required: false
+          properties:
+            - name: id
+              description: The Workday ID of the worker or extended business object
+              type: string
+              required: true
+        - name: textField
+          description: Text field value
+          type: string
+          required: false
+        - name: integerField
+          description: Integer field value
+          type: number
+          required: false
+        - name: booleanField
+          description: Boolean field value
+          type: boolean
+          required: false
+        - name: dateField
+          description: Date field value (YYYY-MM-DD format)
+          type: string
+          required: false
+        - name: decimalField
+          description: Decimal field value
+          type: number
+          required: false
+  steps:
+    - stepId: create_single_instance_custom_object
+      description: Create or update single-instance custom object with Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: updateIfExists
+              value: $.inputs.update_if_exists
+              in: query
+              condition: '{{present($.inputs.update_if_exists)}}'
+            - name: bulk
+              value: $.inputs.bulk
+              in: query
+              condition: '{{present($.inputs.bulk)}}'
+            - name: body
+              value: $.inputs.custom_object_data
+              in: body
+  result:
+    data: $.steps.create_single_instance_custom_object.output.data
+- actionId: update_single_instance_custom_object
+  categories:
+    - hris
+  actionType: update
+  label: Update Single-Instance Custom Object
+  description: Update an existing single-instance custom object with custom field data from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: custom_object_id
+      description: The Workday ID of the extended Workday object instance or the custom object instance
+      type: string
+      in: path
+      required: true
+    - name: custom_object_fields
+      description: The custom object fields to update
+      type: object
+      in: body
+      required: true
+      properties:
+        - name: textField
+          description: Text field value
+          type: string
+          required: false
+        - name: integerField
+          description: Integer field value
+          type: number
+          required: false
+        - name: booleanField
+          description: Boolean field value
+          type: boolean
+          required: false
+        - name: dateField
+          description: Date field value (YYYY-MM-DD format)
+          type: string
+          required: false
+        - name: decimalField
+          description: Decimal field value
+          type: number
+          required: false
+  steps:
+    - stepId: update_single_instance_custom_object
+      description: Update single-instance custom object with Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}/${inputs.custom_object_id}'
+          method: put
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: body
+              value: $.inputs.custom_object_fields
+              in: body
+  result:
+    data: $.steps.update_single_instance_custom_object.output.data
+- actionId: delete_single_instance_custom_object
+  categories:
+    - hris
+  actionType: delete
+  label: Delete Single-Instance Custom Object
+  description: Delete a single-instance custom object from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: custom_object_id
+      description: The Workday ID of the extended Workday object instance or the custom object instance
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: delete_single_instance_custom_object
+      description: Delete single-instance custom object with Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}/${inputs.custom_object_id}'
+          method: delete
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.delete_single_instance_custom_object.output.data
+- actionId: list_multi_instance_custom_objects
+  categories:
+    - hris
+  actionType: list
+  label: List Multi-Instance Custom Objects
+  description: Retrieve all multi-instance custom objects for a specific business object instance from Workday Custom Object Data API v2
+  inputs:
+    - name: business_object_resource
+      description: The resource name of the extended Workday business object (e.g., workers, applicants, locations)
+      type: string
+      in: path
+      required: true
+    - name: business_object_id
+      description: The Workday ID of the extended business object instance
+      type: string
+      in: path
+      required: true
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: list_multi_instance_custom_objects
+      description: Get multi-instance custom objects collection from Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/${inputs.business_object_resource}/${inputs.business_object_id}/customObjects/${inputs.custom_object_alias}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+          response:
+            collection: true
+            dataKey: data
+  result:
+    data: $.steps.list_multi_instance_custom_objects.output.data
+- actionId: get_multi_instance_custom_object
+  categories:
+    - hris
+  actionType: get
+  label: Get Multi-Instance Custom Object
+  description: Retrieve a specific multi-instance custom object with custom field data from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: custom_object_id
+      description: The custom object instance ID or {businessObjectWID};{referenceIdAlias}={referenceIdValue} format
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_multi_instance_custom_object
+      description: Get multi-instance custom object with field data from Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}/${inputs.custom_object_id}'
+          method: get
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.get_multi_instance_custom_object.output.data
+- actionId: create_multi_instance_custom_object
+  categories:
+    - hris
+  actionType: create
+  label: Create Multi-Instance Custom Object
+  description: Create one or more multi-instance custom objects with custom field data from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: update_if_exists
+      description: If true, updates the custom object instance if it exists (default false)
+      type: boolean
+      in: query
+      required: false
+    - name: bulk
+      description: If true, creates or updates multiple custom object instances as an array (default false)
+      type: boolean
+      in: query
+      required: false
+    - name: custom_object_data
+      description: The custom object data including extended business object ID, reference ID, and custom fields
+      type: object
+      in: body
+      required: true
+      properties:
+        - name: worker
+          description: Worker reference object with ID (or other extended business object type)
+          type: object
+          required: false
+          properties:
+            - name: id
+              description: The Workday ID of the worker or extended business object
+              type: string
+              required: true
+        - name: textField
+          description: Text field value
+          type: string
+          required: false
+        - name: integerField
+          description: Integer field value
+          type: number
+          required: false
+        - name: booleanField
+          description: Boolean field value
+          type: boolean
+          required: false
+        - name: dateField
+          description: Date field value (YYYY-MM-DD format)
+          type: string
+          required: false
+        - name: decimalField
+          description: Decimal field value
+          type: number
+          required: false
+  steps:
+    - stepId: create_multi_instance_custom_object
+      description: Create or update multi-instance custom object with Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}'
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: updateIfExists
+              value: $.inputs.update_if_exists
+              in: query
+              condition: '{{present($.inputs.update_if_exists)}}'
+            - name: bulk
+              value: $.inputs.bulk
+              in: query
+              condition: '{{present($.inputs.bulk)}}'
+            - name: body
+              value: $.inputs.custom_object_data
+              in: body
+  result:
+    data: $.steps.create_multi_instance_custom_object.output.data
+- actionId: update_multi_instance_custom_object
+  categories:
+    - hris
+  actionType: update
+  label: Update Multi-Instance Custom Object
+  description: Update an existing multi-instance custom object with custom field data from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: custom_object_id
+      description: The custom object instance ID or {businessObjectWID};{referenceIdAlias}={referenceIdValue} format
+      type: string
+      in: path
+      required: true
+    - name: custom_object_fields
+      description: The custom object fields to update
+      type: object
+      in: body
+      required: true
+      properties:
+        - name: textField
+          description: Text field value
+          type: string
+          required: false
+        - name: integerField
+          description: Integer field value
+          type: number
+          required: false
+        - name: booleanField
+          description: Boolean field value
+          type: boolean
+          required: false
+        - name: dateField
+          description: Date field value (YYYY-MM-DD format)
+          type: string
+          required: false
+        - name: decimalField
+          description: Decimal field value
+          type: number
+          required: false
+  steps:
+    - stepId: update_multi_instance_custom_object
+      description: Update multi-instance custom object with Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}/${inputs.custom_object_id}'
+          method: put
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: body
+              value: $.inputs.custom_object_fields
+              in: body
+  result:
+    data: $.steps.update_multi_instance_custom_object.output.data
+- actionId: delete_multi_instance_custom_object
+  categories:
+    - hris
+  actionType: delete
+  label: Delete Multi-Instance Custom Object
+  description: Delete a multi-instance custom object from Workday Custom Object Data API v2
+  inputs:
+    - name: custom_object_alias
+      description: The web service alias of the custom object (from View Custom Object task in Workday)
+      type: string
+      in: path
+      required: true
+    - name: custom_object_id
+      description: The custom object instance ID or {businessObjectWID};{referenceIdAlias}={referenceIdValue} format
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: delete_multi_instance_custom_object
+      description: Delete multi-instance custom object with Workday Custom Object Data API v2
+      stepFunction:
+        functionName: request
+        parameters:
+          baseUrl: "https://${credentials.workday_host}/ccx/api/customObject/v2/${credentials.tenant}"
+          url: '/customObjects/${inputs.custom_object_alias}/${inputs.custom_object_id}'
+          method: delete
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+  result:
+    data: $.steps.delete_multi_instance_custom_object.output.data

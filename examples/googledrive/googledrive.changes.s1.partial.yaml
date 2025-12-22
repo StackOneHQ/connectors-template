@@ -1,0 +1,330 @@
+- actionId: get_changes_start_page_token
+  categories:
+    - documents
+  actionType: get
+  label: Get Changes Start Page Token
+  description: |
+    Gets the starting pageToken for listing future changes.
+    Use this to initialize change tracking for sync applications.
+  entrypointUrl: /changes/startPageToken
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken
+  inputs:
+    - name: driveId
+      description: The shared drive from which changes are returned (requires supportsAllDrives)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_start_token
+      description: Get changes start page token from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /changes/startPageToken
+          method: get
+          args:
+            - name: driveId
+              value: "{{inputs.driveId}}"
+              in: query
+              condition: "{{present(inputs.driveId)}}"
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+  result:
+    data: $.steps.get_start_token.output.data
+
+- actionId: list_changes
+  categories:
+    - documents
+  actionType: list
+  label: List Changes
+  description: |
+    Lists the changes for a user or shared drive.
+    Use pageToken from getStartPageToken to start, then use nextPageToken for incremental updates.
+  entrypointUrl: /changes
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list
+  inputs:
+    - name: pageToken
+      description: Page token for changes (from getStartPageToken or previous list_changes response)
+      type: string
+      in: query
+      required: true
+    - name: driveId
+      description: The shared drive from which changes are returned
+      type: string
+      in: query
+      required: false
+    - name: includeCorpusRemovals
+      description: Whether to include changes indicating that items have been removed from the corpus
+      type: boolean
+      in: query
+      required: false
+    - name: includeItemsFromAllDrives
+      description: Whether to include files from all drives
+      type: boolean
+      in: query
+      required: false
+    - name: includeLabels
+      description: Comma-separated list of label IDs to include in labelInfo
+      type: string
+      in: query
+      required: false
+    - name: includePermissionsForView
+      description: Specifies which additional view's permissions to include (published)
+      type: string
+      in: query
+      required: false
+    - name: includeRemoved
+      description: Whether to include changes indicating that items have been removed from the list of changes
+      type: boolean
+      in: query
+      required: false
+    - name: pageSize
+      description: Maximum number of changes to return per page (max 1000)
+      type: number
+      in: query
+      required: false
+    - name: restrictToMyDrive
+      description: Whether to restrict to changes inside the My Drive hierarchy
+      type: boolean
+      in: query
+      required: false
+    - name: spaces
+      description: Comma-separated list of spaces to query (drive, appDataFolder, photos)
+      type: string
+      in: query
+      required: false
+    - name: supportsAllDrives
+      description: Whether to support files in shared drives
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: list_changes
+      description: List changes from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /changes
+          method: get
+          args:
+            - name: pageToken
+              value: "{{inputs.pageToken}}"
+              in: query
+            - name: driveId
+              value: "{{inputs.driveId}}"
+              in: query
+              condition: "{{present(inputs.driveId)}}"
+            - name: includeCorpusRemovals
+              value: "{{inputs.includeCorpusRemovals}}"
+              in: query
+              condition: "{{present(inputs.includeCorpusRemovals)}}"
+            - name: includeItemsFromAllDrives
+              value: "{{inputs.includeItemsFromAllDrives}}"
+              in: query
+              condition: "{{present(inputs.includeItemsFromAllDrives)}}"
+            - name: includeLabels
+              value: "{{inputs.includeLabels}}"
+              in: query
+              condition: "{{present(inputs.includeLabels)}}"
+            - name: includePermissionsForView
+              value: "{{inputs.includePermissionsForView}}"
+              in: query
+              condition: "{{present(inputs.includePermissionsForView)}}"
+            - name: includeRemoved
+              value: "{{inputs.includeRemoved}}"
+              in: query
+              condition: "{{present(inputs.includeRemoved)}}"
+            - name: pageSize
+              value: "{{inputs.pageSize}}"
+              in: query
+              condition: "{{present(inputs.pageSize)}}"
+            - name: restrictToMyDrive
+              value: "{{inputs.restrictToMyDrive}}"
+              in: query
+              condition: "{{present(inputs.restrictToMyDrive)}}"
+            - name: spaces
+              value: "{{inputs.spaces}}"
+              in: query
+              condition: "{{present(inputs.spaces)}}"
+            - name: supportsAllDrives
+              value: "{{inputs.supportsAllDrives}}"
+              in: query
+              condition: "{{present(inputs.supportsAllDrives)}}"
+  result:
+    data: $.steps.list_changes.output.data
+# Not tested
+# - actionId: watch_changes
+#   categories:
+#     - documents
+#   actionType: create
+#   label: Watch Changes
+#   description: |
+#     Subscribes to changes for a user via push notifications.
+#     Requires a webhook URL to receive notifications.
+#   entrypointUrl: /changes/watch
+#   entrypointHttpMethod: post
+#   resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/watch
+#   inputs:
+#     - name: pageToken
+#       description: Page token for changes (from getStartPageToken)
+#       type: string
+#       in: query
+#       required: true
+#     - name: id
+#       description: A UUID or similar unique string that identifies this channel
+#       type: string
+#       in: body
+#       required: true
+#     - name: type
+#       description: The type of delivery mechanism (web_hook)
+#       type: string
+#       in: body
+#       required: true
+#     - name: address
+#       description: The address where notifications are delivered (webhook URL)
+#       type: string
+#       in: body
+#       required: true
+#     - name: expiration
+#       description: Expiration time as Unix timestamp in milliseconds
+#       type: number
+#       in: body
+#       required: false
+#     - name: token
+#       description: An arbitrary string for validation
+#       type: string
+#       in: body
+#       required: false
+#     - name: driveId
+#       description: The shared drive from which changes are returned
+#       type: string
+#       in: query
+#       required: false
+#     - name: includeCorpusRemovals
+#       description: Whether to include changes indicating corpus removals
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: includeItemsFromAllDrives
+#       description: Whether to include files from all drives
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: includeLabels
+#       description: Comma-separated list of label IDs to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: includePermissionsForView
+#       description: Specifies which additional view's permissions to include
+#       type: string
+#       in: query
+#       required: false
+#     - name: includeRemoved
+#       description: Whether to include removed items
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: pageSize
+#       description: Maximum number of changes to return per notification (max 1000)
+#       type: number
+#       in: query
+#       required: false
+#     - name: restrictToMyDrive
+#       description: Whether to restrict to My Drive hierarchy
+#       type: boolean
+#       in: query
+#       required: false
+#     - name: spaces
+#       description: Comma-separated list of spaces to query
+#       type: string
+#       in: query
+#       required: false
+#     - name: supportsAllDrives
+#       description: Whether to support files in shared drives
+#       type: boolean
+#       in: query
+#       required: false
+#   steps:
+#     - stepId: watch_changes
+#       description: Watch changes via Google Drive API
+#       stepFunction:
+#         functionName: request
+#         parameters:
+#           url: /changes/watch
+#           method: post
+#           args:
+#             - name: Content-Type
+#               value: application/json
+#               in: headers
+#             - name: pageToken
+#               value: '{{inputs.pageToken}}'
+#               in: query
+#             - name: id
+#               value: $.inputs.id
+#               in: body
+#             - name: type
+#               value: $.inputs.type
+#               in: body
+#             - name: address
+#               value: $.inputs.address
+#               in: body
+#             - name: expiration
+#               value: $.inputs.expiration
+#               in: body
+#               condition: '{{present(inputs.expiration)}}'
+#             - name: token
+#               value: $.inputs.token
+#               in: body
+#               condition: '{{present(inputs.token)}}'
+#             - name: driveId
+#               value: '{{inputs.driveId}}'
+#               in: query
+#               condition: '{{present(inputs.driveId)}}'
+#             - name: includeCorpusRemovals
+#               value: '{{inputs.includeCorpusRemovals}}'
+#               in: query
+#               condition: '{{present(inputs.includeCorpusRemovals)}}'
+#             - name: includeItemsFromAllDrives
+#               value: '{{inputs.includeItemsFromAllDrives}}'
+#               in: query
+#               condition: '{{present(inputs.includeItemsFromAllDrives)}}'
+#             - name: includeLabels
+#               value: '{{inputs.includeLabels}}'
+#               in: query
+#               condition: '{{present(inputs.includeLabels)}}'
+#             - name: includePermissionsForView
+#               value: '{{inputs.includePermissionsForView}}'
+#               in: query
+#               condition: '{{present(inputs.includePermissionsForView)}}'
+#             - name: includeRemoved
+#               value: '{{inputs.includeRemoved}}'
+#               in: query
+#               condition: '{{present(inputs.includeRemoved)}}'
+#             - name: pageSize
+#               value: '{{inputs.pageSize}}'
+#               in: query
+#               condition: '{{present(inputs.pageSize)}}'
+#             - name: restrictToMyDrive
+#               value: '{{inputs.restrictToMyDrive}}'
+#               in: query
+#               condition: '{{present(inputs.restrictToMyDrive)}}'
+#             - name: spaces
+#               value: '{{inputs.spaces}}'
+#               in: query
+#               condition: '{{present(inputs.spaces)}}'
+#             - name: supportsAllDrives
+#               value: '{{inputs.supportsAllDrives}}'
+#               in: query
+#               condition: '{{present(inputs.supportsAllDrives)}}'
+#   result:
+#     data: $.steps.watch_changes.output.data

@@ -1,0 +1,48 @@
+StackOne: 1.0.0
+info:
+  title: Gong
+  key: gong_crm
+  version: 1.0.0
+  description: Gong is a revenue intelligence platform that captures customer interactions and provides insights to sales teams.
+  assets:
+    icon: https://stackone-logos.com/api/gong/filled/png
+baseUrl: https://api.gong.io
+rateLimit:
+  mainRatelimit: 3
+authentication:
+  - apikey:
+      type: apikey
+      label: API Key
+      support:
+        link: https://docs.stackone.com/integration-guides/crm/gong
+        description: API Key authentication using Access Key and Access Key Secret
+      configFields:
+        - key: accessKey
+          label: Access Key
+          type: text
+          required: true
+          secret: false
+          placeholder: your_access_key
+          description: Can be found in the Gong Admin Center > Ecosystem > API
+        - key: accessKeySecret
+          label: Access Key Secret
+          type: password
+          required: true
+          secret: true
+          placeholder: your_access_key_secret
+          description: Can be found in the Gong Admin Center > Ecosystem > API
+      environments:
+        - key: production
+          name: Production
+      authorization:
+        type: basic
+        username: ${credentials.accessKey}
+        password: ${credentials.accessKeySecret}
+        encoding: base64
+actions:
+  $ref: gong.calls
+  $ref: gong.users
+  $ref: gong.meetings
+  $ref: gong.stats
+  $ref: gong.workspaces
+  $ref: gong.library

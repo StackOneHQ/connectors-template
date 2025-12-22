@@ -1,0 +1,152 @@
+StackOne: 1.0.0
+info:
+  title: Workday
+  key: workday
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/workday/filled/png
+  description: Workday connector
+baseUrl: "https://${credentials.workday_host}/ccx/api/v1/${credentials.tenant}"
+authentication:
+  - oauth2:
+      type: oauth2
+      label: OAuth 2.0 (Rest API)
+      support:
+        link: https://docs.stackone.com/integration-guides/hris/workday
+        description: Login to your Workday account to connect your data.
+      authorization:
+        type: oauth2
+        authorizationUrl: "https://${credentials.auth_host}/${credentials.tenant}/authorize"
+        authorizationParams:
+          response_type: 'code'
+          client_id: $.credentials.clientId
+          redirect_uri: '${apiHostUri}/connect/oauth2/workday/callback'
+          scope: '{{$.credentials.scopes ?? "staffing person absenceManagement system"}}'
+          state: 'stackone'
+        tokenUrl: "https://${credentials.workday_host}/ccx/oauth2/${credentials.tenant}/token"
+        token: $.credentials.accessToken
+        includeBearer: true
+      setupFields:
+        - key: workday_host
+          label: Workday Host URL
+          type: text
+          required: true
+          secret: false
+          placeholder: wd2-impl-services1.workday.com
+          description: Your Workday REST API hostname (e.g. 'wd2-impl-services1.workday.com').
+          tooltip: Extract from REST API URL when creating API client (the hostname part before '/ccx/api').
+        - key: auth_host
+          label: Auth Host URL
+          type: text
+          required: true
+          secret: false
+          placeholder: impl.wd12.myworkday.com
+          description: Your Workday Auth hostname (e.g. 'impl.wd12.myworkday.com').
+          tooltip: Extract from Auth URL when creating API client (the hostname part before '/authorize').
+        - key: tenant
+          label: Tenant ID
+          type: text
+          required: true
+          secret: false
+          placeholder: mycompany_pt1
+          description: Your Workday tenant identifier (e.g. 'mycompany_pt1').
+          tooltip: Extract from REST API URL or Auth URL when creating API client (the tenant part in the URL path).
+        - key: clientId
+          label: Client ID
+          type: text
+          required: true
+          secret: false
+          placeholder: A1B2C3D4-E5F6-7890-ABCD-EF1234567890
+          description: OAuth2 Client ID for your Workday API integration.
+          tooltip: Found in Applications > Integrations > [Your Integration] > OAuth 2.0 Clients tab.
+        - key: clientSecret
+          label: Client Secret
+          type: password
+          required: true
+          secret: true
+          placeholder: •••••••••••••••••••••••••••••••••••••••
+          description: OAuth2 Client Secret paired with your Client ID.
+          tooltip: Generated in Applications > Integrations > [Your Integration] > OAuth 2.0 Clients. Only shown once during creation.
+        - key: scopes
+          label: OAuth Scopes
+          type: text
+          required: false
+          secret: false
+          placeholder: staffing person absenceManagement system
+          description: "Space-separated OAuth scopes required for all actions. Default: 'staffing person absenceManagement system'."
+          tooltip: "Configure these exact scopes in Applications > Integrations > [Your Integration] > OAuth 2.0 Clients > Scope tab."
+      refreshAuthentication:
+        schedule: '0 * * * *'
+        action:
+          actionId: refresh_token_workday
+          categories:
+            - internal
+          actionType: refresh_token
+          label: Refresh Token
+          description: Refresh Workday OAuth2 token
+          steps:
+            - stepId: refresh_token_request
+              description: Get new access token
+              stepFunction:
+                functionName: request
+                parameters:
+                  baseUrl: "https://${credentials.workday_host}/ccx/oauth2/${credentials.tenant}"
+                  url: '/token'
+                  method: post
+                  authorization:
+                    type: basic
+                    username: $.credentials.clientId
+                    password: $.credentials.clientSecret
+                    encoding: base64
+                  args:
+                    - name: Content-Type
+                      value: application/x-www-form-urlencoded
+                      in: headers
+                    - name: grant_type
+                      value: refresh_token
+                      in: body
+                    - name: refresh_token
+                      value: $.credentials.refreshToken
+                      in: body
+            - stepId: map_tokens
+              description: Map tokens data
+              stepFunction:
+                functionName: map_fields
+                version: '2'
+                parameters:
+                  fields:
+                    - targetFieldKey: accessToken
+                      expression: $.access_token
+                      type: string
+                    - targetFieldKey: refreshToken
+                      expression: $.refresh_token
+                      type: string
+                    - targetFieldKey: expiresIn
+                      expression: '3600'
+                      type: number
+                  dataSource: $.steps.refresh_token_request.output.data
+          result:
+            data: $.steps.map_tokens.output.data
+      environments:
+        - key: production
+          name: Production
+      testActions:
+        - action: list_workers
+          required: true
+actions:
+  $ref: workday.workers
+  $ref: workday.prospects
+  $ref: workday.inboxTasks
+  $ref: workday.timeOff
+  $ref: workday.personalInfo
+  $ref: workday.personalInfoUpdate
+  $ref: workday.customObjects
+  $ref: workday.wql
+  $ref: workday.businessProcess.types
+  $ref: workday.businessProcess.events
+  $ref: workday.businessProcess.eventSteps
+  $ref: workday.businessProcess.stepActions
+  $ref: workday.businessProcess.eventDetails
+  $ref: workday.jobChangeReasons
+  $ref: workday.organizations
+  

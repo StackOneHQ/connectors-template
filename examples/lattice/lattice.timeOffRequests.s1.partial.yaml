@@ -1,0 +1,105 @@
+- actionId: list_time_off_requests
+  categories:
+    - hris
+  actionType: get
+  schema: time_off_requests
+  label: List Time Off Requests
+  description: Get all time off requests from employees
+  resources: https://developers.lattice.com/
+  inputs:
+    - name: offset
+      description: Number of items to skip before starting to return results (default 0)
+      type: number
+      in: query
+      required: false
+    - name: limit
+      description: Maximum number of items to return per page (max 100, default 25)
+      type: number
+      in: query
+      required: false
+    - name: employee_id
+      description: Filter time off requests by employee ID
+      type: string
+      in: query
+      required: false
+    - name: status
+      description: Filter time off requests by status (PENDING, APPROVED, CANCELLED, REJECTED)
+      type: string
+      in: query
+      required: false
+    - name: start_date
+      description: Filter time off requests starting from this date (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+    - name: end_date
+      description: Filter time off requests up to this date (YYYY-MM-DD)
+      type: string
+      in: query
+      required: false
+  steps:
+    - stepId: get_time_off_requests
+      description: Fetch all time off requests from Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/time-off/requests
+          method: get
+          args:
+            - name: offset
+              value: $.inputs.offset
+              in: query
+              condition: "{{present($.inputs.offset)}}"
+            - name: limit
+              value: $.inputs.limit
+              in: query
+              condition: "{{present($.inputs.limit)}}"
+            - name: employee_ids[0]
+              value: $.inputs.employee_id
+              in: query
+              condition: "{{present($.inputs.employee_id)}}"
+            - name: statuses[0]
+              value: $.inputs.status
+              in: query
+              condition: "{{present($.inputs.status)}}"
+            - name: start_date
+              value: $.inputs.start_date
+              in: query
+              condition: "{{present($.inputs.start_date)}}"
+            - name: end_date
+              value: $.inputs.end_date
+              in: query
+              condition: "{{present($.inputs.end_date)}}"
+          response:
+            collection: true
+  result:
+    data: $.steps.get_time_off_requests.output.data
+
+- actionId: get_time_off_request
+  categories:
+    - hris
+  actionType: get
+  schema: time_off_requests
+  entrypointUrl: /time_off_requests/:id
+  entrypointHttpMethod: get
+  label: Get Time Off Request
+  description: Retrieve detailed information for a specific time off request by ID
+  resources: https://developers.lattice.com/
+  inputs:
+    - name: id
+      description: The unique identifier for the time off request
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: get_time_off_request
+      description: Fetch specific time off request from Lattice HRIS v2 API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /v2/time-off/requests/${inputs.id}
+          method: get
+          response:
+            collection: false
+  result:
+    data: $.steps.get_time_off_request.output.data

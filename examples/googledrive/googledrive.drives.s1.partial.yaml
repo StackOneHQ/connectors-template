@@ -1,0 +1,321 @@
+- actionId: list_drives
+  categories:
+    - documents
+  actionType: list
+  label: List Shared Drives
+  description: Lists the user's shared drives (formerly Team Drives)
+  entrypointUrl: /drives
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/list
+  inputs:
+    - name: pageSize
+      description: Maximum number of shared drives to return (max 100)
+      type: number
+      in: query
+      required: false
+    - name: q
+      description: Query string for filtering shared drives
+      type: string
+      in: query
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: list_drives
+      description: List shared drives from Google Drive API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /drives
+          method: get
+          response:
+            dataKey: drives
+            nextKey: nextPageToken
+          iterator:
+            key: pageToken
+            in: query
+          args:
+            - name: pageSize
+              value: "{{inputs.pageSize}}"
+              in: query
+              condition: "{{present(inputs.pageSize)}}"
+            - name: q
+              value: "{{inputs.q}}"
+              in: query
+              condition: "{{present(inputs.q)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.list_drives.output.data
+
+- actionId: get_drive
+  categories:
+    - documents
+  actionType: get
+  label: Get Shared Drive
+  description: Gets a shared drive's metadata by ID
+  entrypointUrl: /drives/{driveId}
+  entrypointHttpMethod: get
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/get
+  inputs:
+    - name: driveId
+      description: The ID of the shared drive
+      type: string
+      in: path
+      required: true
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: get_drive
+      description: Get shared drive from Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /drives/${inputs.driveId}
+          method: get
+          args:
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.get_drive.output.data
+
+- actionId: create_drive
+  categories:
+    - documents
+  actionType: create
+  label: Create Shared Drive
+  description: Creates a new shared drive
+  entrypointUrl: /drives
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/create
+  inputs:
+    - name: requestId
+      description: Required ID for creating a shared drive (for idempotency)
+      type: string
+      in: query
+      required: true
+    - name: name
+      description: Name of the shared drive
+      type: string
+      in: body
+      required: true
+    - name: themeId
+      description: ID of the theme from which the background image and color will be set
+      type: string
+      in: body
+      required: false
+    - name: colorRgb
+      description: RGB hex color value for the shared drive
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: create_drive
+      description: Create shared drive via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /drives
+          method: post
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: requestId
+              value: "{{inputs.requestId}}"
+              in: query
+            - name: name
+              value: $.inputs.name
+              in: body
+            - name: themeId
+              value: $.inputs.themeId
+              in: body
+              condition: "{{present(inputs.themeId)}}"
+            - name: colorRgb
+              value: $.inputs.colorRgb
+              in: body
+              condition: "{{present(inputs.colorRgb)}}"
+  result:
+    data: $.steps.create_drive.output.data
+
+- actionId: update_drive
+  categories:
+    - documents
+  actionType: update
+  label: Update Shared Drive
+  description: Updates the metadata for a shared drive
+  entrypointUrl: /drives/{driveId}
+  entrypointHttpMethod: patch
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/update
+  inputs:
+    - name: driveId
+      description: The ID of the shared drive
+      type: string
+      in: path
+      required: true
+    - name: name
+      description: Name of the shared drive
+      type: string
+      in: body
+      required: false
+    - name: themeId
+      description: ID of the theme from which the background image and color will be set
+      type: string
+      in: body
+      required: false
+    - name: colorRgb
+      description: RGB hex color value for the shared drive
+      type: string
+      in: body
+      required: false
+    - name: backgroundImageFile
+      description: Image file for the background image
+      type: object
+      in: body
+      required: false
+    - name: restrictions
+      description: Set of restrictions that apply to this shared drive or items inside
+      type: object
+      in: body
+      required: false
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: update_drive
+      description: Update shared drive via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /drives/${inputs.driveId}
+          method: patch
+          args:
+            - name: Content-Type
+              value: application/json
+              in: headers
+            - name: name
+              value: $.inputs.name
+              in: body
+              condition: "{{present(inputs.name)}}"
+            - name: themeId
+              value: $.inputs.themeId
+              in: body
+              condition: "{{present(inputs.themeId)}}"
+            - name: colorRgb
+              value: $.inputs.colorRgb
+              in: body
+              condition: "{{present(inputs.colorRgb)}}"
+            - name: backgroundImageFile
+              value: $.inputs.backgroundImageFile
+              in: body
+              condition: "{{present(inputs.backgroundImageFile)}}"
+            - name: restrictions
+              value: $.inputs.restrictions
+              in: body
+              condition: "{{present(inputs.restrictions)}}"
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.update_drive.output.data
+
+- actionId: delete_drive
+  categories:
+    - documents
+  actionType: delete
+  label: Delete Shared Drive
+  description: Permanently deletes a shared drive for which the user is an organizer
+  entrypointUrl: /drives/{driveId}
+  entrypointHttpMethod: delete
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/delete
+  inputs:
+    - name: driveId
+      description: The ID of the shared drive to delete
+      type: string
+      in: path
+      required: true
+    - name: useDomainAdminAccess
+      description: Issue the request as a domain administrator
+      type: boolean
+      in: query
+      required: false
+  steps:
+    - stepId: delete_drive
+      description: Delete shared drive via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /drives/${inputs.driveId}
+          method: delete
+          args:
+            - name: useDomainAdminAccess
+              value: "{{inputs.useDomainAdminAccess}}"
+              in: query
+              condition: "{{present(inputs.useDomainAdminAccess)}}"
+  result:
+    data: $.steps.delete_drive.output.data
+
+- actionId: hide_drive
+  categories:
+    - documents
+  actionType: update
+  label: Hide Shared Drive
+  description: Hides a shared drive from the default view
+  entrypointUrl: /drives/{driveId}/hide
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/hide
+  inputs:
+    - name: driveId
+      description: The ID of the shared drive to hide
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: hide_drive
+      description: Hide shared drive via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /drives/${inputs.driveId}/hide
+          method: post
+  result:
+    data: $.steps.hide_drive.output.data
+
+- actionId: unhide_drive
+  categories:
+    - documents
+  actionType: update
+  label: Unhide Shared Drive
+  description: Restores a shared drive to the default view
+  entrypointUrl: /drives/{driveId}/unhide
+  entrypointHttpMethod: post
+  resources: https://developers.google.com/workspace/drive/api/reference/rest/v3/drives/unhide
+  inputs:
+    - name: driveId
+      description: The ID of the shared drive to unhide
+      type: string
+      in: path
+      required: true
+  steps:
+    - stepId: unhide_drive
+      description: Unhide shared drive via Google Drive API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /drives/${inputs.driveId}/unhide
+          method: post
+  result:
+    data: $.steps.unhide_drive.output.data

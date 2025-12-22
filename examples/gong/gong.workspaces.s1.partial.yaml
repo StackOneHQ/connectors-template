@@ -1,0 +1,19 @@
+- actionId: list_workspaces
+  categories:
+    - crm
+  actionType: list
+  entrypointUrl: /workspaces
+  entrypointHttpMethod: get
+  schema: custom
+  label: List Workspaces
+  description: List all workspaces in Gong
+  steps:
+    - stepId: get_workspaces
+      description: Retrieve all workspaces
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/v2/workspaces'
+          method: get
+  result:
+    data: $.steps.get_workspaces.output.data
