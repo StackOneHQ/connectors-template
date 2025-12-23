@@ -37,7 +37,7 @@ To fork this repository:
 2. Install dependencies:
 
    ```bash
-   npm ci
+   npm install
    ```
 
    This will automatically:
