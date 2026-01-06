@@ -56,7 +56,7 @@ To fork this repository:
    This command will:
 
    - Authenticate via OAuth with StackOne
-   - Pull down the latest version of ```CLAUDE.md``` for this project
+   - Pull down the latest version of `CLAUDE.md` for this project
    - Securely store your access token as `STACKONE_FALCON_MCP_TOKEN` environment variable
    - Generate `.mcp.json` configuration for MCP servers
    - Configure the project for local development
