@@ -8,7 +8,7 @@ This repository contains a collection of connectors for and created by StackOne.
 
 ### Prerequisites
 
-- Node.js (v18 or higher recommended)
+- Node.js (v22 or higher recommended)
 - npm
 
 ### Fork This Repository
