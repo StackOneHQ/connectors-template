@@ -1,0 +1,111 @@
+StackOne: 1.0.0
+info:
+  title: HubSpot
+  key: hubspot
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/hubspot/filled/png
+  description: CRM platform for marketing, sales, and customer service
+
+baseUrl: https://api.hubapi.com
+
+rateLimit:
+  mainRatelimit: 10
+
+resources: https://developers.hubspot.com/docs/api/overview
+
+authentication:
+  - oauth2:
+      type: oauth2
+      label: OAuth 2.0
+      support:
+        link: https://developers.hubspot.com/docs/api/oauth-quickstart-guide
+        description: OAuth 2.0 authorization for HubSpot API access
+      setupFields:
+        - key: clientId
+          label: Client ID
+          type: text
+          required: true
+          placeholder: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+          description: OAuth client ID from your HubSpot app
+        - key: clientSecret
+          label: Client Secret
+          type: password
+          required: true
+          secret: true
+          placeholder: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+          description: OAuth client secret from your HubSpot app
+      authorization:
+        type: oauth2
+        authorizationUrl: https://app.hubspot.com/oauth/authorize
+        authorizationParams:
+          response_type: code
+          client_id: $.credentials.clientId
+          redirect_uri: ${apiHostUri}/connect/oauth2/hubspot/callback
+          scope: crm.objects.contacts.read crm.objects.contacts.write
+        tokenUrl: https://api.hubapi.com/oauth/v1/token
+        token: $.credentials.accessToken
+        includeBearer: true
+      refreshAuthentication:
+        action:
+          actionId: refresh_token_hubspot
+          categories:
+            - internal
+          actionType: refresh_token
+          label: Refresh Token
+          description: Refresh HubSpot OAuth2 token
+          steps:
+            - stepId: refresh_token_request
+              description: Get new access token
+              stepFunction:
+                functionName: request
+                parameters:
+                  baseUrl: https://api.hubapi.com
+                  url: /oauth/v1/token
+                  method: post
+                  authorization:
+                    type: none
+                  args:
+                    - name: Content-Type
+                      value: application/x-www-form-urlencoded
+                      in: headers
+                    - name: grant_type
+                      value: refresh_token
+                      in: body
+                    - name: refresh_token
+                      value: $.credentials.refreshToken
+                      in: body
+                    - name: client_id
+                      value: $.credentials.clientId
+                      in: body
+                    - name: client_secret
+                      value: $.credentials.clientSecret
+                      in: body
+            - stepId: map_tokens
+              description: Map tokens data
+              stepFunction:
+                functionName: map_fields
+                version: "2"
+                parameters:
+                  fields:
+                    - targetFieldKey: accessToken
+                      expression: $.access_token
+                      type: string
+                    - targetFieldKey: refreshToken
+                      expression: $.refresh_token
+                      type: string
+                    - targetFieldKey: expiresIn
+                      expression: $.expires_in
+                      type: number
+                  dataSource: $.steps.refresh_token_request.output.data
+          result:
+            data: $.steps.map_tokens.output.data
+      environments:
+        - key: production
+          name: Production
+      testActions:
+        - action: unified_list_contacts
+          required: true
+
+actions:
+  $ref: hubspot-unified.contacts

@@ -1,0 +1,179 @@
+- actionId: unified_list_contacts
+  categories:
+    - crm
+  actionType: list
+  label: List Contacts
+  description: Get list of all contacts
+  details: Returns a paginated list of contacts from HubSpot CRM, mapped to the unified contact schema. Supports filtering and pagination via cursor.
+  resources: https://developers.hubspot.com/docs/api/crm/contacts
+  inputs:
+    - name: page_size
+      description: Number of contacts to return per page
+      type: number
+      in: query
+      required: false
+    - name: after
+      description: Cursor for pagination (next page token)
+      type: string
+      in: query
+      required: false
+  fieldConfigs:
+    # Core identity fields
+    - targetFieldKey: id
+      expression: $.id
+      type: string
+    - targetFieldKey: remote_id
+      expression: $.id
+      type: string
+
+    # Name fields
+    - targetFieldKey: first_name
+      expression: $.properties.firstname
+      type: string
+    - targetFieldKey: last_name
+      expression: $.properties.lastname
+      type: string
+
+    # Contact information arrays
+    - targetFieldKey: emails
+      expression: "[$.properties.email]"
+      type: string
+      array: true
+    - targetFieldKey: phone_numbers
+      expression: '[{"number": $.properties.phone, "type": "primary"}]'
+      type: object
+      array: true
+
+    # Company information
+    - targetFieldKey: company_name
+      expression: $.properties.company
+      type: string
+
+    # Timestamps
+    - targetFieldKey: created_at
+      expression: $.createdAt
+      type: datetime_string
+    - targetFieldKey: updated_at
+      expression: $.updatedAt
+      type: datetime_string
+
+  steps:
+    - stepId: fetch_contacts
+      description: Fetch contacts from HubSpot API
+      stepFunction:
+        functionName: paginated_request
+        parameters:
+          url: /crm/v3/objects/contacts
+          method: get
+          response:
+            dataKey: results
+            nextKey: paging.next.after
+          iterator:
+            key: after
+            in: query
+          args:
+            - name: limit
+              value: $.inputs.page_size
+              in: query
+              condition: "{{present(inputs.page_size)}}"
+            - name: properties
+              value: firstname,lastname,email,phone,company
+              in: query
+    - stepId: map_contacts
+      description: Map HubSpot fields to unified schema
+      stepFunction:
+        functionName: map_fields
+        version: "2"
+        parameters:
+          dataSource: $.steps.fetch_contacts.output.data
+    - stepId: typecast_contacts
+      description: Convert types to match unified schema
+      stepFunction:
+        functionName: typecast
+        version: "2"
+        parameters:
+          dataSource: $.steps.map_contacts.output.data
+  result:
+    data: $.steps.typecast_contacts.output.data
+
+- actionId: unified_get_contact
+  categories:
+    - crm
+  actionType: get
+  label: Get Contact
+  description: Get a single contact by ID
+  details: Retrieves detailed information for a specific contact from HubSpot CRM, mapped to the unified contact schema.
+  resources: https://developers.hubspot.com/docs/api/crm/contacts
+  inputs:
+    - name: id
+      description: Contact ID
+      type: string
+      in: path
+      required: true
+  fieldConfigs:
+    # Core identity fields
+    - targetFieldKey: id
+      expression: $.id
+      type: string
+    - targetFieldKey: remote_id
+      expression: $.id
+      type: string
+
+    # Name fields
+    - targetFieldKey: first_name
+      expression: $.properties.firstname
+      type: string
+    - targetFieldKey: last_name
+      expression: $.properties.lastname
+      type: string
+
+    # Contact information arrays
+    - targetFieldKey: emails
+      expression: "[$.properties.email]"
+      type: string
+      array: true
+    - targetFieldKey: phone_numbers
+      expression: '[{"number": $.properties.phone, "type": "primary"}]'
+      type: object
+      array: true
+
+    # Company information
+    - targetFieldKey: company_name
+      expression: $.properties.company
+      type: string
+
+    # Timestamps
+    - targetFieldKey: created_at
+      expression: $.createdAt
+      type: datetime_string
+    - targetFieldKey: updated_at
+      expression: $.updatedAt
+      type: datetime_string
+  steps:
+    - stepId: fetch_contact
+      description: Fetch single contact from HubSpot API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /crm/v3/objects/contacts/${inputs.id}
+          method: get
+          args:
+            - name: properties
+              value: firstname,lastname,email,phone,company
+              in: query
+    - stepId: map_contact
+      description: Map HubSpot fields to unified schema
+      stepFunction:
+        functionName: map_fields
+        version: "2"
+        parameters:
+          dataSource: $.steps.fetch_contact.output.data
+    - stepId: typecast_contact
+      description: Convert types to match unified schema
+      stepFunction:
+        functionName: typecast
+        version: "2"
+        parameters:
+          dataSource: $.steps.map_contact.output.data
+  result:
+    data: $.steps.typecast_contact.output.data

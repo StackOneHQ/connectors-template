@@ -1,0 +1,50 @@
+StackOne: 1.0.0
+info:
+  title: BambooHR
+  key: bamboohr
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/bamboohr/filled/png
+  description: Human resources information system for managing employee data
+
+baseUrl: https://api.bamboohr.com/api/gateway.php/${credentials.subdomain}/v1
+
+rateLimit:
+  mainRatelimit: 10
+
+resources: https://documentation.bamboohr.com/docs
+
+authentication:
+  - custom:
+      type: custom
+      label: API Key
+      support:
+        link: https://documentation.bamboohr.com/docs/getting-started
+        description: API key authentication for BambooHR
+      authorization:
+        type: basic
+        username: $.credentials.apiKey
+        password: x
+      configFields:
+        - key: apiKey
+          label: API Key
+          type: password
+          required: true
+          secret: true
+          placeholder: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          description: Your BambooHR API key from Settings > API Keys
+        - key: subdomain
+          label: Subdomain
+          type: text
+          required: true
+          placeholder: yourcompany
+          description: Your BambooHR subdomain (e.g., 'yourcompany' from yourcompany.bamboohr.com)
+      environments:
+        - key: production
+          name: Production
+      testActions:
+        - action: unified_list_employees
+          required: true
+
+actions:
+  $ref: bamboohr-unified.employees
