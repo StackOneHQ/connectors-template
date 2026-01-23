@@ -1,0 +1,295 @@
+- actionId: unified_list_employees
+  categories:
+    - hris
+  actionType: list
+  label: List Employees
+  description: Get list of all employees
+  details: Returns a list of employees from BambooHR, mapped to the unified employee schema. Includes employment status, contact information, and job details.
+  resources: https://documentation.bamboohr.com/docs/employees
+  inputs:
+    - name: status
+      description: Filter by employment status (active, inactive)
+      type: string
+      in: query
+      required: false
+  fieldConfigs:
+    # Core identity fields
+    - targetFieldKey: id
+      expression: $.id
+      type: string
+    - targetFieldKey: remote_id
+      expression: $.id
+      type: string
+    - targetFieldKey: employee_number
+      expression: $.employeeNumber
+      type: string
+
+    # Name fields
+    - targetFieldKey: first_name
+      expression: $.firstName
+      type: string
+    - targetFieldKey: last_name
+      expression: $.lastName
+      type: string
+    - targetFieldKey: display_full_name
+      expression: '{{$.firstName + " " + $.lastName}}'
+      type: string
+
+    # Contact information
+    - targetFieldKey: work_email
+      expression: $.workEmail
+      type: string
+    - targetFieldKey: personal_email
+      expression: $.homeEmail
+      type: string
+    - targetFieldKey: work_phone_number
+      expression: $.workPhone
+      type: string
+    - targetFieldKey: personal_phone_number
+      expression: $.mobilePhone
+      type: string
+
+    # Employment information
+    - targetFieldKey: hire_date
+      expression: $.hireDate
+      type: datetime_string
+    - targetFieldKey: termination_date
+      expression: $.terminationDate
+      type: datetime_string
+
+    # Employment status enum mapping
+    - targetFieldKey: employment_status
+      expression: $.status
+      type: enum
+      enumMapper:
+        matcher:
+          - matchExpression: '{{$.status == "Active"}}'
+            value: active
+          - matchExpression: '{{$.status == "Inactive"}}'
+            value: inactive
+          - matchExpression: '{{$.status == "Terminated"}}'
+            value: terminated
+          - matchExpression: '{{$.status == "On Leave"}}'
+            value: leave
+
+    # Gender enum mapping
+    - targetFieldKey: gender
+      expression: $.gender
+      type: enum
+      enumMapper:
+        matcher:
+          - matchExpression: '{{$.gender == "Male"}}'
+            value: male
+          - matchExpression: '{{$.gender == "Female"}}'
+            value: female
+          - matchExpression: '{{$.gender == "Non-binary"}}'
+            value: non_binary
+          - matchExpression: '{{$.gender == "Other"}}'
+            value: other
+          - matchExpression: '{{$.gender == "Not Disclosed"}}'
+            value: not_disclosed
+
+    # Job information
+    - targetFieldKey: job_title
+      expression: $.jobTitle
+      type: string
+    - targetFieldKey: department
+      expression: $.department
+      type: string
+    - targetFieldKey: division
+      expression: $.division
+      type: string
+
+    # Location information
+    - targetFieldKey: work_location
+      expression: '{{{"city": $.city, "state": $.state, "country": $.country}}}'
+      type: object
+
+    # Manager information (nested object)
+    - targetFieldKey: manager
+      expression: '{{{"id": $.supervisorId, "employee_number": $.supervisorEId}}}'
+      type: object
+
+    # Timestamps
+    - targetFieldKey: created_at
+      expression: $.createdTime
+      type: datetime_string
+    - targetFieldKey: updated_at
+      expression: $.lastChanged
+      type: datetime_string
+  steps:
+    - stepId: fetch_employees
+      description: Fetch employees from BambooHR API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /employees/directory
+          method: get
+          args:
+            - name: Accept
+              value: application/json
+              in: headers
+    - stepId: map_employees
+      description: Map BambooHR fields to unified schema
+      stepFunction:
+        functionName: map_fields
+        version: "2"
+        parameters:
+          dataSource: $.steps.fetch_employees.output.data.employees
+    - stepId: typecast_employees
+      description: Convert types to match unified schema
+      stepFunction:
+        functionName: typecast
+        version: "2"
+        parameters:
+          dataSource: $.steps.map_employees.output.data
+  result:
+    data: $.steps.typecast_employees.output.data
+
+- actionId: unified_get_employee
+  categories:
+    - hris
+  actionType: get
+  label: Get Employee
+  description: Get a single employee by ID
+  details: Retrieves detailed information for a specific employee from BambooHR, mapped to the unified employee schema.
+  resources: https://documentation.bamboohr.com/docs/employees
+  inputs:
+    - name: id
+      description: Employee ID
+      type: string
+      in: path
+      required: true
+  fieldConfigs:
+    # Core identity fields
+    - targetFieldKey: id
+      expression: $.id
+      type: string
+    - targetFieldKey: remote_id
+      expression: $.id
+      type: string
+    - targetFieldKey: employee_number
+      expression: $.employeeNumber
+      type: string
+
+    # Name fields
+    - targetFieldKey: first_name
+      expression: $.firstName
+      type: string
+    - targetFieldKey: last_name
+      expression: $.lastName
+      type: string
+    - targetFieldKey: display_full_name
+      expression: '{{$.firstName + " " + $.lastName}}'
+      type: string
+
+    # Contact information
+    - targetFieldKey: work_email
+      expression: $.workEmail
+      type: string
+    - targetFieldKey: personal_email
+      expression: $.homeEmail
+      type: string
+    - targetFieldKey: work_phone_number
+      expression: $.workPhone
+      type: string
+    - targetFieldKey: personal_phone_number
+      expression: $.mobilePhone
+      type: string
+
+    # Employment information
+    - targetFieldKey: hire_date
+      expression: $.hireDate
+      type: datetime_string
+    - targetFieldKey: termination_date
+      expression: $.terminationDate
+      type: datetime_string
+
+    # Employment status enum mapping
+    - targetFieldKey: employment_status
+      expression: $.status
+      type: enum
+      enumMapper:
+        matcher:
+          - matchExpression: '{{$.status == "Active"}}'
+            value: active
+          - matchExpression: '{{$.status == "Inactive"}}'
+            value: inactive
+          - matchExpression: '{{$.status == "Terminated"}}'
+            value: terminated
+          - matchExpression: '{{$.status == "On Leave"}}'
+            value: leave
+
+    # Gender enum mapping
+    - targetFieldKey: gender
+      expression: $.gender
+      type: enum
+      enumMapper:
+        matcher:
+          - matchExpression: '{{$.gender == "Male"}}'
+            value: male
+          - matchExpression: '{{$.gender == "Female"}}'
+            value: female
+          - matchExpression: '{{$.gender == "Non-binary"}}'
+            value: non_binary
+          - matchExpression: '{{$.gender == "Other"}}'
+            value: other
+          - matchExpression: '{{$.gender == "Not Disclosed"}}'
+            value: not_disclosed
+
+    # Job information
+    - targetFieldKey: job_title
+      expression: $.jobTitle
+      type: string
+    - targetFieldKey: department
+      expression: $.department
+      type: string
+    - targetFieldKey: division
+      expression: $.division
+      type: string
+
+    # Location information
+    - targetFieldKey: work_location
+      expression: '{{{"city": $.city, "state": $.state, "country": $.country}}}'
+      type: object
+
+    # Manager information (nested object)
+    - targetFieldKey: manager
+      expression: '{{{"id": $.supervisorId, "employee_number": $.supervisorEId}}}'
+      type: object
+
+    # Timestamps
+    - targetFieldKey: created_at
+      expression: $.createdTime
+      type: datetime_string
+    - targetFieldKey: updated_at
+      expression: $.lastChanged
+      type: datetime_string
+  steps:
+    - stepId: fetch_employee
+      description: Fetch single employee from BambooHR API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /employees/${inputs.id}
+          method: get
+          args:
+            - name: Accept
+              value: application/json
+              in: headers
+    - stepId: map_employee
+      description: Map BambooHR fields to unified schema
+      stepFunction:
+        functionName: map_fields
+        version: "2"
+        parameters:
+          dataSource: $.steps.fetch_employee.output.data
+    - stepId: typecast_employee
+      description: Convert types to match unified schema
+      stepFunction:
+        functionName: typecast
+        version: "2"
+        parameters:
+          dataSource: $.steps.map_employee.output.data
+  result:
+    data: $.steps.typecast_employee.output.data
