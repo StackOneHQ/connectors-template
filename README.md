@@ -14,7 +14,7 @@ This repository contains a collection of connectors for and created by StackOne.
 
 ### Set Up Your Private Repository
 
-To maintain your own private version of these connectors while still being able to pull updates from StackOne, follow these steps to "mirror" the repository. This allows you to: :
+To maintain your own private version of these connectors while still being able to pull updates from StackOne, follow these steps to "mirror" the repository. This allows you to:
 
 - Maintain your own connector configurations privately
 - Keep your custom connectors separate from the template
