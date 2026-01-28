@@ -10,31 +10,73 @@ This repository contains a collection of connectors for and created by StackOne.
 
 - Node.js (v22 or higher recommended)
 - npm
+- Git installed on your local machine
 
-### Fork This Repository
+### Set Up Your Private Repository
 
-**Important:** Before you begin, you should fork this repository to your own GitHub account or organization. This allows you to:
+To maintain your own private version of these connectors while still being able to pull updates from StackOne, follow these steps to "mirror" the repository. This allows you to:
 
-- Maintain your own connector configurations
-- Submit pull requests back to the main repository
+- Maintain your own connector configurations privately
 - Keep your custom connectors separate from the template
 
-To fork this repository:
+1. Create a new private repository:
 
-1. Click the "Fork" button at the top right of the GitHub page
-2. Select your account or organization
-3. Clone your forked repository (not this one)
+   Create a new, empty repository on your GitHub/GitLab/Bitbucket account. Do not initialize it with a README or License. Note your new repository URL (e.g., https://github.com/your-org/private-connectors.git).
 
-### Installation
+2. Mirror the StackOne repository:
 
-1. Clone your forked repository:
+   Open your terminal and run the following commands to push the template code to your private repo:
 
    ```bash
-   git clone <your-forked-repository-url>
-   cd <repository-name>
+   # 1. Clone the StackOne template as a bare repository
+   git clone --bare https://github.com/stackone-hq/connector-template.git
+
+   # 2. Enter the repository directory
+   cd connector-template.git
+
+   # 3. Mirror-push the code to your new private repository
+   git push --mirror https://github.com/your-org/private-connectors.git
+
+   # 4. Remove the temporary bare clone
+   cd ..
+   rm -rf connector-template.git
    ```
 
-2. Install dependencies:
+3. Clone your private repo and set Upstream:
+
+   Now, clone your private repository to your machine and link it back to StackOne to receive future updates:
+
+   ```bash
+   # 1. Clone your private repository
+   git clone https://github.com/your-org/private-connectors.git
+   cd private-connectors
+
+   # 2. Add the original StackOne repo as a remote named 'upstream'
+   git remote add upstream https://github.com/stackone-hq/connector-template.git
+
+   # 3. Disable pushing to upstream (prevents accidental pushes to StackOne)
+   git remote set-url --push upstream DISABLE
+   ```
+
+### Keeping Your Repo Up-to-Date
+
+When StackOne releases new features or connector updates, you can pull them into your private repository using these commands:
+
+   ```bash
+   # Fetch the latest changes from StackOne
+   git fetch upstream
+
+   # Merge the updates into your main branch
+   git checkout main
+   git merge upstream/main
+
+   # Push the updates to your private cloud repository
+   git push origin main
+   ```
+Note: If you have modified files that StackOne also updated, you may need to resolve merge conflicts during this process.
+
+### Installation
+1. Install dependencies:
 
    ```bash
    npm install
@@ -45,7 +87,7 @@ To fork this repository:
    - Install all required packages
    - Set up Git hooks
 
-3. Set up authentication:
+2. Set up authentication:
 
    **BEFORE RUNNING THIS ASK YOUR CONTACT AT STACKONE FOR USERNAME/PASSWORD**
 
@@ -68,6 +110,7 @@ To fork this repository:
    ```
 
    Use this to configure authentication once across all StackOne projects.
+
 
 ### MCP Configuration
 
