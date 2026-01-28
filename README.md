@@ -75,9 +75,7 @@ When StackOne releases new features or connector updates, you can pull them into
    ```
 Note: If you have modified files that StackOne also updated, you may need to resolve merge conflicts during this process.
 
-
-   ### Installation
-
+### Installation
 1. Install dependencies:
 
    ```bash
