@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@stackone/agent-config": "^1.3.0",
-        "@stackone/cli": "1.14.1",
+        "@stackone/cli": "1.16.0",
         "@stackone/connect-sdk": "2.18.0",
         "@stackone/core": "2.3.4",
         "@stackone/expressions": "0.18.0",
