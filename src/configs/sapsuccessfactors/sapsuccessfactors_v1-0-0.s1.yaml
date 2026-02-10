@@ -4034,36 +4034,18 @@ actions:
         type: string
         in: query
         required: false
-      - name: active
-        description: Filter for active items only (true/false)
-        type: boolean
-        in: query
-        required: false
-      - name: filter
-        description: Custom OData filter expression (e.g., "criteria/active eq true and criteria/itemTitle eq 'course name'")
-        type: string
-        in: query
-        required: false
     steps:
       - stepId: search_learning_items_request
         description: Search for learning items
         stepFunction:
           functionName: request
           parameters:
-            url: '/LearningItem'
+            url: '/../../public/admin/searchItem/v1/Items'
             method: get
-            headers:
-              - name: Accept
-                value: application/json
             args:
-              - name: $filter
-                value: $.inputs.filter
-                in: query
-                condition: '{{present(inputs.filter)}}'
-              - name: $filter
+              - name: '{{"$filter"}}'
                 value: 'criteria/active eq true and criteria/itemTitle eq ''{{inputs.itemTitle}}'''
                 in: query
-                condition: '{{present(inputs.itemTitle) && !present(inputs.filter)}}'
     result: $.steps.search_learning_items_request.output.data
   - actionId: assign_learning_item
     categories:
@@ -4105,11 +4087,6 @@ actions:
           parameters:
             url: '/../../public/admin/user-service/v2/UserCourses'
             method: post
-            headers:
-              - name: Accept
-                value: application/json
-              - name: Content-Type
-                value: application/json
             args:
               - name: userId
                 value: $.inputs.userId

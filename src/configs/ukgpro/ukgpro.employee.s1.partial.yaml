@@ -522,8 +522,13 @@
         parameters:
           url: /services/LoginService
           method: post
+          authorization:
+            type: basic
+            username: ${credentials.username}
+            password: ${credentials.password}
           args:
             - name: soapBody
+              in: body
               value: |-
                 <?xml version="1.0" encoding="utf-8"?>
                 <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
@@ -538,10 +543,9 @@
                     <TokenRequest xmlns="http://www.ultipro.com/contracts" />
                   </s:Body>
                 </s:Envelope>
-              in: body
             - name: Content-Type
-              value: application/soap+xml; charset=utf-8
               in: headers
+              value: application/soap+xml; charset=utf-8
 
     - stepId: extract_token
       description: Extract UltiProToken from SOAP response
@@ -562,8 +566,12 @@
         parameters:
           url: /services/EmployeeNewHire
           method: post
+          authorization:
+            type: bearer
+            token: ${steps.extract_token.output.data.token}
           args:
             - name: soapBody
+              in: body
               value: |-
                 <?xml version="1.0" encoding="utf-8"?>
                 <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
@@ -644,9 +652,8 @@
                     </NewHireUsa>
                   </s:Body>
                 </s:Envelope>
-              in: body
             - name: Content-Type
-              value: application/soap+xml; charset=utf-8
               in: headers
+              value: application/soap+xml; charset=utf-8
   result:
     provider_response: $.steps.create_employee_soap.output.data['s:Envelope']['s:Body']['NewHireUsaResponse']['NewHireUsaResult']
