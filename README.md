@@ -29,7 +29,7 @@ To maintain your own private version of these connectors while still being able 
 
    ```bash
    # 1. Clone the StackOne template as a bare repository
-   git clone --bare https://github.com/stackonehq/connectors-template.git
+   git clone https://github.com/stackonehq/connectors-template.git
 
    # 2. Enter the repository directory
    cd connectors-template.git
