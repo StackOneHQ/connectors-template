@@ -1,0 +1,4128 @@
+StackOne: 1.0.0
+info:
+  title: SAP SuccessFactors
+  key: sapsuccessfactors
+  version: 1.0.0
+  description: SAP SuccessFactors is a comprehensive cloud-based Human Capital Management (HCM) solution that helps organizations manage HR processes including employee data, recruiting, onboarding, performance management, learning, and compensation.
+  assets:
+    icon: https://stackone-logos.com/api/sap-sucessfactors/filled/png
+
+baseUrl: ${credentials.apiServer}/odata/v2
+
+resources: "SAP SuccessFactors API documentation: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2"
+releaseStage: preview
+authentication:
+  - custom:
+      type: oauth2
+      label: OAuth 2.0
+      grantType: client_credentials
+      support:
+        description: Connect using OAuth 2.0 with client credentials grant type. Requires Admin access to SAP SuccessFactors Admin Center to register an OAuth2 client application and generate X.509 certificate credentials.
+        guides:
+          config:
+            warning: "Ensure you have Admin privileges for your SAP SuccessFactors account with permission for the Manage Integration Tools > Manage OAuth2 Client Applications."
+            sections:
+              - title: Locating API Server
+                content: |
+                  SAP uses multiple API server addresses. You will need to look up the API server that corresponds to your tenant domain.
+                steps:
+                  - title: Find Your API Server
+                    content: |
+                      Navigate to the [SAP API Server Table](https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/list-of-sap-successfactors-api-servers?locale=en-US) and locate your tenant domain in the table.
+                    list:
+                      - "For example, if your domain is `https://pmsalesdemo8.successfactors.com/`, search for `salesdemo8` in the table"
+                      - Copy the value in the **API Server** column (remove the trailing forward-slash)
+                      - "Example: `https://apisalesdemo8.successfactors.com`"
+              - title: Finding Username
+                content: |
+                  Your username is required for authentication and can be found in your SAP SuccessFactors profile.
+                steps:
+                  - title: Locate Your Username
+                    content: |
+                      Log in to SAP SuccessFactors and select your profile image in the upper right-hand corner of the screen.
+                    list:
+                      - Your username is the value in parentheses next to your name
+                      - "Example: If you see 'John Smith (jsmith)', your username is `jsmith`"
+                      - Copy this value and note it as your **Username**
+              - title: Finding Company ID
+                content: |
+                  The Company ID uniquely identifies your SAP SuccessFactors organization.
+                steps:
+                  - title: Access Version Information
+                    content: |
+                      Within the same profile dropdown, select **Show version information**.
+                  - title: Copy Company ID
+                    content: |
+                      In the modal that appears, locate and copy the **Company ID** value.
+                    list:
+                      - "Example format: `SFPART123456`"
+              - title: Registering a New OAuth2 Client Application
+                content: |
+                  To use OAuth 2.0 authentication with SAP SuccessFactors, you need to register an OAuth2 client application in the Admin Center.
+                steps:
+                  - title: Access Manage OAuth2 Client Applications
+                    content: |
+                      In the upper right search bar, search for **Manage OAuth2 Client Applications** and select the option under Actions.
+                  - title: Register Client Application
+                    content: |
+                      Click **Register Client Application**.
+                  - title: Enter Application Details
+                    content: |
+                      Enter an Application Name (e.g., `StackOne`) and an Application URL.
+                    list:
+                      - "Note: The Application URL can be any valid URL and is not used in this integration"
+                      - Click **Register** to create the application
+              - title: Generating X.509 Certificate
+                content: |
+                  SAP SuccessFactors uses X.509 certificate-based authentication for OAuth2. SAP will generate the certificate for you.
+                steps:
+                  - title: Generate Certificate in SAP
+                    content: |
+                      In the OAuth2 Client Application registration screen, click the **Generate X.509 Certificate** button.
+                    list:
+                      - Enter any Common Name (CN) for the certificate (e.g., `StackOne OAuth2`)
+                      - Click **Generate**
+                  - title: Copy the Certificate
+                    content: |
+                      After generation, copy the entire value displayed in the **X.509 Certificate** section.
+                    list:
+                      - This is your **x509 Certificate** value — store it securely for use later
+              - title: Downloading Private Key
+                content: |
+                  The private key is required for signing authentication requests.
+                steps:
+                  - title: Download Private Key File
+                    content: |
+                      After generating the certificate, click the **Download** button.
+                    list:
+                      - "⚠️ Caution: The downloaded file contains your private key — handle it securely"
+                  - title: Extract Private Key Content
+                    content: |
+                      Open the downloaded file and locate the private key content.
+                    list:
+                      - Copy only the long string of characters between `-----BEGIN ENCRYPTED PRIVATE KEY-----` and `-----END ENCRYPTED PRIVATE KEY-----`
+                      - Do not include the BEGIN/END markers themselves
+                      - This value is your **Private Key** — store it securely for use later
+              - title: Finding API Key
+                content: |
+                  The API Key (also called Client ID) is required for OAuth2 authentication.
+                steps:
+                  - title: Locate API Key
+                    content: |
+                      Your API Key is displayed on the **Manage OAuth2 Client Applications** screen above your X.509 Certificate.
+                    list:
+                      - "Note: Copy this value immediately as it may not be shown again"
+                      - Store it securely for use later
+              - title: Configure OData API Permissions
+                content: |
+                  Ensure the OAuth2 application has proper permissions to access OData API entities.
+                steps:
+                  - title: Access OData API Dictionary
+                    content: |
+                      Navigate to **Admin Center** > **Company Settings** > **OData API Data Dictionary**.
+                  - title: Enable Required Entities
+                    content: |
+                      Verify that the entities you need to access are enabled for OData API.
+                    list:
+                      - Check that entities like `Employee`, `Candidate`, `JobRequisition`, `JobApplication` are enabled
+                      - Ensure the OAuth2 client has appropriate read/write permissions
+                      - Enable Upsert operations if you need to update records (optional, not available in all instances)
+      authorization:
+        type: bearer
+        token: $.credentials.accessToken
+        includeBearer: true
+      refreshAuthentication:
+        action:
+          actionId: refresh_token_successfactors
+          categories:
+            - internal
+          actionType: refresh_token
+          label: Refresh SAP SuccessFactors OAuth2 Token
+          description: Refresh SAP SuccessFactors OAuth2 access token
+          steps:
+            - stepId: refresh_token_request
+              description: Get new access token
+              stepFunction:
+                functionName: request
+                parameters:
+                  baseUrl: ${credentials.apiServer}
+                  url: '/oauth/token'
+                  method: post
+                  authorization:
+                    type: none
+                  saml:
+                    objectKey: assertion
+                    key: $.credentials.privateKey
+                    clientId: $.credentials.apiKey
+                    cert: $.credentials.certificate
+                    issuer: app.stackone.com
+                    lifetime: 3600
+                    nameId: $.credentials.username
+                    audience: www.successfactors.com
+                    nameIdentifierFormat: urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
+                    tokenEndpoint: ${$.credentials.apiServer}/oauth/token
+                  args:
+                    - name: Content-Type
+                      value: application/x-www-form-urlencoded
+                      in: headers
+                    - name: grant_type
+                      value: urn:ietf:params:oauth:grant-type:saml2-bearer
+                      in: body
+                    - name: client_id
+                      value: $.credentials.apiKey
+                      in: body
+                    - name: company_id
+                      value: $.credentials.companyId
+                      in: body
+            - stepId: map_tokens
+              description: Map tokens data
+              stepFunction:
+                functionName: map_fields
+                version: '2'
+                parameters:
+                  fields:
+                    - targetFieldKey: accessToken
+                      expression: $.access_token
+                      type: string
+                    - targetFieldKey: expiresIn
+                      expression: '{{3600}}'
+                      type: number
+                  dataSource: $.steps.refresh_token_request.output.data
+          result: $.steps.map_tokens.output.data
+      configFields:
+        - key: apiServer
+          label: API Server
+          type: text
+          required: true
+          secret: false
+          placeholder: https://apisalesdemo2.successfactors.com
+          description: Your SAP SuccessFactors instance URL (e.g., https://api.successfactors.com, https://api2.successfactors.eu, https://apisalesdemo2.successfactors.com)
+          tooltip: The base URL for your SAP SuccessFactors instance
+        - key: companyId
+          label: Company ID
+          type: text
+          required: true
+          secret: false
+          placeholder: SFPART123456
+          description: Your SAP SuccessFactors Company ID
+          tooltip: Found in your SAP SuccessFactors instance settings
+        - key: apiKey
+          label: API Key
+          type: text
+          required: true
+          secret: false
+          placeholder: your_client_id/api_key
+          description: OAuth 2.0 Client ID from SAP SuccessFactors OAuth Client Application
+          tooltip: Created in Admin Center > Manage OAuth2 Client Applications
+        - key: username
+          label: Username
+          type: text
+          required: true
+          secret: false
+          placeholder: your_username
+          description: Your User ID is displayed in your SAP profile drop-down menu, to the right of your name within brackets. If not present here, you can retrieve it from the SAP Export Users action
+          tooltip: Used for SAML assertion generation
+        - key: privateKey
+          label: Private Key
+          type: password
+          required: true
+          secret: true
+          placeholder: TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFDeEJrOHssDRDFaDKFDFDaHFJKDSHGSDKJHaaSHFHFSKaJFH
+          description: Your private key can be downloaded when registering a new application in SAP
+          tooltip: Downloaded during OAuth client registration
+        - key: certificate
+          label: x509 Certificate
+          type: text
+          required: true
+          secret: false
+          placeholder: TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFDeEJrOHssDRDFaDKFDFDaHFJKDSHGSDKJHaaSHFHFSKaJFH
+          description: Your x509 certificate will be displayed under the API Key when registering a new application in SAP
+          tooltip: Found in SAP OAuth client application settings
+      environments:
+        - key: production
+          name: Production
+
+actions:
+  - actionId: list_employee_addresses
+    categories:
+      - hris
+    tags:
+      - PerAddressDEFLT
+    actionType: custom
+    label: List Employee Addresses
+    description: Retrieve a list of employee address records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/peraddressdeflt
+    details: Use cases include retrieving employee address information, syncing address data across systems, building employee contact directories, and auditing address records. Returns collection of PerAddressDEFLT entities with address details like street, city, state, postal code, and country. Supports filtering by personIdExternal and addressType. Each employee can have multiple addresses (home, mailing, business, etc.).
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get addresses for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: addressType
+        description: Filter by address type (e.g., 'address1', 'address2', 'address3')
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_employee_addresses_request
+        description: Fetch employee addresses
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerAddressDEFLT'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_employee_addresses_request.output.data
+  - actionId: get_employee_address
+    categories:
+      - hris
+    tags:
+      - PerAddressDEFLT
+    actionType: custom
+    label: Get Employee Address
+    description: Retrieve a specific employee address by personIdExternal, addressType, and startDate
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/peraddressdeflt
+    details: Use cases include fetching individual employee address data for display in applications, retrieving specific address types (home, mailing, business), validating address record existence, and accessing detailed address information with effective dating. Returns PerAddressDEFLT entity with complete address data including street address, city, state, postal code, country, and effective date range. Note that PerAddressDEFLT uses composite key (personIdExternal, addressType, startDate).
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., 'cgrant', '103077')
+        type: string
+        in: path
+        required: true
+      - name: addressType
+        description: Address type (e.g., 'address1', 'address2', 'address3', 'home')
+        type: string
+        in: path
+        required: true
+      - name: startDate
+        description: Start date in ISO format YYYY-MM-DD (e.g., '2013-09-07')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_employee_address_request
+        description: Get employee address
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerAddressDEFLT(addressType=''${inputs.addressType}'',personIdExternal=''${inputs.personIdExternal}'',startDate=datetime''${inputs.startDate}T00:00:00'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_employee_address_request.output.data
+  - actionId: upsert_address
+    categories:
+      - hris
+    tags:
+      - PerAddressDEFLT
+    actionType: custom
+    label: Upsert Address
+    description: Create or update employee address record in PerAddressDEFLT entity
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/peraddressdeflt
+    details: Use cases include onboarding new employees with address information, updating employee addresses during relocation, maintaining multiple address types per employee, and managing address effective dating. Uses HTTP POST with the upsert operation to create or update PerAddressDEFLT records. Composite key includes personIdExternal, addressType, and startDate. Returns operation results including any errors or warnings. Address types typically include address1 (home), address2 (mailing), address3 (business).
+    inputs:
+      - name: personIdExternal
+        description: External person ID
+        type: string
+        in: body
+        required: true
+      - name: addressType
+        description: Address type (e.g., 'address1', 'address2', 'address3')
+        type: string
+        in: body
+        required: true
+      - name: startDate
+        description: Start date in format /Date(ticks)/
+        type: string
+        in: body
+        required: true
+      - name: address1
+        description: Address line 1 (street address)
+        type: string
+        in: body
+        required: false
+      - name: address2
+        description: Address line 2 (apartment, suite, etc.)
+        type: string
+        in: body
+        required: false
+      - name: address3
+        description: Address line 3 (additional address info)
+        type: string
+        in: body
+        required: false
+      - name: city
+        description: City name
+        type: string
+        in: body
+        required: false
+      - name: state
+        description: State or province
+        type: string
+        in: body
+        required: false
+      - name: zipCode
+        description: Postal/ZIP code
+        type: string
+        in: body
+        required: false
+      - name: country
+        description: Country code (ISO 3166-1 alpha-3)
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_address_request
+        description: Upsert PerAddressDEFLT entity
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PerAddressDEFLT
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: addressType
+                value: $.inputs.addressType
+                in: body
+              - name: startDate
+                value: $.inputs.startDate
+                in: body
+              - name: address1
+                value: $.inputs.address1
+                in: body
+                condition: '{{present(inputs.address1)}}'
+              - name: address2
+                value: $.inputs.address2
+                in: body
+                condition: '{{present(inputs.address2)}}'
+              - name: address3
+                value: $.inputs.address3
+                in: body
+                condition: '{{present(inputs.address3)}}'
+              - name: city
+                value: $.inputs.city
+                in: body
+                condition: '{{present(inputs.city)}}'
+              - name: state
+                value: $.inputs.state
+                in: body
+                condition: '{{present(inputs.state)}}'
+              - name: zipCode
+                value: $.inputs.zipCode
+                in: body
+                condition: '{{present(inputs.zipCode)}}'
+              - name: country
+                value: $.inputs.country
+                in: body
+                condition: '{{present(inputs.country)}}'
+    result:
+      data: $.steps.upsert_address_request.output.data
+  - actionId: list_available_time_types
+    categories:
+      - hris
+    tags:
+      - AvailableTimeType
+    actionType: custom
+    label: List Available Time Types
+    description: Retrieve a list of available time types based on filtering criteria
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/availabletimetype
+    details: Use cases include retrieving available time types for employees, filtering time types by user, date, and time account, determining which time types can be used for absence requests, and understanding time type availability rules. Returns collection of AvailableTimeType entities with time type codes, descriptions, and availability information. Supports filtering by userId, date, and timeAccountExternalCode to get context-specific available time types.
+    inputs:
+      - name: userId
+        description: Filter by user ID to get available time types for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: asOfDate
+        description: Filter by date to get available time types as of a specific date (format YYYY-MM-DD)
+        type: string
+        in: query
+        required: false
+      - name: timeAccountExternalCode
+        description: Filter by time account external code
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_available_time_types_request
+        description: Fetch available time types
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/AvailableTimeType'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_available_time_types_request.output.data
+  - actionId: get_available_time_type
+    categories:
+      - hris
+    tags:
+      - AvailableTimeType
+    actionType: custom
+    label: Get Available Time Type
+    description: Retrieve a specific available time type by composite key (TimeTypeProfile_externalCode, TimeTypeProfile_mdfSystemEffectiveStartDate, externalCode)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/availabletimetype
+    details: Use cases include validating time type availability for a specific time type profile, checking time type configuration details, and verifying time type selection rules for absence requests. Returns AvailableTimeType entity with complete availability information including time type code, description, and related time account information. Note that AvailableTimeType uses composite key (TimeTypeProfile_externalCode, TimeTypeProfile_mdfSystemEffectiveStartDate, externalCode).
+    inputs:
+      - name: timeTypeProfileExternalCode
+        description: Time type profile external code (e.g., 'TP_normal')
+        type: string
+        in: path
+        required: true
+      - name: timeTypeProfileEffectiveStartDate
+        description: Time type profile effective start date in ISO format YYYY-MM-DD (e.g., '1900-01-01')
+        type: string
+        in: path
+        required: true
+      - name: externalCode
+        description: External code of the available time type (e.g., '11')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_available_time_type_request
+        description: Get available time type
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/AvailableTimeType(TimeTypeProfile_externalCode=''${inputs.timeTypeProfileExternalCode}'',TimeTypeProfile_mdfSystemEffectiveStartDate=datetime''${inputs.timeTypeProfileEffectiveStartDate}T00:00:00'',externalCode=''${inputs.externalCode}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_available_time_type_request.output.data
+  - actionId: list_candidates
+    categories:
+      - ats
+    tags:
+      - Candidate
+    actionType: custom
+    label: List Candidates
+    description: Retrieve a list of candidates
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/candidate-and-candidatebackground
+    details: Use cases include retrieving all candidates in the system, filtering candidates by various criteria, searching for specific candidate profiles, and managing candidate databases. Returns collection of Candidate entities with personal information, contact details, and profile data. Supports expanding related entities like resume, jobsApplied, education, comments, and tags.
+    inputs:
+      - name: firstName
+        description: Filter by first name
+        type: string
+        in: query
+        required: false
+      - name: lastName
+        description: Filter by last name
+        type: string
+        in: query
+        required: false
+      - name: email
+        description: Filter by email address
+        type: string
+        in: query
+        required: false
+      - name: expand
+        description: Comma-separated list of related entities to expand (e.g., resume, jobsApplied, education, comments, tags)
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_candidates_request
+        description: Fetch candidates
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Candidate'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$expand"}}'
+                value: $.inputs.expand
+                in: query
+                condition: '{{present(inputs.expand)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_candidates_request.output.data
+  - actionId: get_candidate
+    categories:
+      - ats
+    tags:
+      - Candidate
+    actionType: custom
+    label: Get Candidate
+    description: Retrieve a specific candidate by ID
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/candidate-and-candidatebackground
+    details: Use cases include viewing detailed candidate profile information, accessing candidate contact details and resume data, reviewing candidate history and applications, and retrieving candidate documents. Returns Candidate entity with complete profile including personal information, education, work experience, and skills. Supports expanding related entities like resume, jobsApplied, education, comments, and tags.
+    inputs:
+      - name: candidateId
+        description: Candidate ID (e.g., '12345')
+        type: string
+        in: path
+        required: true
+      - name: expand
+        description: Comma-separated list of related entities to expand (e.g., resume, jobsApplied, education, comments, tags)
+        type: string
+        in: query
+        required: false
+    steps:
+      - stepId: get_candidate_request
+        description: Get candidate
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Candidate(${inputs.candidateId}L)'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$expand"}}'
+                value: $.inputs.expand
+                in: query
+                condition: '{{present(inputs.expand)}}'
+    result:
+      data: $.steps.get_candidate_request.output.data
+  - actionId: create_candidate
+    categories:
+      - ats
+    tags:
+      - Candidate
+    actionType: custom
+    label: Create Candidate
+    description: Create a new candidate profile
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/candidate-and-candidatebackground
+    details: Use cases include adding new candidates to the system, importing candidate data from external sources, creating candidate profiles from application submissions, and building candidate databases. Creates a new Candidate entity with provided profile information. Supports creating candidates with basic information, education background, comments, tags, and attachments.
+    inputs:
+      - name: firstName
+        description: Candidate first name
+        type: string
+        in: body
+        required: true
+      - name: lastName
+        description: Candidate last name
+        type: string
+        in: body
+        required: true
+      - name: primaryEmail
+        description: Primary email address
+        type: string
+        in: body
+        required: true
+      - name: country
+        description: Candidate country code
+        type: string
+        in: body
+        required: true
+      - name: cellPhone
+        description: Candidate mobile phone number
+        type: string
+        in: body
+        required: false
+      - name: city
+        description: Candidate city
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: create_candidate_request
+        description: Create new candidate
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Candidate'
+            method: post
+            args:
+              - name: firstName
+                value: $.inputs.firstName
+                in: body
+              - name: lastName
+                value: $.inputs.lastName
+                in: body
+              - name: primaryEmail
+                value: $.inputs.primaryEmail
+                in: body
+              - name: country
+                value: $.inputs.country
+                in: body
+              - name: cellPhone
+                value: $.inputs.cellPhone
+                in: body
+                condition: '{{present(inputs.cellPhone)}}'
+              - name: city
+                value: $.inputs.city
+                in: body
+                condition: '{{present(inputs.city)}}'
+    result:
+      message: Candidate created successfully
+      data: $.steps.create_candidate_request.output.data
+  - actionId: update_candidate
+    categories:
+      - ats
+    tags:
+      - Candidate
+    actionType: custom
+    label: Update Candidate
+    description: Update an existing candidate profile using upsert endpoint
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/candidate-and-candidatebackground
+    details: Use cases include updating candidate contact information, modifying candidate profile details, correcting candidate data errors, and maintaining current candidate information. Updates the specified Candidate entity with new information using the upsert endpoint which allows partial updates.
+    inputs:
+      - name: candidateId
+        description: Candidate ID to update
+        type: string
+        in: body
+        required: true
+      - name: firstName
+        description: Updated first name
+        type: string
+        in: body
+        required: false
+      - name: lastName
+        description: Updated last name
+        type: string
+        in: body
+        required: false
+      - name: primaryEmail
+        description: Updated primary email address
+        type: string
+        in: body
+        required: false
+      - name: cellPhone
+        description: Updated mobile phone number
+        type: string
+        in: body
+        required: false
+      - name: country
+        description: Updated country code
+        type: string
+        in: body
+        required: false
+      - name: city
+        description: Updated city
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: update_candidate_request
+        description: Update candidate using upsert
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: __metadata
+                value: {"type":"SFOData.Candidate","uri":"Candidate(${inputs.candidateId}L)"}
+                in: body
+              - name: firstName
+                value: $.inputs.firstName
+                in: body
+                condition: '{{present(inputs.firstName)}}'
+              - name: lastName
+                value: $.inputs.lastName
+                in: body
+                condition: '{{present(inputs.lastName)}}'
+              - name: primaryEmail
+                value: $.inputs.primaryEmail
+                in: body
+                condition: '{{present(inputs.primaryEmail)}}'
+              - name: cellPhone
+                value: $.inputs.cellPhone
+                in: body
+                condition: '{{present(inputs.cellPhone)}}'
+              - name: country
+                value: $.inputs.country
+                in: body
+                condition: '{{present(inputs.country)}}'
+              - name: city
+                value: $.inputs.city
+                in: body
+                condition: '{{present(inputs.city)}}'
+    result:
+      message: Candidate updated successfully
+      data: $.steps.update_candidate_request.output.data
+  - actionId: list_compensation_records
+    categories:
+      - hris
+    tags:
+      - EmpCompensation
+    actionType: custom
+    label: List Compensation Records
+    description: Retrieve a list of employee compensation records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empcompensation
+    details: Use cases include retrieving employee compensation information, analyzing salary data, syncing compensation across systems, and auditing pay records. Returns collection of EmpCompensation entities with compensation details like salary, currency, pay frequency, and effective dates. Supports filtering by userId and seqNumber. Each employee can have multiple compensation records with effective dating for tracking salary changes over time.
+    inputs:
+      - name: userId
+        description: Filter by user ID to get compensation for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: seqNumber
+        description: Filter by sequence number
+        type: number
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_compensation_request
+        description: Fetch compensation records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpCompensation'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_compensation_request.output.data
+  - actionId: get_compensation_record
+    categories:
+      - hris
+    tags:
+      - EmpCompensation
+    actionType: custom
+    label: Get Compensation Record
+    description: Retrieve a specific compensation record by startDate and userId
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empcompensation
+    details: Use cases include fetching individual compensation data for display in applications, retrieving specific compensation records for reporting, validating compensation record existence, and accessing detailed compensation information with effective dating. Returns EmpCompensation entity with complete compensation data including base salary, bonuses, stock, currency, pay frequency, and effective date range. Note that EmpCompensation uses composite key (startDate, userId) - only two fields, not three.
+    inputs:
+      - name: startDate
+        description: Start date in ISO format YYYY-MM-DD (e.g., '1997-01-01')
+        type: string
+        in: path
+        required: true
+      - name: userId
+        description: User ID (e.g., 'cgrant', '107030')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_compensation_request
+        description: Get compensation record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpCompensation(startDate=datetime''${inputs.startDate}T00:00:00'',userId=''${inputs.userId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_compensation_request.output.data
+  - actionId: list_countries
+    categories:
+      - hris
+    tags:
+      - Country
+    actionType: custom
+    label: List Countries
+    description: Retrieve a list of countries
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/country
+    details: Use cases include populating country dropdowns in forms, validating address data, managing localization settings, and synchronizing country reference data across systems. Returns collection of Country entities with country codes and names. Supports filtering and pagination.
+    inputs:
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_countries_request
+        description: Fetch countries
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Country'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_countries_request.output.data
+  - actionId: get_country
+    categories:
+      - hris
+    tags:
+      - Country
+    actionType: custom
+    label: Get Country
+    description: Retrieve a specific country by code
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/country
+    details: Use cases include looking up country details by code, validating country selections, retrieving country names for display, and fetching country-specific configuration. Returns Country entity with complete country information. Country entity uses composite key (code, effectiveStartDate).
+    inputs:
+      - name: code
+        description: Country code (e.g., 'US', 'GB', 'DE', 'NZL')
+        type: string
+        in: path
+        required: true
+      - name: effectiveStartDate
+        description: Effective start date in format YYYY-MM-DD (defaults to '1900-01-01' for foundation data)
+        type: string
+        in: path
+        required: false
+    steps:
+      - stepId: get_country_request
+        description: Get country details
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Country(code=''${inputs.code}'',effectiveStartDate=datetime''${inputs.effectiveStartDate || "1900-01-01"}T00:00:00'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_country_request.output.data
+  - actionId: list_person_emails
+    categories:
+      - hris
+    tags:
+      - PerEmail
+    actionType: custom
+    label: List Person Emails
+    description: Retrieve a list of person email records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/peremail
+    details: Use cases include retrieving employee email addresses, syncing email data across systems, building employee directories with contact information, and managing communication channels. Returns collection of PerEmail entities with email details including email address, email type, and primary status. Supports filtering and pagination.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get emails for a specific person
+        type: string
+        in: query
+        required: false
+      - name: emailType
+        description: Filter by email type code (e.g., business, personal)
+        type: string
+        in: query
+        required: false
+      - name: isPrimary
+        description: Filter by primary email status (true or false)
+        type: boolean
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_person_emails_request
+        description: Fetch person email records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerEmail'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && !present(inputs.emailType) && !present(inputs.isPrimary)}}'
+              - name: '{{"$filter"}}'
+                value: emailType eq '${inputs.emailType}'
+                in: query
+                condition: '{{present(inputs.emailType) && !present(inputs.personIdExternal) && !present(inputs.isPrimary)}}'
+              - name: '{{"$filter"}}'
+                value: isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.isPrimary) && !present(inputs.personIdExternal) && !present(inputs.emailType)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and emailType eq '${inputs.emailType}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.emailType) && !present(inputs.isPrimary)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.isPrimary) && !present(inputs.emailType)}}'
+              - name: '{{"$filter"}}'
+                value: emailType eq '${inputs.emailType}' and isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.emailType) && present(inputs.isPrimary) && !present(inputs.personIdExternal)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and emailType eq '${inputs.emailType}' and isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.emailType) && present(inputs.isPrimary)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_person_emails_request.output.data
+  - actionId: get_person_email
+    categories:
+      - hris
+    tags:
+      - PerEmail
+    actionType: custom
+    label: Get Person Email
+    description: Retrieve a specific person email record by composite key
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/peremail
+    details: Use cases include fetching detailed email information for a specific person and email type, retrieving contact details for communication, validating email record existence, and accessing email metadata. Returns PerEmail entity with complete email information including email address, email type, and primary status. Requires composite key (emailType and personIdExternal).
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., '103077', '101050')
+        type: string
+        in: path
+        required: true
+      - name: emailType
+        description: Email type code (e.g., '8448' for business email). Get this value from list_person_emails response.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_person_email_request
+        description: Get specific person email record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerEmail(emailType=''${inputs.emailType}'',personIdExternal=''${inputs.personIdExternal}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_person_email_request.output.data
+  - actionId: upsert_person_email
+    categories:
+      - hris
+    tags:
+      - PerEmail
+    actionType: custom
+    label: Upsert Person Email
+    description: Create or update a person email record
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/peremail
+    details: Use cases include adding new email addresses for employees, updating existing email information, managing multiple email types per person, and setting primary email preferences. Uses HTTP POST with the upsert operation to create or update PerEmail records. The composite key (emailType and personIdExternal) determines create vs update. Returns operation results including any errors or warnings.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (must reference existing PerPerson record)
+        type: string
+        in: body
+        required: true
+      - name: emailType
+        description: Email type code (e.g., business, personal)
+        type: string
+        in: body
+        required: true
+      - name: emailAddress
+        description: Email address
+        type: string
+        in: body
+        required: false
+      - name: isPrimary
+        description: Whether this is the primary email address for the person
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_person_email_request
+        description: Upsert person email record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PerEmail
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: emailType
+                value: $.inputs.emailType
+                in: body
+              - name: emailAddress
+                value: $.inputs.emailAddress
+                in: body
+                condition: '{{present(inputs.emailAddress)}}'
+              - name: isPrimary
+                value: $.inputs.isPrimary
+                in: body
+                condition: '{{present(inputs.isPrimary)}}'
+    result:
+      data: $.steps.upsert_person_email_request.output.data
+  - actionId: list_employments
+    categories:
+      - hris
+    tags:
+      - EmpEmployment
+    actionType: custom
+    label: List Employments
+    description: Retrieve a list of employment records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empemployment
+    details: Use cases include retrieving employment information for employees, syncing employment data across systems, managing employment history, auditing employment records, and building employment reports. Returns collection of EmpEmployment entities with employment details including start date, assignment class, employment status, service dates, and various employment-related dates. Supports filtering and pagination.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get employments for a specific person
+        type: string
+        in: query
+        required: false
+      - name: userId
+        description: Filter by user ID
+        type: string
+        in: query
+        required: false
+      - name: assignmentClass
+        description: Filter by assignment class code
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_employments_request
+        description: Fetch employment records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpEmployment'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && !present(inputs.userId) && !present(inputs.assignmentClass)}}'
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId) && !present(inputs.personIdExternal) && !present(inputs.assignmentClass)}}'
+              - name: '{{"$filter"}}'
+                value: assignmentClass eq '${inputs.assignmentClass}'
+                in: query
+                condition: '{{present(inputs.assignmentClass) && !present(inputs.personIdExternal) && !present(inputs.userId)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.userId) && !present(inputs.assignmentClass)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and assignmentClass eq '${inputs.assignmentClass}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.assignmentClass) && !present(inputs.userId)}}'
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}' and assignmentClass eq '${inputs.assignmentClass}'
+                in: query
+                condition: '{{present(inputs.userId) && present(inputs.assignmentClass) && !present(inputs.personIdExternal)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and userId eq '${inputs.userId}' and assignmentClass eq '${inputs.assignmentClass}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.userId) && present(inputs.assignmentClass)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_employments_request.output.data
+  - actionId: get_employment
+    categories:
+      - hris
+    tags:
+      - EmpEmployment
+    actionType: custom
+    label: Get Employment
+    description: Retrieve a specific employment record by composite key
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empemployment
+    details: Use cases include fetching detailed employment information for a specific employee, retrieving employment status and dates, validating employment record existence, and accessing comprehensive employment data including service dates, assignment information, and eligibility flags. Returns EmpEmployment entity with complete employment information. Requires composite key (personIdExternal and userId).
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., '103077', '101050')
+        type: string
+        in: path
+        required: true
+      - name: userId
+        description: User ID (e.g., '103077', '101050'). Usually matches personIdExternal.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_employment_request
+        description: Get specific employment record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpEmployment(personIdExternal=''${inputs.personIdExternal}'',userId=''${inputs.userId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_employment_request.output.data
+  - actionId: upsert_employment
+    categories:
+      - hris
+    tags:
+      - EmpEmployment
+    actionType: custom
+    label: Upsert Employment
+    description: Create or update employee employment record
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empemployment
+    details: Use cases include creating employment relationships, updating employment information, managing employment history, and automated onboarding. This is commonly the second step when adding a new employee (after PerPerson and before EmpJob). Uses HTTP POST with the upsert operation to create or update EmpEmployment records. The composite key (personIdExternal and userId) determines create vs update. Date fields accept both ISO format (YYYY-MM-DD) and OData format (/Date(ticks)/). Returns operation results including any errors or warnings.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (must match PerPerson record)
+        type: string
+        in: body
+        required: true
+      - name: userId
+        description: User ID for the employee
+        type: string
+        in: body
+        required: true
+      - name: startDate
+        description: Employment start date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: assignmentClass
+        description: Assignment class code (e.g., ST for standard)
+        type: string
+        in: body
+        required: false
+      - name: firstDateWorked
+        description: First date worked in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: originalStartDate
+        description: Original start date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: seniorityDate
+        description: Seniority date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: serviceDate
+        description: Service date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: endDate
+        description: Employment end date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: isContingentWorker
+        description: Whether the employee is a contingent worker
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_employment_request
+        description: Upsert employment record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: EmpEmployment
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: userId
+                value: $.inputs.userId
+                in: body
+              - name: startDate
+                value: $.inputs.startDate
+                in: body
+                condition: '{{present(inputs.startDate)}}'
+              - name: assignmentClass
+                value: $.inputs.assignmentClass
+                in: body
+                condition: '{{present(inputs.assignmentClass)}}'
+              - name: firstDateWorked
+                value: $.inputs.firstDateWorked
+                in: body
+                condition: '{{present(inputs.firstDateWorked)}}'
+              - name: originalStartDate
+                value: $.inputs.originalStartDate
+                in: body
+                condition: '{{present(inputs.originalStartDate)}}'
+              - name: seniorityDate
+                value: $.inputs.seniorityDate
+                in: body
+                condition: '{{present(inputs.seniorityDate)}}'
+              - name: serviceDate
+                value: $.inputs.serviceDate
+                in: body
+                condition: '{{present(inputs.serviceDate)}}'
+              - name: endDate
+                value: $.inputs.endDate
+                in: body
+                condition: '{{present(inputs.endDate)}}'
+              - name: isContingentWorker
+                value: $.inputs.isContingentWorker
+                in: body
+                condition: '{{present(inputs.isContingentWorker)}}'
+    result:
+      data: $.steps.upsert_employment_request.output.data
+  - actionId: list_job_records
+    categories:
+      - hris
+    tags:
+      - EmpJob
+    actionType: custom
+    label: List Job Records
+    description: Retrieve a list of employee job records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empjob
+    details: Use cases include retrieving employee job information, analyzing job assignments, syncing job data across systems, and auditing job records. Returns collection of EmpJob entities with job details like job code, position, department, location, manager, and effective dates. Supports filtering by userId and seqNumber. Each employee can have multiple job records with effective dating for tracking job changes over time.
+    inputs:
+      - name: userId
+        description: Filter by user ID to get job records for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: seqNumber
+        description: Filter by sequence number
+        type: number
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_job_request
+        description: Fetch job records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpJob'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_job_request.output.data
+  - actionId: get_job_record
+    categories:
+      - hris
+    tags:
+      - EmpJob
+    actionType: custom
+    label: Get Job Record
+    description: Retrieve a specific job record by composite key (seqNumber, startDate, userId)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empjob
+    details: Use cases include fetching individual job data for display in applications, retrieving specific job records for reporting, validating job record existence, and accessing detailed job information with effective dating. Returns EmpJob entity with complete job data including job code, position, department, location, manager, company, business unit, and effective date range. Note that EmpJob uses composite key (seqNumber, startDate, userId) with three fields.
+    inputs:
+      - name: seqNumber
+        description: Sequence number (e.g., 0, 1)
+        type: number
+        in: path
+        required: true
+      - name: startDate
+        description: Start date in ISO format YYYY-MM-DD (e.g., '2013-09-07')
+        type: string
+        in: path
+        required: true
+      - name: userId
+        description: User ID (e.g., 'cgrant', '107030')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_job_request
+        description: Get job record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpJob(seqNumber=${inputs.seqNumber}L,startDate=datetime''${inputs.startDate}T00:00:00'',userId=''${inputs.userId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_job_request.output.data
+  - actionId: upsert_job
+    categories:
+      - hris
+    tags:
+      - EmpJob
+    actionType: custom
+    label: Upsert Job
+    description: Create or update employee job information record (step 3 of 4 for adding new employee)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empjob-upsert
+    details: Use cases include assigning job roles, updating job information, managing job history, and position assignments. This is the third required step when adding a new employee. Must be done after upserting PerPerson and EmpEmployment, and before upserting PerPersonal. Uses HTTP POST with the upsert operation to create or update EmpJob records. Note that SAP requires valid Company record association and may have additional environment-specific validation rules. Date fields accept both ISO format (YYYY-MM-DD) and OData format (/Date(ticks)/). Returns operation results including any errors or warnings.
+    inputs:
+      - name: userId
+        description: User ID for the employee (must match EmpEmployment)
+        type: string
+        in: body
+        required: true
+      - name: startDate
+        description: Job start date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: seqNumber
+        description: Sequence number for the job record
+        type: number
+        in: body
+        required: false
+      - name: jobCode
+        description: Job code
+        type: string
+        in: body
+        required: false
+      - name: position
+        description: Position code
+        type: string
+        in: body
+        required: false
+      - name: company
+        description: Company code
+        type: string
+        in: body
+        required: false
+      - name: department
+        description: Department code
+        type: string
+        in: body
+        required: false
+      - name: location
+        description: Location code
+        type: string
+        in: body
+        required: false
+      - name: businessUnit
+        description: Business unit code
+        type: string
+        in: body
+        required: false
+      - name: managerId
+        description: Manager user ID
+        type: string
+        in: body
+        required: false
+      - name: eventReason
+        description: Event reason code
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_job_request
+        description: Upsert job record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: EmpJob
+                in: body
+              - name: userId
+                value: $.inputs.userId
+                in: body
+              - name: startDate
+                value: $.inputs.startDate
+                in: body
+                condition: '{{present(inputs.startDate)}}'
+              - name: seqNumber
+                value: $.inputs.seqNumber
+                in: body
+                condition: '{{present(inputs.seqNumber)}}'
+              - name: jobCode
+                value: $.inputs.jobCode
+                in: body
+                condition: '{{present(inputs.jobCode)}}'
+              - name: position
+                value: $.inputs.position
+                in: body
+                condition: '{{present(inputs.position)}}'
+              - name: company
+                value: $.inputs.company
+                in: body
+                condition: '{{present(inputs.company)}}'
+              - name: department
+                value: $.inputs.department
+                in: body
+                condition: '{{present(inputs.department)}}'
+              - name: location
+                value: $.inputs.location
+                in: body
+                condition: '{{present(inputs.location)}}'
+              - name: businessUnit
+                value: $.inputs.businessUnit
+                in: body
+                condition: '{{present(inputs.businessUnit)}}'
+              - name: managerId
+                value: $.inputs.managerId
+                in: body
+                condition: '{{present(inputs.managerId)}}'
+              - name: eventReason
+                value: $.inputs.eventReason
+                in: body
+                condition: '{{present(inputs.eventReason)}}'
+    result:
+      data: $.steps.upsert_job_request.output.data
+  - actionId: list_employee_time
+    categories:
+      - hris
+    tags:
+      - EmployeeTime
+    actionType: custom
+    label: List Employee Time
+    description: Retrieve a list of employee time records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/employeetime
+    details: Use cases include retrieving time records for employees, filtering time entries by user, date range, and time type, managing time off requests, and tracking employee attendance. Returns collection of EmployeeTime entities with time type, dates, status, and approval information.
+    inputs:
+      - name: userId
+        description: Filter by user ID to get time records for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: timeType
+        description: Filter by time type code (e.g., 'VACATION', 'SICK')
+        type: string
+        in: query
+        required: false
+      - name: startDate
+        description: Filter by start date (YYYY-MM-DD)
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_employee_time_request
+        description: Fetch employee time records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmployeeTime'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_employee_time_request.output.data
+  - actionId: get_employee_time
+    categories:
+      - hris
+    tags:
+      - EmployeeTime
+    actionType: custom
+    label: Get Employee Time
+    description: Retrieve a specific employee time record by external code
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/employeetime
+    details: Use cases include viewing details of a specific time entry, checking approval status of time off requests, retrieving time entry audit information, and validating time record data. Returns EmployeeTime entity with complete time record information including dates, time type, status, and approver details.
+    inputs:
+      - name: externalCode
+        description: External code of the employee time record (e.g., 'cgrant_20260202')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_employee_time_request
+        description: Get employee time record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmployeeTime(''${inputs.externalCode}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_employee_time_request.output.data
+  - actionId: list_employment_terminations
+    categories:
+      - hris
+    tags:
+      - EmpEmploymentTermination
+    actionType: custom
+    label: List Employment Terminations
+    description: Retrieve a list of employment termination records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empemploymenttermination
+    details: Use cases include retrieving termination information for employees, syncing termination data across systems, managing offboarding processes, auditing termination records, and building termination reports. Returns collection of EmpEmploymentTermination entities with termination details including end dates, regret status, rehire eligibility, and various termination-related dates. Supports filtering and pagination.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get terminations for a specific person
+        type: string
+        in: query
+        required: false
+      - name: userId
+        description: Filter by user ID
+        type: string
+        in: query
+        required: false
+      - name: okToRehire
+        description: Filter by rehire eligibility status (true or false)
+        type: boolean
+        in: query
+        required: false
+      - name: regretTermination
+        description: Filter by regret termination status (true or false)
+        type: boolean
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_employment_terminations_request
+        description: Fetch employment termination records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpEmploymentTermination'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && !present(inputs.userId) && !present(inputs.okToRehire) && !present(inputs.regretTermination)}}'
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId) && !present(inputs.personIdExternal) && !present(inputs.okToRehire) && !present(inputs.regretTermination)}}'
+              - name: '{{"$filter"}}'
+                value: okToRehire eq ${inputs.okToRehire}
+                in: query
+                condition: '{{present(inputs.okToRehire) && !present(inputs.personIdExternal) && !present(inputs.userId) && !present(inputs.regretTermination)}}'
+              - name: '{{"$filter"}}'
+                value: regretTermination eq ${inputs.regretTermination}
+                in: query
+                condition: '{{present(inputs.regretTermination) && !present(inputs.personIdExternal) && !present(inputs.userId) && !present(inputs.okToRehire)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.userId) && !present(inputs.okToRehire) && !present(inputs.regretTermination)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_employment_terminations_request.output.data
+  - actionId: get_employment_termination
+    categories:
+      - hris
+    tags:
+      - EmpEmploymentTermination
+    actionType: custom
+    label: Get Employment Termination
+    description: Retrieve a specific employment termination record by composite key
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/empemploymenttermination
+    details: Use cases include fetching detailed termination information for a specific employee, retrieving offboarding status and dates, validating termination record existence, and accessing comprehensive termination data including last date worked, rehire eligibility, and regret status. Returns EmpEmploymentTermination entity with complete termination information. Requires composite key (endDate, personIdExternal, and userId).
+    inputs:
+      - name: endDate
+        description: End date in OData datetime format YYYY-MM-DDTHH:MM:SS (e.g., '2024-12-16T00:00:00'). Get this value from list_employment_terminations response endDate field converted from /Date(ticks)/ format.
+        type: string
+        in: path
+        required: true
+      - name: personIdExternal
+        description: External person ID (e.g., '100052', '100083')
+        type: string
+        in: path
+        required: true
+      - name: userId
+        description: User ID (e.g., '103719', '103721')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_employment_termination_request
+        description: Get specific employment termination record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/EmpEmploymentTermination(endDate=datetime''${inputs.endDate}'',personIdExternal=''${inputs.personIdExternal}'',userId=''${inputs.userId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_employment_termination_request.output.data
+  - actionId: list_job_applications
+    categories:
+      - ats
+    tags:
+      - JobApplication
+    actionType: custom
+    label: List Job Applications
+    description: Retrieve a list of job applications
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/jobapplication
+    details: Use cases include retrieving all candidate applications, filtering applications by job requisition or status, tracking recruitment pipeline and candidate progress, and managing application workflows. Returns collection of JobApplication entities with application details, candidate information, job requisition reference, application status, and submission date.
+    inputs:
+      - name: jobReqId
+        description: Filter by job requisition ID
+        type: string
+        in: query
+        required: false
+      - name: candidateId
+        description: Filter by candidate ID
+        type: string
+        in: query
+        required: false
+      - name: status
+        description: Filter by application status
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_job_applications_request
+        description: Fetch job applications
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobApplication'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_job_applications_request.output.data
+  - actionId: get_job_application
+    categories:
+      - ats
+    tags:
+      - JobApplication
+    actionType: custom
+    label: Get Job Application
+    description: Retrieve a specific job application by ID
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/jobapplication
+    details: Use cases include viewing detailed information about a specific application, checking application status and progress, reviewing candidate responses and documents, and accessing interview and assessment results. Returns JobApplication entity with complete application information including candidate details, job requisition, status, submission date, and all associated data.
+    inputs:
+      - name: applicationId
+        description: Job application ID (e.g., '12345')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_job_application_request
+        description: Get job application
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobApplication(${inputs.applicationId}L)'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_job_application_request.output.data
+  - actionId: list_job_locations
+    categories:
+      - hris
+    tags:
+      - JobLocation
+    actionType: custom
+    label: List Job Locations
+    description: Retrieve a list of job location records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/joblocation
+    details: Use cases include retrieving location information for jobs and positions, syncing location data across systems, managing office locations, building location dropdowns for HR forms, and generating location reports. Returns collection of JobLocation entities with location codes, addresses, city, state, country, and effective dates. Supports filtering by externalCode and effective start date. This is an MDF (Metadata Framework) effective-dated entity.
+    inputs:
+      - name: externalCode
+        description: Filter by location code (e.g., 'NYC', 'LON', 'TYO')
+        type: string
+        in: query
+        required: false
+      - name: mdfSystemEffectiveStartDate
+        description: Filter by effective start date in OData datetime format YYYY-MM-DDTHH:MM:SS
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_job_locations_request
+        description: Fetch job location records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobLocation'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: externalCode eq '${inputs.externalCode}'
+                in: query
+                condition: '{{present(inputs.externalCode) && !present(inputs.mdfSystemEffectiveStartDate)}}'
+              - name: '{{"$filter"}}'
+                value: mdfSystemEffectiveStartDate eq datetime'${inputs.mdfSystemEffectiveStartDate}'
+                in: query
+                condition: '{{present(inputs.mdfSystemEffectiveStartDate) && !present(inputs.externalCode)}}'
+              - name: '{{"$filter"}}'
+                value: externalCode eq '${inputs.externalCode}' and mdfSystemEffectiveStartDate eq datetime'${inputs.mdfSystemEffectiveStartDate}'
+                in: query
+                condition: '{{present(inputs.externalCode) && present(inputs.mdfSystemEffectiveStartDate)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_job_locations_request.output.data
+  - actionId: get_job_location
+    categories:
+      - hris
+    tags:
+      - JobLocation
+    actionType: custom
+    label: Get Job Location
+    description: Retrieve a specific job location record by composite key
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/joblocation
+    details: Use cases include fetching detailed location information for a specific location code and effective date, validating location record existence, and accessing comprehensive location data including address, city, state, country, and translation fields. Returns JobLocation entity with complete location information. Requires composite key (externalCode and mdfSystemEffectiveStartDate). This is an MDF effective-dated entity, meaning locations can have multiple versions based on effective date.
+    inputs:
+      - name: externalCode
+        description: Location code (e.g., 'NYC', 'LON', 'TYO'). Get this value from list_job_locations response.
+        type: string
+        in: path
+        required: true
+      - name: mdfSystemEffectiveStartDate
+        description: Effective start date in OData datetime format YYYY-MM-DDTHH:MM:SS (e.g., '2020-01-01T00:00:00'). Get this value from list_job_locations response mdfSystemEffectiveStartDate field converted from /Date(ticks)/ format.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_job_location_request
+        description: Get specific job location record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobLocation(externalCode=''${inputs.externalCode}'',mdfSystemEffectiveStartDate=datetime''${inputs.mdfSystemEffectiveStartDate}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_job_location_request.output.data
+  - actionId: list_job_offers
+    categories:
+      - ats
+    tags:
+      - JobOffer
+    actionType: custom
+    label: List Job Offers
+    description: Retrieve a list of job offer records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/joboffer
+    details: Use cases include retrieving job offers for candidates, tracking offer approval status, syncing offer data across systems, building offer management dashboards, and generating offer reports. Returns collection of JobOffer entities with offer details including application ID, approval status, compensation, location, start date, and custom fields. Supports filtering and pagination. Part of SAP SuccessFactors Recruiting module.
+    inputs:
+      - name: offerApprovalId
+        description: Filter by offer approval ID
+        type: number
+        in: query
+        required: false
+      - name: applicationId
+        description: Filter by job application ID
+        type: number
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_job_offers_request
+        description: Fetch job offer records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobOffer'
+            method: get
+            args:
+              - name: '{{\"$format\"}}'
+                value: json
+                in: query
+              - name: '{{\"$filter\"}}'
+                value: offerApprovalId eq ${inputs.offerApprovalId}
+                in: query
+                condition: '{{present(inputs.offerApprovalId) && !present(inputs.applicationId)}}'
+              - name: '{{\"$filter\"}}'
+                value: applicationId eq ${inputs.applicationId}
+                in: query
+                condition: '{{present(inputs.applicationId) && !present(inputs.offerApprovalId)}}'
+              - name: '{{\"$filter\"}}'
+                value: offerApprovalId eq ${inputs.offerApprovalId} and applicationId eq ${inputs.applicationId}
+                in: query
+                condition: '{{present(inputs.offerApprovalId) && present(inputs.applicationId)}}'
+              - name: '{{\"$top\"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{\"$skip\"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_job_offers_request.output.data
+  - actionId: get_job_offer
+    categories:
+      - ats
+    tags:
+      - JobOffer
+    actionType: custom
+    label: Get Job Offer
+    description: Retrieve a specific job offer record by offer approval ID
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/joboffer
+    details: Use cases include fetching detailed offer information for a specific offer approval ID, retrieving offer status and compensation details, validating offer record existence, and accessing comprehensive offer data including approvers, custom fields, and related job application. Returns JobOffer entity with complete offer information. Requires offerApprovalId key.
+    inputs:
+      - name: offerApprovalId
+        description: Offer approval ID (e.g., 101, 201). Get this value from list_job_offers response.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_job_offer_request
+        description: Get specific job offer record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobOffer(${inputs.offerApprovalId})'
+            method: get
+            args:
+              - name: '{{\"$format\"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_job_offer_request.output.data
+  - actionId: list_job_requisitions
+    categories:
+      - ats
+    tags:
+      - JobRequisition
+    actionType: custom
+    label: List Job Requisitions
+    description: Retrieve a list of job requisitions
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/jobrequisition
+    details: Use cases include retrieving all open job requisitions, filtering requisitions by status or department, tracking recruitment pipeline, and managing hiring workflows. Returns collection of JobRequisition entities with requisition details, job title, department, status, and posting information.
+    inputs:
+      - name: status
+        description: Filter by requisition status
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_job_requisitions_request
+        description: Fetch job requisitions
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobRequisition'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_job_requisitions_request.output.data
+  - actionId: get_job_requisition
+    categories:
+      - ats
+    tags:
+      - JobRequisition
+    actionType: custom
+    label: Get Job Requisition
+    description: Retrieve a specific job requisition by ID
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/jobrequisition
+    details: Use cases include viewing detailed information about a specific job requisition, checking requisition status and approval workflow, retrieving posting details and requirements, and accessing linked applications and candidates. Returns JobRequisition entity with complete requisition information including job title, description, department, location, hiring manager, status, and posting dates.
+    inputs:
+      - name: jobReqId
+        description: Job requisition ID (e.g., '12345')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_job_requisition_request
+        description: Get job requisition
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/JobRequisition(${inputs.jobReqId}L)'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_job_requisition_request.output.data
+  - actionId: list_employee_personal_info
+    categories:
+      - hris
+    tags:
+      - PerPerson
+    actionType: custom
+    label: List Employee Personal Info
+    description: Retrieve a list of employee personal information records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perperson
+    details: Use cases include retrieving employee personal data, syncing demographic information across systems, building employee directories, and auditing personal information. Returns collection of PerPerson entities with personal details like nationality, marital status, date of birth, gender, and personal identification information. Supports filtering and pagination.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get personal info for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_employee_personal_info_request
+        description: Fetch employee personal information
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPerson'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_employee_personal_info_request.output.data
+  - actionId: get_employee_personal_info
+    categories:
+      - hris
+    tags:
+      - PerPerson
+    actionType: custom
+    label: Get Employee Personal Info
+    description: Retrieve a specific employee's personal information by personIdExternal
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perperson
+    details: Use cases include fetching individual employee personal data for display in applications, retrieving demographic information, validating personal record existence, and accessing personal identification information. Returns PerPerson entity with complete personal data including nationality, marital status, date of birth, gender, and personal identification information.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., '104067', 'cgrant', '103077')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_employee_personal_info_request
+        description: Get employee personal information
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPerson(''${inputs.personIdExternal}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_employee_personal_info_request.output.data
+  - actionId: generate_next_person_id
+    categories:
+      - hris
+    tags:
+      - PerPerson
+    actionType: custom
+    label: Generate Next Person ID
+    description: Generate the next available person ID for creating a new employee in SAP SuccessFactors
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/generating-next-person-id
+    details: Use cases include automated employee onboarding workflows, bulk employee imports, API-driven hiring processes, and maintaining unique employee identifiers across integrated systems. Must be called before creating PerPerson entity to ensure ID uniqueness and prevent conflicts. Generated ID follows configured numbering scheme in SAP SuccessFactors. Essential first step in complete employee creation flow. Requires EC permissions for person ID generation.
+    steps:
+      - stepId: generate_person_id_request
+        description: Request next person ID from SAP SuccessFactors
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/generateNextPersonID'
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.generate_person_id_request.output.data
+  - actionId: upsert_person
+    categories:
+      - hris
+    tags:
+      - PerPerson
+    actionType: custom
+    label: Upsert Person
+    description: Create or update employee record in PerPerson entity (step 1 of 4 for adding new employee)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perperson-upsert
+    details: Use cases include new hire onboarding, employee data corrections, birth date updates, demographic changes, and country of birth amendments. This is the first required step when adding a new employee. Must be done before upserting EmpEmployment, EmpJob, and PerPersonal. Uses HTTP POST with the upsert operation to create or update PerPerson records. Date fields accept both ISO format (YYYY-MM-DD) and OData format (/Date(ticks)/). Returns operation results including any errors or warnings.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (use generate_next_person_id to get a new ID)
+        type: string
+        in: body
+        required: true
+      - name: dateOfBirth
+        description: Date of birth in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: countryOfBirth
+        description: Country of birth (ISO 3166-1 alpha-3 code)
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_person_request
+        description: Upsert PerPerson entity
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: Content-Type
+                value: application/json
+                in: headers
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PerPerson
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: dateOfBirth
+                value: $.inputs.dateOfBirth
+                in: body
+                condition: '{{present(inputs.dateOfBirth)}}'
+              - name: countryOfBirth
+                value: $.inputs.countryOfBirth
+                in: body
+                condition: '{{present(inputs.countryOfBirth)}}'
+    result:
+      data: $.steps.upsert_person_request.output.data
+  - actionId: list_employee_personal_details
+    categories:
+      - hris
+    tags:
+      - PerPersonal
+    actionType: custom
+    label: List Employee Personal Details
+    description: Retrieve a list of employee personal detail records (PerPersonal)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perpersonal
+    details: Use cases include retrieving detailed personal information for employees, syncing personal data across systems, building comprehensive employee profiles, and auditing personal records. Returns collection of PerPersonal entities with detailed personal information including names, demographics, contact preferences, and personal identification details. Supports filtering and pagination. This entity contains the detailed personal information that complements the PerPerson entity.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get personal details for a specific employee
+        type: string
+        in: query
+        required: false
+      - name: startDate
+        description: Filter by start date in format YYYY-MM-DD
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_employee_personal_details_request
+        description: Fetch employee personal details
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPersonal'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_employee_personal_details_request.output.data
+  - actionId: get_employee_personal_details
+    categories:
+      - hris
+    tags:
+      - PerPersonal
+    actionType: custom
+    label: Get Employee Personal Details
+    description: Retrieve specific employee personal details by personIdExternal and startDate
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perpersonal
+    details: Use cases include fetching detailed personal information for individual employees, retrieving demographic data, displaying personal profiles, and accessing complete personal identification information. Returns PerPersonal entity with comprehensive personal data including first name, last name, preferred name, date of birth, gender, marital status, nationality, language preferences, and personal identification details. The PerPersonal entity requires both personIdExternal and startDate as key fields.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., '104067', 'cgrant', '103077')
+        type: string
+        in: path
+        required: true
+      - name: startDate
+        description: Start date in OData datetime format YYYY-MM-DDT00:00:00 or YYYY-MM-DDTHH:MM:SS (e.g., '2013-09-07T00:00:00'). Get this value from the list_employee_personal_details response startDate field converted from /Date(ticks)/ format.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_employee_personal_details_request
+        description: Get employee personal details
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPersonal(personIdExternal=''${inputs.personIdExternal}'',startDate=datetime''${inputs.startDate}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_employee_personal_details_request.output.data
+  - actionId: upsert_personal
+    categories:
+      - hris
+    tags:
+      - PerPersonal
+    actionType: custom
+    label: Upsert Personal
+    description: Create or update employee personal information record (step 4 of 4 for adding new employee)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perpersonal-upsert
+    details: Use cases include storing personal information, updating demographic data, managing personal details, and completing employee setup. This is the fourth and final required step when adding a new employee. Must be done after upserting PerPerson, EmpEmployment, and EmpJob. After completing this step, you can create a SCIM user account. Uses HTTP POST with the upsert operation to create or update PerPersonal records. Note that SAP requires fields like firstName, lastName, preferredLanguage, and nationality which may vary by environment configuration. Date fields accept both ISO format (YYYY-MM-DD) and OData format (/Date(ticks)/). Returns operation results including any errors or warnings.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (must match PerPerson record)
+        type: string
+        in: body
+        required: true
+      - name: startDate
+        description: Start date in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: firstName
+        description: First name of the person
+        type: string
+        in: body
+        required: false
+      - name: lastName
+        description: Last name of the person
+        type: string
+        in: body
+        required: false
+      - name: maritalStatus
+        description: Marital status code
+        type: string
+        in: body
+        required: false
+      - name: nationality
+        description: Nationality code
+        type: string
+        in: body
+        required: false
+      - name: gender
+        description: Gender code (e.g., M, F)
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_personal_request
+        description: Upsert personal information record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PerPersonal
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: startDate
+                value: $.inputs.startDate
+                in: body
+                condition: '{{present(inputs.startDate)}}'
+              - name: firstName
+                value: $.inputs.firstName
+                in: body
+                condition: '{{present(inputs.firstName)}}'
+              - name: lastName
+                value: $.inputs.lastName
+                in: body
+                condition: '{{present(inputs.lastName)}}'
+              - name: maritalStatus
+                value: $.inputs.maritalStatus
+                in: body
+                condition: '{{present(inputs.maritalStatus)}}'
+              - name: nationality
+                value: $.inputs.nationality
+                in: body
+                condition: '{{present(inputs.nationality)}}'
+              - name: gender
+                value: $.inputs.gender
+                in: body
+                condition: '{{present(inputs.gender)}}'
+    result:
+      data: $.steps.upsert_personal_request.output.data
+  - actionId: list_person_types
+    categories:
+      - hris
+    tags:
+      - PersonType
+    actionType: custom
+    label: List Person Types
+    description: Retrieve a list of person type definitions
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/persontype
+    details: Use cases include retrieving available person type classifications, understanding employee categorizations, building person type selection lists, and synchronizing person type data across systems. Returns collection of PersonType entities with person type codes, descriptions, and configuration details. Supports filtering and pagination. Person types define employee categories such as full-time, part-time, contractor, temporary, etc.
+    inputs:
+      - name: externalCode
+        description: Filter by external code
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_person_types_request
+        description: Fetch person types
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PersonType'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: externalCode eq '${inputs.externalCode}'
+                in: query
+                condition: '{{present(inputs.externalCode)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_person_types_request.output.data
+  - actionId: get_person_type
+    categories:
+      - hris
+    tags:
+      - PersonType
+    actionType: custom
+    label: Get Person Type
+    description: Retrieve a specific person type by external code
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/persontype
+    details: Use cases include fetching detailed information about a specific person type, retrieving person type configuration, validating person type existence, and displaying person type details in UI. Returns PersonType entity with complete person type information including external code, description, active status, and associated configuration settings. Person types define employee classifications used throughout the system.
+    inputs:
+      - name: externalCode
+        description: External code of the person type (e.g., 'EMP', 'CON', 'INT')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_person_type_request
+        description: Get specific person type
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PersonType(''${inputs.externalCode}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_person_type_request.output.data
+  - actionId: upsert_person_type
+    categories:
+      - hris
+    tags:
+      - PersonType
+    actionType: custom
+    label: Upsert Person Type
+    description: Create or update a person type definition
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/persontype
+    details: Use cases include creating new person type classifications, updating person type descriptions, managing person type configurations, and maintaining employee categorization systems. Uses HTTP POST with the upsert operation to create or update PersonType records. The external code determines create vs update. Returns operation results including any errors or warnings. Person types are fundamental to employee classification and must be properly configured.
+    inputs:
+      - name: externalCode
+        description: External code of the person type (unique identifier)
+        type: string
+        in: body
+        required: true
+      - name: name
+        description: Name/description of the person type
+        type: string
+        in: body
+        required: false
+      - name: status
+        description: Status of the person type (e.g., ACTIVE, INACTIVE)
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_person_type_request
+        description: Upsert person type record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PersonType
+                in: body
+              - name: externalCode
+                value: $.inputs.externalCode
+                in: body
+              - name: name
+                value: $.inputs.name
+                in: body
+                condition: '{{present(inputs.name)}}'
+              - name: status
+                value: $.inputs.status
+                in: body
+                condition: '{{present(inputs.status)}}'
+    result:
+      data: $.steps.upsert_person_type_request.output.data
+  - actionId: get_entity_metadata
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: Get Entity Metadata
+    description: Retrieve metadata definition for a specific OData entity in JSON format
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/odata-metadata-document
+    details: Use cases include API discovery for specific entities, understanding entity structure and field types, generating client code, validating entity schemas, and building dynamic integrations. Returns entity metadata in JSON format (unlike $metadata which only supports XML). Supports any entity name like User, PerPerson, EmpEmployment, Position, etc. Essential for programmatic entity analysis. Requires valid authentication.
+    inputs:
+      - name: entityName
+        description: Entity name (e.g., 'User', 'PerPerson', 'EmpEmployment', 'Position', 'Goal')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_entity_metadata_request
+        description: Get entity metadata in JSON format
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Entity(''${inputs.entityName}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: JSON
+                in: query
+    result: $.steps.get_entity_metadata_request.output.data
+  - actionId: list_picklists
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: List Picklists
+    description: Retrieve all available MDF picklist definitions that can be used to get picklist values for form fields
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklistv2
+    details: Use cases include discovering available picklists for dynamic form building, identifying which fields have dropdown options, API discovery for data validation, and building configuration UIs. Returns list of all MDF picklist definitions with their IDs and effective dates. IDs returned can be passed to get_picklist action. Essential for understanding what configurable dropdowns exist in the system. Supports filtering by effectiveStartDate to get specific versions. Requires EC permissions for PickListV2 READ access.
+    inputs:
+      - name: effectiveStartDate
+        description: Filter by effective start date in format YYYY-MM-DD (e.g., '2020-01-01')
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_picklists_request
+        description: Fetch all picklist definitions
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PickListV2'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$select"}}'
+                value: id,effectiveStartDate,status
+                in: query
+              - name: '{{"$filter"}}'
+                value: effectiveStartDate eq datetime'${inputs.effectiveStartDate}T00:00:00'
+                in: query
+                condition: '{{present(inputs.effectiveStartDate)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result: $.steps.list_picklists_request.output.data
+  - actionId: get_picklist
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: Get Picklist
+    description: Retrieve a specific MDF picklist definition by ID and effective start date
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklistv2
+    details: Use cases include retrieving picklist metadata for a specific version, validating picklist configuration, accessing picklist properties, and enriching picklist data. Returns complete picklist definition including id, effectiveStartDate, and status. Can optionally expand picklistOptions navigation property to retrieve all values in one call. Use list_picklists to discover available picklist IDs first. Requires EC permissions for PickListV2 READ access.
+    inputs:
+      - name: picklistId
+        description: Picklist identifier (e.g., 'csfCountry', 'locationsBR', 'ChangeReason')
+        type: string
+        in: path
+        required: true
+      - name: effectiveStartDate
+        description: Effective start date in format YYYY-MM-DD (e.g., '2020-01-01')
+        type: string
+        in: path
+        required: true
+      - name: expandOptions
+        description: Whether to expand and include picklist options in response
+        type: boolean
+        in: query
+        required: false
+    steps:
+      - stepId: get_picklist_request
+        description: Get MDF picklist definition
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PickListV2(id=''${inputs.picklistId}'',effectiveStartDate=datetime''${inputs.effectiveStartDate}T00:00:00'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$expand"}}'
+                value: picklistOptions
+                in: query
+                condition: '{{present(inputs.expandOptions)}}'
+    result: $.steps.get_picklist_request.output.data
+  - actionId: list_picklist_values
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: List Picklist Values
+    description: Retrieve picklist/dropdown values for respected fields such as countries, departments, locations, languages, change reasons, and other configurable field options
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklistvaluev2
+    details: Use cases include populating form dropdowns, validating user-entered values, building dynamic UI components, retrieving localized option labels, and syncing configuration data. Supports filtering by picklistId to retrieve specific dropdown options (e.g., csfCountry, locationsBR, ChangeReason, language). Foundation data configured per tenant. Returns values with translations across multiple languages. Requires EC permissions for PickListValueV2 READ access.
+    inputs:
+      - name: picklistId
+        description: Filter by picklist ID
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_picklist_values_request
+        description: Get picklist values
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PickListValueV2'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: PickListV2_id eq '${inputs.picklistId}'
+                in: query
+                condition: '{{present(inputs.picklistId)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result: $.steps.list_picklist_values_request.output.data
+  - actionId: get_picklist_value
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: Get Picklist Value
+    description: Retrieve details for a specific picklist value from respected fields such as country codes, location IDs, or other field option values
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklistvaluev2
+    details: Use cases include validating specific dropdown selections, retrieving localized option labels for a single value, enriching form data, and verifying configuration. Requires picklistId (e.g., 'csfCountry', 'locationsBR'), effectiveStartDate (e.g., '1900-01-01'), and externalCode (e.g., '1', 'USA') as path parameters. Returns complete picklist option details with translations across all supported languages. Requires EC permissions for PickListValueV2 READ access.
+    inputs:
+      - name: picklistId
+        description: Picklist ID (e.g., 'csfCountry', 'locationsBR', 'benefitContactType')
+        type: string
+        in: path
+        required: true
+      - name: effectiveStartDate
+        description: Effective start date in format YYYY-MM-DD (e.g., '1900-01-01')
+        type: string
+        in: path
+        required: true
+      - name: externalCode
+        description: External code of the value (e.g., '1', 'USA', specific identifier for the picklist option)
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_picklist_value_request
+        description: Get picklist value details
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PickListValueV2(PickListV2_effectiveStartDate=datetime''${inputs.effectiveStartDate}T00:00:00'',PickListV2_id=''${inputs.picklistId}'',externalCode=''${inputs.externalCode}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result: $.steps.get_picklist_value_request.output.data
+  - actionId: list_legacy_picklist
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: List Legacy Picklists
+    description: Retrieve all legacy picklist definitions (pre-MDF picklist system)
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklist
+    details: Use cases include discovering available legacy picklists, listing all picklist IDs for older integrations, accessing picklist definitions managed via Picklist Management tool, and building picklist discovery workflows. Returns picklist metadata with picklistId that can be used in get_legacy_picklist. Legacy picklists differ from MDF picklists in structure and behavior. Requires Picklist Management permissions.
+    steps:
+      - stepId: list_legacy_picklist_request
+        description: Get all legacy picklist definitions
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Picklist'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result: $.steps.list_legacy_picklist_request.output.data
+  - actionId: get_legacy_picklist
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: Get Legacy Picklist
+    description: Retrieve a specific legacy picklist definition by ID with option to expand picklist options
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklist
+    details: Use cases include retrieving picklist metadata, accessing picklist options via navigation property, validating picklist IDs, and enriching legacy picklist data. Returns picklist definition with picklistId. Can expand picklistOptions to get all options in one call. Use list_legacy_picklist to discover available picklist IDs first. Requires Picklist Management permissions.
+    inputs:
+      - name: picklistId
+        description: Picklist identifier (e.g., 'ecMaritalStatus', 'language', 'country')
+        type: string
+        in: path
+        required: true
+      - name: expandOptions
+        description: Whether to expand and include picklist options in response
+        type: boolean
+        in: query
+        required: false
+    steps:
+      - stepId: get_legacy_picklist_request
+        description: Get legacy picklist definition
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Picklist(''${inputs.picklistId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$expand"}}'
+                value: picklistOptions
+                in: query
+                condition: '{{present(inputs.expandOptions)}}'
+    result: $.steps.get_legacy_picklist_request.output.data
+  - actionId: list_legacy_picklist_options
+    categories:
+      - hris
+    tags:
+      - Metadata
+    actionType: custom
+    label: List Legacy Picklist Options
+    description: Retrieve all options for a specific legacy picklist
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/picklistoption
+    details: Use cases include populating dropdowns from legacy picklists, retrieving all available values for a specific picklist field, accessing option IDs and external codes, and syncing legacy picklist data. Returns collection of picklist options with id, externalCode, and label properties. Can navigate to child options for hierarchical picklists. Requires Picklist Management permissions.
+    inputs:
+      - name: picklistId
+        description: Picklist identifier (e.g., 'ecMaritalStatus', 'language', 'country')
+        type: string
+        in: path
+        required: true
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_legacy_picklist_options_request
+        description: Get legacy picklist options for specific picklist
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Picklist(''${inputs.picklistId}'')/picklistOptions'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result: $.steps.list_legacy_picklist_options_request.output.data
+  - actionId: list_event_reasons
+    categories:
+      - hris
+    tags:
+      - FOEventReason
+      - Metadata
+    actionType: custom
+    label: List Event Reasons
+    description: Retrieve event reason codes available for employment events like terminations, transfers, or status changes
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/foeventreason
+    details: Use cases include retrieving valid event reason codes for employment termination upsert operations, discovering configured termination reasons, filtering event reasons by employee status, and validating event reason codes before submitting termination records. Returns FOEventReason records with externalCode (the code to use in termination upsert), description, employee status, and effective dates. Filter by emplStatus eq 'T' to get termination-specific reasons. Essential for populating eventReason field in EmpEmploymentTermination upsert operations. The externalCode field from results should be used as the eventReason value.
+    inputs:
+      - name: emplStatus
+        description: Filter by employee status (e.g., 'T' for terminated, 'A' for active). Use 'T' to get valid termination event reason codes.
+        type: string
+        in: query
+        required: false
+      - name: externalCode
+        description: Filter by specific event reason code (e.g., 'TERRMNT', 'RESIGN', 'RETIRE')
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_event_reasons_request
+        description: Fetch event reason records from FOEventReason entity
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/FOEventReason'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: emplStatus eq '${inputs.emplStatus}'
+                in: query
+                condition: '{{present(inputs.emplStatus) && !present(inputs.externalCode)}}'
+              - name: '{{"$filter"}}'
+                value: externalCode eq '${inputs.externalCode}'
+                in: query
+                condition: '{{present(inputs.externalCode) && !present(inputs.emplStatus)}}'
+              - name: '{{"$filter"}}'
+                value: emplStatus eq '${inputs.emplStatus}' and externalCode eq '${inputs.externalCode}'
+                in: query
+                condition: '{{present(inputs.emplStatus) && present(inputs.externalCode)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_event_reasons_request.output.data
+  - actionId: list_person_phones
+    categories:
+      - hris
+    tags:
+      - PerPhone
+    actionType: custom
+    label: List Person Phones
+    description: Retrieve a list of person phone records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perphone
+    details: Use cases include retrieving employee contact information, syncing phone data across systems, building employee directories with phone numbers, and managing communication channels. Returns collection of PerPhone entities with phone details including phone number, country code, area code, extension, phone type, and primary status. Supports filtering and pagination.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get phones for a specific person
+        type: string
+        in: query
+        required: false
+      - name: phoneType
+        description: Filter by phone type code (e.g., business, mobile, home)
+        type: string
+        in: query
+        required: false
+      - name: isPrimary
+        description: Filter by primary phone status (true or false)
+        type: boolean
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_person_phones_request
+        description: Fetch person phone records
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPhone'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && !present(inputs.phoneType) && !present(inputs.isPrimary)}}'
+              - name: '{{"$filter"}}'
+                value: phoneType eq '${inputs.phoneType}'
+                in: query
+                condition: '{{present(inputs.phoneType) && !present(inputs.personIdExternal) && !present(inputs.isPrimary)}}'
+              - name: '{{"$filter"}}'
+                value: isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.isPrimary) && !present(inputs.personIdExternal) && !present(inputs.phoneType)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and phoneType eq '${inputs.phoneType}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.phoneType) && !present(inputs.isPrimary)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.isPrimary) && !present(inputs.phoneType)}}'
+              - name: '{{"$filter"}}'
+                value: phoneType eq '${inputs.phoneType}' and isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.phoneType) && present(inputs.isPrimary) && !present(inputs.personIdExternal)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and phoneType eq '${inputs.phoneType}' and isPrimary eq ${inputs.isPrimary}
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.phoneType) && present(inputs.isPrimary)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_person_phones_request.output.data
+  - actionId: get_person_phone
+    categories:
+      - hris
+    tags:
+      - PerPhone
+    actionType: custom
+    label: Get Person Phone
+    description: Retrieve a specific person phone record by composite key
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perphone
+    details: Use cases include fetching detailed phone information for a specific person and phone type, retrieving contact details for communication, validating phone record existence, and accessing phone metadata. Returns PerPhone entity with complete phone information including phone number, country code, area code, extension, phone type, and primary status. Requires composite key (personIdExternal and phoneType).
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., '103077', '101050')
+        type: string
+        in: path
+        required: true
+      - name: phoneType
+        description: Phone type code (e.g., '10605' for business, '10606' for mobile). Get this value from list_person_phones response.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_person_phone_request
+        description: Get specific person phone record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPhone(personIdExternal=''${inputs.personIdExternal}'',phoneType=''${inputs.phoneType}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_person_phone_request.output.data
+  - actionId: upsert_person_phone
+    categories:
+      - hris
+    tags:
+      - PerPhone
+    actionType: custom
+    label: Upsert Person Phone
+    description: Create or update a person phone record
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perphone
+    details: Use cases include adding new phone numbers for employees, updating existing phone information, managing multiple phone types per person, and setting primary phone preferences. Uses HTTP POST with the upsert operation to create or update PerPhone records. The composite key (personIdExternal and phoneType) determines create vs update. Returns operation results including any errors or warnings.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (must reference existing PerPerson record)
+        type: string
+        in: body
+        required: true
+      - name: phoneType
+        description: Phone type code (e.g., business, mobile, home)
+        type: string
+        in: body
+        required: true
+      - name: phoneNumber
+        description: Phone number
+        type: string
+        in: body
+        required: false
+      - name: countryCode
+        description: Country calling code (e.g., '1' for US, '44' for UK, '49' for Germany)
+        type: string
+        in: body
+        required: false
+      - name: areaCode
+        description: Area code or city code
+        type: string
+        in: body
+        required: false
+      - name: extension
+        description: Phone extension number
+        type: string
+        in: body
+        required: false
+      - name: isPrimary
+        description: Whether this is the primary phone number for the person
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_person_phone_request
+        description: Upsert person phone record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PerPhone
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: phoneType
+                value: $.inputs.phoneType
+                in: body
+              - name: phoneNumber
+                value: $.inputs.phoneNumber
+                in: body
+                condition: '{{present(inputs.phoneNumber)}}'
+              - name: countryCode
+                value: $.inputs.countryCode
+                in: body
+                condition: '{{present(inputs.countryCode)}}'
+              - name: areaCode
+                value: $.inputs.areaCode
+                in: body
+                condition: '{{present(inputs.areaCode)}}'
+              - name: extension
+                value: $.inputs.extension
+                in: body
+                condition: '{{present(inputs.extension)}}'
+              - name: isPrimary
+                value: $.inputs.isPrimary
+                in: body
+                condition: '{{present(inputs.isPrimary)}}'
+    result:
+      data: $.steps.upsert_person_phone_request.output.data
+  - actionId: list_photos
+    categories:
+      - hris
+    tags:
+      - Photo
+    actionType: custom
+    label: List Photos
+    description: Retrieve a list of user profile photos
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/photo
+    details: Use cases include bulk photo retrieval for directory applications, syncing profile photos across systems, building employee photo galleries, and auditing photo availability. Returns collection of Photo entities with metadata and photo data. Can filter by userId or photoType, and supports pagination. Photos are stored as base64-encoded binary data in the photo field.
+    inputs:
+      - name: userId
+        description: Filter by user ID to get photos for a specific user
+        type: string
+        in: query
+        required: false
+      - name: photoType
+        description: Filter by photo type (1=LIVE_PROFILE, 2=ORG_CHART, 3=QUICK_CARD, 7=FACE, 14=USER_EXPRESSIVE_PHOTO, 26=LIVE_PROFILE_SQUARE_60, 27=LIVE_PROFILE_SQUARE_30)
+        type: number
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_photos_request
+        description: Fetch photos
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Photo'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: userId eq '${inputs.userId}'
+                in: query
+                condition: '{{present(inputs.userId)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_photos_request.output.data
+  - actionId: get_photo
+    categories:
+      - hris
+    tags:
+      - Photo
+    actionType: custom
+    label: Get Photo
+    description: Retrieve a specific user profile photo by userId and photoType
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/photo
+    details: Use cases include fetching individual profile photos for display in applications, retrieving photo metadata, validating photo existence, and downloading photos for local storage. Returns Photo entity with complete photo data including base64-encoded image in the photo field. Photo entity uses composite key (photoType, userId).
+    inputs:
+      - name: photoType
+        description: Photo type identifier (1=LIVE_PROFILE, 2=ORG_CHART, 3=QUICK_CARD, 7=FACE, 14=USER_EXPRESSIVE_PHOTO, 26=LIVE_PROFILE_SQUARE_60, 27=LIVE_PROFILE_SQUARE_30)
+        type: number
+        in: path
+        required: true
+      - name: userId
+        description: User ID associated with the photo (e.g., '104067', 'cgrant')
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_photo_request
+        description: Get photo details
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/Photo(photoType=${inputs.photoType},userId=''${inputs.userId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result: $.steps.get_photo_request.output.data
+  - actionId: list_person_relationships
+    categories:
+      - hris
+    tags:
+      - PerPersonRelationship
+    actionType: custom
+    label: List Person Relationships
+    description: Retrieve a list of person relationship records
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perpersonrelationship
+    details: Use cases include retrieving employee dependent and family relationship information, syncing relationship data across systems, managing beneficiary information, and building family relationship reports. Returns collection of PerPersonRelationship entities with details about related persons including relationship type, names, dates, and beneficiary status. Supports filtering and pagination.
+    inputs:
+      - name: personIdExternal
+        description: Filter by external person ID to get relationships for a specific person
+        type: string
+        in: query
+        required: false
+      - name: relatedPersonIdExternal
+        description: Filter by related person external ID
+        type: string
+        in: query
+        required: false
+      - name: relationshipType
+        description: Filter by relationship type code
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_person_relationships_request
+        description: Fetch person relationships
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPersonRelationship'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && !present(inputs.relatedPersonIdExternal) && !present(inputs.relationshipType)}}'
+              - name: '{{"$filter"}}'
+                value: relatedPersonIdExternal eq '${inputs.relatedPersonIdExternal}'
+                in: query
+                condition: '{{present(inputs.relatedPersonIdExternal) && !present(inputs.personIdExternal) && !present(inputs.relationshipType)}}'
+              - name: '{{"$filter"}}'
+                value: relationshipType eq '${inputs.relationshipType}'
+                in: query
+                condition: '{{present(inputs.relationshipType) && !present(inputs.personIdExternal) && !present(inputs.relatedPersonIdExternal)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and relatedPersonIdExternal eq '${inputs.relatedPersonIdExternal}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.relatedPersonIdExternal) && !present(inputs.relationshipType)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and relationshipType eq '${inputs.relationshipType}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.relationshipType) && !present(inputs.relatedPersonIdExternal)}}'
+              - name: '{{"$filter"}}'
+                value: relatedPersonIdExternal eq '${inputs.relatedPersonIdExternal}' and relationshipType eq '${inputs.relationshipType}'
+                in: query
+                condition: '{{present(inputs.relatedPersonIdExternal) && present(inputs.relationshipType) && !present(inputs.personIdExternal)}}'
+              - name: '{{"$filter"}}'
+                value: personIdExternal eq '${inputs.personIdExternal}' and relatedPersonIdExternal eq '${inputs.relatedPersonIdExternal}' and relationshipType eq '${inputs.relationshipType}'
+                in: query
+                condition: '{{present(inputs.personIdExternal) && present(inputs.relatedPersonIdExternal) && present(inputs.relationshipType)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result:
+      data: $.steps.list_person_relationships_request.output.data
+  - actionId: get_person_relationship
+    categories:
+      - hris
+    tags:
+      - PerPersonRelationship
+    actionType: custom
+    label: Get Person Relationship
+    description: Retrieve a specific person relationship by composite key
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perpersonrelationship
+    details: Use cases include fetching detailed information about a specific relationship, retrieving dependent information for benefits processing, validating relationship existence, and accessing beneficiary details. Returns PerPersonRelationship entity with complete relationship information including relationship type, names, contact details, and dependent/beneficiary status. Requires composite key (personIdExternal, relatedPersonIdExternal, and startDate).
+    inputs:
+      - name: personIdExternal
+        description: External person ID (e.g., '100115', '103077')
+        type: string
+        in: path
+        required: true
+      - name: relatedPersonIdExternal
+        description: Related person external ID (e.g., '18_d924', '18_d1041')
+        type: string
+        in: path
+        required: true
+      - name: startDate
+        description: Start date in OData datetime format YYYY-MM-DDTHH:MM:SS (e.g., '2015-11-04T00:00:00'). Get this value from list_person_relationships response startDate field converted from /Date(ticks)/ format.
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_person_relationship_request
+        description: Get specific person relationship
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/PerPersonRelationship(personIdExternal=''${inputs.personIdExternal}'',relatedPersonIdExternal=''${inputs.relatedPersonIdExternal}'',startDate=datetime''${inputs.startDate}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+    result:
+      data: $.steps.get_person_relationship_request.output.data
+  - actionId: upsert_person_relationship
+    categories:
+      - hris
+    tags:
+      - PerPersonRelationship
+    actionType: custom
+    label: Upsert Person Relationship
+    description: Create or update a person relationship record
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/perpersonrelationship
+    details: Use cases include adding new dependent relationships, updating beneficiary information, managing family member data, and maintaining emergency contact relationships. Uses HTTP POST with the upsert operation to create or update PerPersonRelationship records. The composite key (personIdExternal, relatedPersonIdExternal, startDate) determines create vs update. Date fields accept both ISO format (YYYY-MM-DD) and OData format (/Date(ticks)/). Returns operation results including any errors or warnings.
+    inputs:
+      - name: personIdExternal
+        description: External person ID (must reference existing PerPerson record)
+        type: string
+        in: body
+        required: true
+      - name: relatedPersonIdExternal
+        description: Related person external ID (identifier for the related person)
+        type: string
+        in: body
+        required: true
+      - name: startDate
+        description: Start date of the relationship in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: true
+      - name: relationshipType
+        description: Relationship type code (e.g., spouse, child, parent, dependent)
+        type: string
+        in: body
+        required: false
+      - name: firstName
+        description: First name of the related person
+        type: string
+        in: body
+        required: false
+      - name: lastName
+        description: Last name of the related person
+        type: string
+        in: body
+        required: false
+      - name: endDate
+        description: End date of the relationship in format YYYY-MM-DD or /Date(ticks)/
+        type: string
+        in: body
+        required: false
+      - name: isBeneficiary
+        description: Whether the related person is a beneficiary
+        type: boolean
+        in: body
+        required: false
+      - name: isAccompanyingDependent
+        description: Whether the related person is an accompanying dependent
+        type: boolean
+        in: body
+        required: false
+      - name: attachmentId
+        description: Attachment ID for relationship documentation
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: upsert_person_relationship_request
+        description: Upsert person relationship record
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/upsert'
+            method: post
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: __metadata
+                value:
+                  uri: PerPersonRelationship
+                in: body
+              - name: personIdExternal
+                value: $.inputs.personIdExternal
+                in: body
+              - name: relatedPersonIdExternal
+                value: $.inputs.relatedPersonIdExternal
+                in: body
+              - name: startDate
+                value: $.inputs.startDate
+                in: body
+              - name: relationshipType
+                value: $.inputs.relationshipType
+                in: body
+                condition: '{{present(inputs.relationshipType)}}'
+              - name: firstName
+                value: $.inputs.firstName
+                in: body
+                condition: '{{present(inputs.firstName)}}'
+              - name: lastName
+                value: $.inputs.lastName
+                in: body
+                condition: '{{present(inputs.lastName)}}'
+              - name: endDate
+                value: $.inputs.endDate
+                in: body
+                condition: '{{present(inputs.endDate)}}'
+              - name: isBeneficiary
+                value: $.inputs.isBeneficiary
+                in: body
+                condition: '{{present(inputs.isBeneficiary)}}'
+              - name: isAccompanyingDependent
+                value: $.inputs.isAccompanyingDependent
+                in: body
+                condition: '{{present(inputs.isAccompanyingDependent)}}'
+              - name: attachmentId
+                value: $.inputs.attachmentId
+                in: body
+                condition: '{{present(inputs.attachmentId)}}'
+    result:
+      data: $.steps.upsert_person_relationship_request.output.data
+  - actionId: list_users
+    categories:
+      - hris
+    tags:
+      - User
+    actionType: custom
+    label: List Users
+    description: Retrieve all users from the system
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/user
+    details: Query all user accounts including employees, administrators, and system users. Supports filtering by status, username, email, and department. Returns user profiles with basic information, permissions, and access rights. Useful for user management, access audits, directory synchronization, and employee lookups.
+    inputs:
+      - name: filter
+        description: OData filter expression to query users. Supports standard OData operators (eq, ne, lt, le, gt, ge, and, or, not, contains, startswith, endswith). Available field names can be found at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/properties or by examining the list_users response structure. Status values (t for active, f for inactive, T for active_external, F for inactive_external, e for active_external_suite, d for inactive_external_suite). Examples (username eq 'jdoe'), (email eq 'user@example.com'), (status eq 't'), (status in 'f','F','e','d'), (department eq 'HR' and status eq 't'), (contains(username,'admin')), (startswith(email,'test'))
+        type: string
+        in: query
+        required: false
+      - name: orderby
+        description: Comma-separated list of fields to sort by. Add 'asc' or 'desc' after field name for sort direction. Default is ascending. Available field names at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/properties. Examples (username), (username asc), (lastName desc), (department asc, username desc)
+        type: string
+        in: query
+        required: false
+      - name: select
+        description: Comma-separated list of field names to return in the response. Reduces response payload size by requesting only specific fields. Available field names at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/properties and usage documentation at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/select. Examples (userId,username,email), (userId,username,email,status,department)
+        type: string
+        in: query
+        required: false
+      - name: expand
+        description: Comma-separated list of navigation properties to expand in the response. Available properties (manager, directReports, empInfo, hr, hrReports, matrix1Label, matrix2Label, matrix3Label, nominationNav, proxy, secondManager, secondReports, talentPool). Full list at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/navigation-properties. Example (manager,empInfo,hr)
+        type: string
+        in: query
+        required: false
+      - name: limit
+        description: Maximum number of records to return
+        type: number
+        in: query
+        required: false
+      - name: skip
+        description: Number of records to skip for pagination
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_users_request
+        description: Get all users
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/User'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$filter"}}'
+                value: ${inputs.filter}
+                in: query
+                condition: '{{present(inputs.filter)}}'
+              - name: '{{"$orderby"}}'
+                value: ${inputs.orderby}
+                in: query
+                condition: '{{present(inputs.orderby)}}'
+              - name: '{{"$select"}}'
+                value: ${inputs.select}
+                in: query
+                condition: '{{present(inputs.select)}}'
+              - name: '{{"$expand"}}'
+                value: ${inputs.expand}
+                in: query
+                condition: '{{present(inputs.expand)}}'
+              - name: '{{"$top"}}'
+                value: $.inputs.limit
+                in: query
+                condition: '{{present(inputs.limit)}}'
+              - name: '{{"$skip"}}'
+                value: $.inputs.skip
+                in: query
+                condition: '{{present(inputs.skip)}}'
+    result: $.steps.list_users_request.output.data
+  - actionId: get_user
+    categories:
+      - hris
+    tags:
+      - User
+    actionType: custom
+    label: Get User
+    description: Retrieve detailed information for a specific user by userId
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/user
+    details: Fetch complete user profile including username, email, status, permissions, manager relationships, department assignments, and HR information. Useful for user profile display, permission verification, organizational hierarchy views, and employee information lookups.
+    inputs:
+      - name: userId
+        description: The unique identifier for the user
+        type: string
+        in: path
+        required: true
+      - name: select
+        description: Comma-separated list of field names to return in the response. Reduces response payload size by requesting only specific fields. Available field names at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/properties and usage documentation at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/select. Examples (userId,username,email), (userId,username,email,status,department)
+        type: string
+        in: query
+        required: false
+      - name: expand
+        description: Comma-separated list of navigation properties to expand in the response. Available properties (manager, directReports, empInfo, hr, hrReports, matrix1Label, matrix2Label, matrix3Label, nominationNav, proxy, secondManager, secondReports, talentPool). Full list at https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/navigation-properties. Example (manager,empInfo,hr)
+        type: string
+        in: query
+        required: false
+    steps:
+      - stepId: get_user_request
+        description: Get user details
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/User(''${inputs.userId}'')'
+            method: get
+            args:
+              - name: '{{"$format"}}'
+                value: json
+                in: query
+              - name: '{{"$select"}}'
+                value: ${inputs.select}
+                in: query
+                condition: '{{present(inputs.select)}}'
+              - name: '{{"$expand"}}'
+                value: ${inputs.expand}
+                in: query
+                condition: '{{present(inputs.expand)}}'
+    result: $.steps.get_user_request.output.data
+  - actionId: create_user
+    categories:
+      - hris
+    tags:
+      - User
+    actionType: custom
+    label: Create User
+    description: Create a new user in the system
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/user
+    details: Create a new user account with basic information including username, email, and personal details. Requires admin permissions. The userId field is required and must be unique. Additional fields like firstName, lastName, email, and username are commonly required based on your instance configuration.
+    inputs:
+      - name: userId
+        description: Unique identifier for the user. Must be unique across the system. Cannot be changed after creation. Commonly uses formats like employee ID, email prefix, or custom identifier (e.g., 'jdoe', 'EMP001', 'john.doe')
+        type: string
+        in: body
+        required: true
+      - name: username
+        description: Login username for the user. Used for authentication and must be unique
+        type: string
+        in: body
+        required: true
+      - name: firstName
+        description: User's first name
+        type: string
+        in: body
+        required: false
+      - name: lastName
+        description: User's last name
+        type: string
+        in: body
+        required: false
+      - name: email
+        description: User's email address
+        type: string
+        in: body
+        required: false
+      - name: status
+        description: User status (t for active, f for inactive, T for active_external, F for inactive_external, e for active_external_suite, d for inactive_external_suite)
+        type: string
+        in: body
+        required: false
+      - name: department
+        description: Department assignment
+        type: string
+        in: body
+        required: false
+      - name: division
+        description: Division assignment
+        type: string
+        in: body
+        required: false
+      - name: location
+        description: Location assignment
+        type: string
+        in: body
+        required: false
+      - name: title
+        description: Job title
+        type: string
+        in: body
+        required: false
+      - name: defaultLocale
+        description: Default locale (e.g., en_US, en_GB)
+        type: string
+        in: body
+        required: false
+      - name: timeZone
+        description: Time zone (e.g., America/New_York, Europe/London)
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: create_user_request
+        description: Create new user
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/User'
+            method: post
+            args:
+              - name: userId
+                value: $.inputs.userId
+                in: body
+              - name: username
+                value: $.inputs.username
+                in: body
+              - name: firstName
+                value: $.inputs.firstName
+                in: body
+                condition: '{{present(inputs.firstName)}}'
+              - name: lastName
+                value: $.inputs.lastName
+                in: body
+                condition: '{{present(inputs.lastName)}}'
+              - name: email
+                value: $.inputs.email
+                in: body
+                condition: '{{present(inputs.email)}}'
+              - name: status
+                value: $.inputs.status
+                in: body
+                condition: '{{present(inputs.status)}}'
+              - name: department
+                value: $.inputs.department
+                in: body
+                condition: '{{present(inputs.department)}}'
+              - name: division
+                value: $.inputs.division
+                in: body
+                condition: '{{present(inputs.division)}}'
+              - name: location
+                value: $.inputs.location
+                in: body
+                condition: '{{present(inputs.location)}}'
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: '{{present(inputs.title)}}'
+              - name: defaultLocale
+                value: $.inputs.defaultLocale
+                in: body
+                condition: '{{present(inputs.defaultLocale)}}'
+              - name: timeZone
+                value: $.inputs.timeZone
+                in: body
+                condition: '{{present(inputs.timeZone)}}'
+    result: $.steps.create_user_request.output.data
+  - actionId: update_user
+    categories:
+      - hris
+    tags:
+      - User
+    actionType: custom
+    label: Update User
+    description: Update an existing user's information
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/user
+    details: Update user account information including personal details, status, assignments, and preferences. Uses PUT method which requires userId and username fields to be included in the request body along with the fields you want to update. Requires admin permissions. The userId in the path identifies which user to update.
+    inputs:
+      - name: userId
+        description: The unique identifier for the user to update (required in both path and body for PUT)
+        type: string
+        in: path
+        required: true
+      - name: username
+        description: Login username for the user (required in body for PUT method)
+        type: string
+        in: body
+        required: true
+      - name: firstName
+        description: User's first name
+        type: string
+        in: body
+        required: false
+      - name: lastName
+        description: User's last name
+        type: string
+        in: body
+        required: false
+      - name: email
+        description: User's email address
+        type: string
+        in: body
+        required: false
+      - name: status
+        description: User status (t for active, f for inactive, T for active_external, F for inactive_external, e for active_external_suite, d for inactive_external_suite)
+        type: string
+        in: body
+        required: false
+      - name: department
+        description: Department assignment
+        type: string
+        in: body
+        required: false
+      - name: division
+        description: Division assignment
+        type: string
+        in: body
+        required: false
+      - name: location
+        description: Location assignment
+        type: string
+        in: body
+        required: false
+      - name: title
+        description: Job title
+        type: string
+        in: body
+        required: false
+      - name: defaultLocale
+        description: Default locale (e.g., en_US, en_GB)
+        type: string
+        in: body
+        required: false
+      - name: timeZone
+        description: Time zone (e.g., America/New_York, Europe/London)
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: update_user_request
+        description: Update user information
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/User(''${inputs.userId}'')'
+            method: put
+            args:
+              - name: userId
+                value: $.inputs.userId
+                in: body
+              - name: username
+                value: $.inputs.username
+                in: body
+              - name: firstName
+                value: $.inputs.firstName
+                in: body
+                condition: '{{present(inputs.firstName)}}'
+              - name: lastName
+                value: $.inputs.lastName
+                in: body
+                condition: '{{present(inputs.lastName)}}'
+              - name: email
+                value: $.inputs.email
+                in: body
+                condition: '{{present(inputs.email)}}'
+              - name: status
+                value: $.inputs.status
+                in: body
+                condition: '{{present(inputs.status)}}'
+              - name: department
+                value: $.inputs.department
+                in: body
+                condition: '{{present(inputs.department)}}'
+              - name: division
+                value: $.inputs.division
+                in: body
+                condition: '{{present(inputs.division)}}'
+              - name: location
+                value: $.inputs.location
+                in: body
+                condition: '{{present(inputs.location)}}'
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: '{{present(inputs.title)}}'
+              - name: defaultLocale
+                value: $.inputs.defaultLocale
+                in: body
+                condition: '{{present(inputs.defaultLocale)}}'
+              - name: timeZone
+                value: $.inputs.timeZone
+                in: body
+                condition: '{{present(inputs.timeZone)}}'
+    result: $.steps.update_user_request.output.data
+  - actionId: search_learning_items
+    categories:
+      - hris
+    tags:
+      - Learning
+      - Search
+    actionType: custom
+    label: Search Learning Items
+    description: Search for learning items/courses by title or other criteria
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/learning
+    details: Search for learning items/courses in the system using OData filter criteria. Requires admin permissions. Returns matching items with their IDs, titles, and other metadata that can be used for assigning to users.
+    inputs:
+      - name: itemTitle
+        description: Title of the learning item/course to search for (exact or partial match)
+        type: string
+        in: query
+        required: false
+      - name: active
+        description: Filter for active items only (true/false)
+        type: boolean
+        in: query
+        required: false
+      - name: filter
+        description: Custom OData filter expression (e.g., "criteria/active eq true and criteria/itemTitle eq 'course name'")
+        type: string
+        in: query
+        required: false
+    steps:
+      - stepId: search_learning_items_request
+        description: Search for learning items
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/LearningItem'
+            method: get
+            headers:
+              - name: Accept
+                value: application/json
+            args:
+              - name: $filter
+                value: $.inputs.filter
+                in: query
+                condition: '{{present(inputs.filter)}}'
+              - name: $filter
+                value: 'criteria/active eq true and criteria/itemTitle eq ''{{inputs.itemTitle}}'''
+                in: query
+                condition: '{{present(inputs.itemTitle) && !present(inputs.filter)}}'
+    result: $.steps.search_learning_items_request.output.data
+  - actionId: assign_learning_item
+    categories:
+      - hris
+    tags:
+      - Learning
+      - Assignment
+    actionType: custom
+    label: Assign Learning Item to User
+    description: Assign a learning item/course to a user
+    resources: https://help.sap.com/docs/successfactors-platform/sap-successfactors-api-reference-guide-odata-v2/learning
+    details: Assign a learning item or course to a user. Requires admin permissions in the user-service/v2 endpoint. The learning item ID (itemId/courseId) can be obtained from the search_learning_items action, and the user must exist in the system.
+    inputs:
+      - name: userId
+        description: The unique identifier of the user to assign the learning item to
+        type: string
+        in: body
+        required: true
+      - name: itemId
+        description: The unique identifier of the learning item/course to assign (obtained from search results)
+        type: string
+        in: body
+        required: true
+      - name: startDate
+        description: Optional start date for the learning assignment (format depends on instance configuration)
+        type: string
+        in: body
+        required: false
+      - name: dueDate
+        description: Optional due date for the learning assignment
+        type: string
+        in: body
+        required: false
+    steps:
+      - stepId: assign_learning_item_request
+        description: Assign learning item to user
+        stepFunction:
+          functionName: request
+          parameters:
+            url: '/../../public/admin/user-service/v2/UserCourses'
+            method: post
+            headers:
+              - name: Accept
+                value: application/json
+              - name: Content-Type
+                value: application/json
+            args:
+              - name: userId
+                value: $.inputs.userId
+                in: body
+              - name: itemId
+                value: $.inputs.itemId
+                in: body
+              - name: startDate
+                value: $.inputs.startDate
+                in: body
+                condition: '{{present(inputs.startDate)}}'
+              - name: dueDate
+                value: $.inputs.dueDate
+                in: body
+                condition: '{{present(inputs.dueDate)}}'
+    result: $.steps.assign_learning_item_request.output.data

@@ -1,0 +1,1649 @@
+- actionId: get_create_employee_metadata
+  categories:
+    - hris
+  actionType: custom
+  label: Get Create Employee Metadata
+  description: Retrieve metadata for creating employees in UKG Pro.
+  steps:
+    # Step 1: Fetch enum metadata from code-tables endpoints
+    # Prefix
+    - stepId: fetch_prefix_metadata
+      description: Fetch Prefix code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/Prefix
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # Suffix
+    - stepId: fetch_suffix_metadata
+      description: Fetch Suffix code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/Suffix
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # Gender
+    - stepId: fetch_gender_metadata
+      description: Fetch Gender code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/Gender
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # MaritalStatus
+    - stepId: fetch_marital_status_metadata
+      description: Fetch MaritalStatus code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/MaritalStatus
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # EthnicOrigin
+    - stepId: fetch_ethnic_origin_metadata
+      description: Fetch EthnicOrigin code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/ETHNICCODE2007
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # CompanyIdentifier
+    - stepId: fetch_company_details_metadata
+      description: Fetch Company Details metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/company-details
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: false
+    
+    # HireSource
+    - stepId: fetch_hire_source_metadata
+      description: Fetch HireSource code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/HireSrce
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # JobCode
+    - stepId: fetch_job_code_metadata
+      description: Fetch Job Codes metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v2/jobs
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # JobGroup
+    - stepId: fetch_job_group_metadata
+      description: Fetch Job Group metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/jobgroup
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # LocationCode
+    - stepId: fetch_location_code_metadata
+      description: Fetch Location Codes metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/locations
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # EmployeeType
+    - stepId: fetch_employee_type_metadata
+      description: Fetch EmployeeType code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/EmpType
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # FullOrPartTime
+    - stepId: fetch_full_or_part_time_metadata
+      description: Fetch FullOrPartTime code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/FULLORPARTTIME
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # HourlyOrSalaried
+    - stepId: fetch_hourly_or_salaried_metadata
+      description: Fetch HourlyOrSalaried code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/SALARYORHOURLY
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # EarningsGroup
+    - stepId: fetch_earnings_group_metadata
+      description: Fetch Earnings Group metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/earnings
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # PayRateType
+    - stepId: fetch_pay_rate_type_metadata
+      description: Fetch PayRateType code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/RatesPer
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # FederalFilingStatus
+    - stepId: fetch_federal_filing_status_metadata
+      description: Fetch FederalFilingStatus code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/TAXFITFILINGSTATUS
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # OtherPhoneType
+    - stepId: fetch_other_phone_type_metadata
+      description: Fetch OtherPhoneType code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/OtherPhone
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # DistributionCenterCode
+    - stepId: fetch_distribution_center_code_metadata
+      description: Fetch DistributionCenterCode code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/DISTRIBCENTERACTV
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # OrgLevel1
+    - stepId: fetch_org_level_1_metadata
+      description: Fetch OrgLevel1 code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/ORGLVL1ACTIVE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # OrgLevel2
+    - stepId: fetch_org_level_2_metadata
+      description: Fetch OrgLevel2 code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/ORGLVL2ACTIVE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # OrgLevel3
+    - stepId: fetch_org_level_3_metadata
+      description: Fetch OrgLevel3 code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/ORGLVL3ACTIVE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # PayScaleCode
+    - stepId: fetch_pay_scale_code_metadata
+      description: Fetch PayScaleCode code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/PayScale
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # BankAccountType (for DirectDeposits)
+    - stepId: fetch_bank_account_type_metadata
+      description: Fetch BankAccountType code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/BANKACCTTYPE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # WorkStateDisabilityPlanType
+    - stepId: fetch_work_state_disability_plan_type_metadata
+      description: Fetch WorkStateDisabilityPlanType code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/DISABILITYPLAN
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # WorkStatePlan
+    - stepId: fetch_work_state_plan_metadata
+      description: Fetch WorkStatePlan code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/PLANTYPE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # DeductionBenefitGroup
+    - stepId: fetch_deduction_benefit_group_metadata
+      description: Fetch DeductionBenefitGroup code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/BENGRP
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # I9Verification
+    - stepId: fetch_i9_verification_metadata
+      description: Fetch I9Verification code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/I9VERIF
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # Project
+    - stepId: fetch_project_metadata
+      description: Fetch Project code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/Project
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # ShiftCode
+    - stepId: fetch_shift_code_metadata
+      description: Fetch ShiftCode metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/shift-codes
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # ShiftGroup
+    - stepId: fetch_shift_group_metadata
+      description: Fetch ShiftGroup code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/ShiftGroup
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # StateGeographicCode
+    - stepId: fetch_state_geographic_code_metadata
+      description: Fetch StateGeographicCode code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/SUIGEOCODE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # StateOccupationalCode
+    - stepId: fetch_state_occupational_code_metadata
+      description: Fetch StateOccupationalCode code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/STATESUIOCCCODE
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # UnionLocal
+    - stepId: fetch_union_local_metadata
+      description: Fetch UnionLocal code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/LABUNION
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # UnionNational
+    - stepId: fetch_union_national_metadata
+      description: Fetch UnionNational code table metadata
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /configuration/v1/code-tables/LABUNION
+          method: get
+          args:
+            - name: US-CUSTOMER-API-KEY
+              value: ${credentials.customer_api_key}
+              in: headers
+          response:
+            collection: true
+    
+    # Transform enum responses into matcher format
+    # Prefix - Transform array items from {code, description} to {source_value, value}
+    - stepId: transform_prefix_matcher
+      description: Transform Prefix metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_prefix_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # Suffix
+    - stepId: transform_suffix_matcher
+      description: Transform Suffix metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_suffix_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+                
+    
+    # Gender
+    - stepId: transform_gender_matcher
+      description: Transform Gender metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_gender_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # MaritalStatus
+    - stepId: transform_marital_status_matcher
+      description: Transform MaritalStatus metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_marital_status_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # EthnicOrigin
+    - stepId: transform_ethnic_origin_matcher
+      description: Transform EthnicOrigin metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_ethnic_origin_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # CompanyIdentifier - this one might have different structure
+    - stepId: transform_company_identifier_matcher
+      description: Transform CompanyIdentifier metadata into matcher format, filtered to USA only
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_company_details_metadata.output.data[?(@.addressCountry == "USA")]
+          fields:
+            - targetFieldKey: source_value
+              expression: $.companyId
+              type: string
+            - targetFieldKey: value
+              expression: $.companyName
+              type: string
+    
+    # HireSource
+    - stepId: transform_hire_source_matcher
+      description: Transform HireSource metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_hire_source_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # JobCode - might have different structure
+    - stepId: transform_job_code_matcher
+      description: Transform JobCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_job_code_metadata.output.data[?(@.countryCode == "USA")]
+          fields:
+            - targetFieldKey: source_value
+              expression: $.title
+              type: string
+            - targetFieldKey: value
+              expression: $.jobCode
+              type: string
+    
+    # JobGroup
+    - stepId: transform_job_group_matcher
+      description: Transform JobGroup metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_job_group_metadata.output.data[?(@.jobGroupCountryCode == "USA")]
+          fields:
+            - targetFieldKey: source_value
+              expression: $.jobGroupCodeDescription
+              type: string
+            - targetFieldKey: value
+              expression: $.jobGroupCode
+              type: string
+    
+    # LocationCode
+    - stepId: transform_location_code_matcher
+      description: Transform LocationCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_location_code_metadata.output.data[?(@.countryCode == "USA")]
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.locationCode
+              type: string
+    
+    # EmployeeType
+    - stepId: transform_employee_type_matcher
+      description: Transform EmployeeType metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_employee_type_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # FullOrPartTime
+    - stepId: transform_full_or_part_time_matcher
+      description: Transform FullOrPartTime metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_full_or_part_time_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # HourlyOrSalaried
+    - stepId: transform_hourly_or_salaried_matcher
+      description: Transform HourlyOrSalaried metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_hourly_or_salaried_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # EarningsGroup
+    - stepId: transform_earnings_group_matcher
+      description: Transform EarningsGroup metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_earnings_group_metadata.output.data[?(@.countryCode == "USA")]
+          fields:
+            - targetFieldKey: source_value
+              expression: $.longDescription
+              type: string
+            - targetFieldKey: value
+              expression: $.earningCode
+              type: string
+    
+    # PayRateType
+    - stepId: transform_pay_rate_type_matcher
+      description: Transform PayRateType metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_pay_rate_type_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # FederalFilingStatus
+    - stepId: transform_federal_filing_status_matcher
+      description: Transform FederalFilingStatus metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_federal_filing_status_metadata.output.data
+          fields:
+            - targetFieldKey: matcher
+              expression: $[*]
+              type: object
+              array: true
+              properties:
+                - targetFieldKey: source_value
+                  expression: $.code
+                  type: string
+                - targetFieldKey: value
+                  expression: $.description
+                  type: string
+    
+    # OtherPhoneType
+    - stepId: transform_other_phone_type_matcher
+      description: Transform OtherPhoneType metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_other_phone_type_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # StateOrProvince - Hardcoded US states list
+    - stepId: transform_state_or_province_matcher
+      description: Create US states matcher with state names as labels and 2-letter codes as values
+      stepFunction:
+        functionName: static_values
+        parameters:
+          values:
+            - source_value: Alabama
+              value: AL
+            - source_value: Alaska
+              value: AK
+            - source_value: Arizona
+              value: AZ
+            - source_value: Arkansas
+              value: AR
+            - source_value: California
+              value: CA
+            - source_value: Colorado
+              value: CO
+            - source_value: Connecticut
+              value: CT
+            - source_value: Delaware
+              value: DE
+            - source_value: Florida
+              value: FL
+            - source_value: Georgia
+              value: GA
+            - source_value: Hawaii
+              value: HI
+            - source_value: Idaho
+              value: ID
+            - source_value: Illinois
+              value: IL
+            - source_value: Indiana
+              value: IN
+            - source_value: Iowa
+              value: IA
+            - source_value: Kansas
+              value: KS
+            - source_value: Kentucky
+              value: KY
+            - source_value: Louisiana
+              value: LA
+            - source_value: Maine
+              value: ME
+            - source_value: Maryland
+              value: MD
+            - source_value: Massachusetts
+              value: MA
+            - source_value: Michigan
+              value: MI
+            - source_value: Minnesota
+              value: MN
+            - source_value: Mississippi
+              value: MS
+            - source_value: Missouri
+              value: MO
+            - source_value: Montana
+              value: MT
+            - source_value: Nebraska
+              value: NE
+            - source_value: Nevada
+              value: NV
+            - source_value: New Hampshire
+              value: NH
+            - source_value: New Jersey
+              value: NJ
+            - source_value: New Mexico
+              value: NM
+            - source_value: New York
+              value: NY
+            - source_value: North Carolina
+              value: NC
+            - source_value: North Dakota
+              value: ND
+            - source_value: Ohio
+              value: OH
+            - source_value: Oklahoma
+              value: OK
+            - source_value: Oregon
+              value: OR
+            - source_value: Pennsylvania
+              value: PA
+            - source_value: Rhode Island
+              value: RI
+            - source_value: South Carolina
+              value: SC
+            - source_value: South Dakota
+              value: SD
+            - source_value: Tennessee
+              value: TN
+            - source_value: Texas
+              value: TX
+            - source_value: Utah
+              value: UT
+            - source_value: Vermont
+              value: VT
+            - source_value: Virginia
+              value: VA
+            - source_value: Washington
+              value: WA
+            - source_value: West Virginia
+              value: WV
+            - source_value: Wisconsin
+              value: WI
+            - source_value: Wyoming
+              value: WY
+            - source_value: District of Columbia
+              value: DC
+    
+    # DistributionCenterCode
+    - stepId: transform_distribution_center_code_matcher
+      description: Transform DistributionCenterCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_distribution_center_code_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # OrgLevel1
+    - stepId: transform_org_level_1_matcher
+      description: Transform OrgLevel1 metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_org_level_1_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # OrgLevel2
+    - stepId: transform_org_level_2_matcher
+      description: Transform OrgLevel2 metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_org_level_2_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # OrgLevel3
+    - stepId: transform_org_level_3_matcher
+      description: Transform OrgLevel3 metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_org_level_3_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # PayScaleCode
+    - stepId: transform_pay_scale_code_matcher
+      description: Transform PayScaleCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_pay_scale_code_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # BankAccountType
+    - stepId: transform_bank_account_type_matcher
+      description: Transform BankAccountType metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_bank_account_type_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.description
+              type: string
+            - targetFieldKey: value
+              expression: $.code
+              type: string
+    
+    # WorkStateDisabilityPlanType
+    - stepId: transform_work_state_disability_plan_type_matcher
+      description: Transform WorkStateDisabilityPlanType metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_work_state_disability_plan_type_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # WorkStatePlan
+    - stepId: transform_work_state_plan_matcher
+      description: Transform WorkStatePlan metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_work_state_plan_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # DeductionBenefitGroup
+    - stepId: transform_deduction_benefit_group_matcher
+      description: Transform DeductionBenefitGroup metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_deduction_benefit_group_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # I9Verification
+    - stepId: transform_i9_verification_matcher
+      description: Transform I9Verification metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_i9_verification_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # Project
+    - stepId: transform_project_matcher
+      description: Transform Project metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_project_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # ShiftCode
+    - stepId: transform_shift_code_matcher
+      description: Transform ShiftCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_shift_code_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.shiftCode
+              type: string
+            - targetFieldKey: value
+              expression: $.shiftCodeDescription
+              type: string
+    
+    # ShiftGroup
+    - stepId: transform_shift_group_matcher
+      description: Transform ShiftGroup metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_shift_group_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # StateGeographicCode
+    - stepId: transform_state_geographic_code_matcher
+      description: Transform StateGeographicCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_state_geographic_code_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # StateOccupationalCode
+    - stepId: transform_state_occupational_code_matcher
+      description: Transform StateOccupationalCode metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_state_occupational_code_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # UnionLocal
+    - stepId: transform_union_local_matcher
+      description: Transform UnionLocal metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_union_local_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # UnionNational
+    - stepId: transform_union_national_matcher
+      description: Transform UnionNational metadata into matcher format
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.fetch_union_national_metadata.output.data
+          fields:
+            - targetFieldKey: source_value
+              expression: $.code
+              type: string
+            - targetFieldKey: value
+              expression: $.description
+              type: string
+    
+    # Build the final metadata structure using map_fields to reference step outputs
+    - stepId: build_metadata_structure
+      description: Create base metadata structure with static values
+      stepFunction:
+        functionName: static_values
+        parameters:
+          values:
+            provider: ukgpro
+            provider_name: UKG Pro
+            category: hris
+            models:
+              employees:
+                create_usa:
+                  input:
+                    default_fields:
+                      # Basic Info Fields
+                      - name: FirstName
+                        type: string
+                        required: true
+                      - name: MiddleName
+                        type: string
+                        required: false
+                      - name: LastName
+                        type: string
+                        required: true
+                      - name: PreferredFirstName
+                        type: string
+                        required: false
+                      - name: Prefix
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_prefix_matcher.output.data
+                      - name: Suffix
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_suffix_matcher.output.data
+                      # Address Fields
+                      - name: AddressLine1
+                        type: string
+                        required: true
+                      - name: AddressLine2
+                        type: string
+                        required: false
+                      - name: City
+                        type: string
+                        required: true
+                      - name: StateOrProvince
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_state_or_province_matcher.output.data
+                      - name: ZipOrPostalCode
+                        type: string
+                        required: true
+                      - name: Country
+                        type: string
+                        required: true
+                      - name: County
+                        type: string
+                        required: false
+                      # Contact Fields
+                      - name: EmailAddress
+                        type: string
+                        required: false
+                      - name: AlternateEmailAddress
+                        type: string
+                        required: false
+                      - name: HomePhone
+                        type: string
+                        required: false
+                      - name: OtherPhone
+                        type: string
+                        required: false
+                      - name: OtherPhoneExtension
+                        type: string
+                        required: false
+                      - name: OtherPhoneType
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_other_phone_type_matcher.output.data
+                      # Personal Info Fields
+                      - name: BirthDate
+                        type: datetime-string
+                        required: true
+                      - name: EthnicOrigin
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_ethnic_origin_matcher.output.data
+                      - name: Gender
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_gender_matcher.output.data
+                      - name: SSN
+                        type: string
+                        required: true
+                      - name: FormerLastName
+                        type: string
+                        required: false
+                      - name: MaritalStatus
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_marital_status_matcher.output.data
+                      # Employment Fields
+                      - name: CompanyIdentifier
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_company_identifier_matcher.output.data
+                      - name: HireDate
+                        type: datetime-string
+                        required: true
+                      - name: HireSource
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_hire_source_matcher.output.data
+                      - name: JobCode
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_job_code_matcher.output.data
+                      - name: JobGroup
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_job_group_matcher.output.data
+                      - name: LocationCode
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_location_code_matcher.output.data
+                      - name: EmployeeType
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_employee_type_matcher.output.data
+                      - name: FullOrPartTime
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_full_or_part_time_matcher.output.data
+                      - name: EmployeeNumber
+                        type: string
+                        required: false
+                      - name: SeniorityDate
+                        type: datetime-string
+                        required: true
+                      - name: BenefitSeniorityDate
+                        type: datetime-string
+                        required: true
+                      - name: HourlyOrSalaried
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_hourly_or_salaried_matcher.output.data
+                      - name: EarningsGroup
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_earnings_group_matcher.output.data
+                      - name: PayAutomatically
+                        type: boolean
+                        required: false
+                      - name: PayGroup
+                        type: string
+                        required: true
+                      - name: PayRate
+                        type: number
+                        required: true
+                      - name: PayRateType
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_pay_rate_type_matcher.output.data
+                      - name: ScheduledHours
+                        type: number
+                        required: true
+                      - name: PayScaleCode
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_pay_scale_code_matcher.output.data
+                      - name: DistributionCenterCode
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_distribution_center_code_matcher.output.data
+                      - name: OrgLevel1
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_org_level_1_matcher.output.data
+                      - name: OrgLevel2
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_org_level_2_matcher.output.data
+                      - name: OrgLevel3
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_org_level_3_matcher.output.data
+                      # Direct Deposit (Collection)
+                      - name: DirectDeposits
+                        type: object
+                        required: false
+                        array: true
+                        properties:
+                          - name: AccountNumber
+                            type: string
+                            required: true
+                          - name: AccountType
+                            type: enum
+                            required: true
+                            value_map:
+                              type: hashmap
+                              matcher: $.steps.transform_bank_account_type_matcher.output.data
+                          - name: AmountRule
+                            type: enum
+                            required: false
+                            value_map:
+                              type: hashmap
+                              matcher:
+                                - source_value: D
+                                  value: Flat Amount
+                                - source_value: P
+                                  value: Percent Amount
+                                - source_value: A
+                                  value: Available Balance
+                          - name: BankName
+                            type: string
+                            required: false
+                          - name: RoutingNumber
+                            type: string
+                            required: true
+                          - name: FlatOrPercentAmount
+                            type: number
+                            required: false
+                      # Federal Tax Fields
+                      - name: FederalAdditionalAmountWithheld
+                        type: number
+                        required: false
+                      - name: FederalDeductionAmount
+                        type: number
+                        required: false
+                      - name: FederalDependentAmount
+                        type: number
+                        required: false
+                      - name: FederalEmployeeClaimsExempt
+                        type: boolean
+                        required: false
+                      - name: FederalOtherIncome
+                        type: number
+                        required: false
+                      - name: FederalSubjectToBackupWitholding
+                        type: boolean
+                        required: false
+                      - name: FederalW2Pension
+                        type: boolean
+                        required: false
+                      # Work State Tax Fields
+                      - name: WorkStateDisabilityPlanType
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_work_state_disability_plan_type_matcher.output.data
+                      - name: LocalWorkInTaxResidentStatus
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher:
+                            - source_value: N
+                              value: Non resident
+                            - source_value: R
+                              value: Resident
+                      - name: WorkStateTotalAllowancesClaimed
+                        type: number
+                        required: false
+                      - name: WorkStateAdditionalAmountWithheld
+                        type: number
+                        required: false
+                      - name: WorkStateAdditionalAllowances
+                        type: number
+                        required: false
+                      - name: WorkStateEmployeeClaimsExempt
+                        type: boolean
+                        required: false
+                      - name: WorkStateFilingStatus
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_work_state_filing_status_matcher.output.data
+                      - name: WorkStatePlan
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_work_state_plan_matcher.output.data
+                      - name: WorkStateDeductionAmount
+                        type: number
+                        required: false
+                      - name: WorkStateDependentAmount
+                        type: number
+                        required: false
+                      - name: WorkOtherIncome
+                        type: number
+                        required: false
+                      # Resident State Tax Fields
+                      - name: ResidentStateDeductionAmount
+                        type: number
+                        required: false
+                      - name: ResidentStateDependentAmount
+                        type: number
+                        required: false
+                      - name: ResidentJurisdiction
+                        type: string
+                        required: false
+                      - name: ResidentStateTotalAllowancesClaimed
+                        type: number
+                        required: false
+                      - name: ResidentStateAdditionalAmountWithheld
+                        type: number
+                        required: false
+                      - name: ResidentStateAdditionalAllowances
+                        type: number
+                        required: false
+                      - name: ResidentOtherIncome
+                        type: number
+                        required: false
+                      - name: ResidentStateEmployeeClaimsExempt
+                        type: boolean
+                        required: false
+                      - name: ResidentStateFilingStatus
+                        type: string
+                        required: true
+                      # Additional Fields
+                      - name: DeductionBenefitGroup
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_deduction_benefit_group_matcher.output.data
+                      - name: I9Verification
+                        type: enum
+                        required: true
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_i9_verification_matcher.output.data
+                      - name: MailStop
+                        type: string
+                        required: false
+                      - name: NextPerformanceReviewDate
+                        type: datetime-string
+                        required: false
+                      - name: Project
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_project_matcher.output.data
+                      - name: ShiftCode
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_shift_code_matcher.output.data
+                      - name: ShiftGroup
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_shift_group_matcher.output.data
+                      - name: StateGeographicCode
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_state_geographic_code_matcher.output.data
+                      - name: StateOccupationalCode
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_state_occupational_code_matcher.output.data
+                      - name: TimeClock
+                        type: string
+                        required: false
+                      - name: WorkExtension
+                        type: string
+                        required: false
+                      - name: WorkPhone
+                        type: string
+                        required: false
+                      - name: StepNo
+                        type: number
+                        required: false
+                      - name: UnionLocal
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_union_local_matcher.output.data
+                      - name: UnionNational
+                        type: enum
+                        required: false
+                        value_map:
+                          type: hashmap
+                          matcher: $.steps.transform_union_national_matcher.output.data
+                      # PTO Plans (Collection)
+                      - name: PTOPlans
+                        type: object
+                        required: false
+                        array: true
+                        properties:
+                          - name: Available
+                            type: number
+                            required: false
+                          - name: EarnedThroughDate
+                            type: datetime-string
+                            required: false
+                          - name: Plan
+                            type: string
+                            required: true
+                            value_map:
+                              type: hashmap
+                              matcher: $.steps.transform_pto_plan_matcher.output.data
+                          - name: ResetDate
+                            type: datetime-string
+                            required: false
+                    expand_fields: []
+                  output:
+                    default_fields: []
+                    expand_fields: []
+  result:
+    # DEBUGGING: Temporarily change this to inspect step outputs:
+    # data: $.steps.fetch_prefix_metadata.output.data
+    # data: $.steps.transform_prefix_matcher.output.data
+    data: $.steps.build_metadata_structure.output.data
+

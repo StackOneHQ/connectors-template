@@ -1,0 +1,1871 @@
+StackOne: 1.0.0
+info:
+  title: Notion
+  key: notion
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/notion/filled/png
+  description: Notion connector for managing pages, databases, blocks, users, and comments
+baseUrl: 'https://api.notion.com/v1'
+releaseStage: preview
+rateLimit:
+  mainRatelimit: 3
+resources: https://developers.notion.com/reference
+authentication:
+  - custom:
+      type: custom
+      label: Integration Token
+      support:
+        description: Connect using your Notion workspace. Click Connect to authorize access to your Notion pages and databases.
+      authorization:
+        type: bearer
+        token: $.credentials.token
+        includeBearer: true
+      environments:
+        - key: production
+          name: Production
+      testActions:
+        - action: list_users
+          required: true
+  - oauth2:
+      type: oauth2
+      label: OAuth 2.0
+      grantType: authorization_code
+      support:
+        description: Connect using OAuth 2.0 for public integrations. This allows you to authorize access to specific pages and databases during the authorization flow.
+        guides:
+          setup:
+            warning: You must be a workspace owner in Notion to create a public integration for OAuth 2.0.
+            sections:
+              - title: Creating a Public Integration
+                content: |
+                  To enable OAuth 2.0, you need to create a public integration in Notion and retrieve the OAuth credentials.
+                steps:
+                  - title: Access My Integrations
+                    content: |
+                      Sign in to your [Notion account](https://www.notion.so/login) and navigate to [My Integrations](https://www.notion.so/profile/integrations).
+                  - title: Create a New Public Integration
+                    content: |
+                      Click the **+ New integration** button.
+                    list:
+                      - Enter a name for your integration (e.g., StackOne OAuth)
+                      - Select the workspace
+                      - Under **Type**, select **Public**
+                      - Click **Create integration**
+                  - title: Configure Basic Information
+                    content: |
+                      In the **Basic Information** tab, complete the required fields.
+                    list:
+                      - Enter your **Company name**
+                      - Enter your **Website URL**
+                      - Add a **Tagline** describing your integration
+                      - Upload a **Logo** for your integration (optional but recommended)
+              - title: Configuring OAuth Settings
+                content: |
+                  Configure the redirect URI and retrieve your OAuth credentials.
+                steps:
+                  - title: Add Redirect URI
+                    content: |
+                      In the **Configuration** tab, scroll to the **OAuth Domain & URIs** section.
+                    list:
+                      - "Add the following redirect URI: `https://api.stackone.com/connect/oauth2/notion/callback`"
+                      - Click **Save changes**
+                  - title: Retrieve OAuth Credentials
+                    content: |
+                      In the **Secrets** section of the **Configuration** tab, locate your OAuth credentials.
+                    list:
+                      - Copy the **OAuth Client ID** value
+                      - Click **Show** next to **OAuth Client Secret** to reveal it
+                      - Copy the **OAuth Client Secret** value
+                      - Store both values securely for use later
+      authorization:
+        type: oauth2
+        authorizationUrl: 'https://api.notion.com/v1/oauth/authorize'
+        authorizationParams:
+          client_id: $.credentials.clientId
+          redirect_uri: '${apiHostUri}/connect/oauth2/notion/callback'
+          response_type: code
+          owner: user
+        tokenUrl: 'https://api.notion.com/v1/oauth/token'
+        customHeaders:
+          Authorization: Basic ${encodeBase64(credentials.clientId + ":" + credentials.clientSecret)}
+        token: $.credentials.accessToken
+        includeBearer: true
+      setupFields:
+        - key: clientId
+          label: Client ID
+          type: text
+          required: true
+          secret: false
+          placeholder: 'ab34cd72-56c6-4841-809e-81fbc6310939'
+          description: You can generate or view an OAuth Client ID by going to Integrations menu in your Manage Notion Integration Page
+          tooltip: Found in the Secrets section of your public integration settings at https://www.notion.so/profile/integrations
+        - key: clientSecret
+          label: Client Secret
+          type: password
+          required: true
+          secret: true
+          placeholder: 'bbgPbXDhXQt7zBgtnq9uFe81FIgmJfWnXutbnRS3U'
+          description: You can generate or view an OAuth Client Secret by going to Integrations menu in your Manage Notion Integration Page
+          tooltip: Found in the Secrets section of your public integration settings at https://www.notion.so/profile/integrations
+      refreshAuthentication:
+        action:
+          actionId: refresh_token_notion
+          categories:
+            - internal
+          actionType: refresh_token
+          label: Refresh Notion OAuth Token
+          description: Refresh the Notion OAuth access token using the refresh token
+          steps:
+            - stepId: refresh_token_request
+              description: Exchange refresh token for new access token using HTTP Basic Auth
+              stepFunction:
+                functionName: request
+                parameters:
+                  baseUrl: 'https://api.notion.com'
+                  url: '/v1/oauth/token'
+                  method: post
+                  authorization:
+                    type: basic
+                    username: $.credentials.clientId
+                    password: $.credentials.clientSecret
+                    encoding: base64
+                  args:
+                    - name: Content-Type
+                      value: application/x-www-form-urlencoded
+                      in: headers
+                    - name: Notion-Version
+                      value: '2025-09-03'
+                      in: headers
+                    - name: grant_type
+                      value: refresh_token
+                      in: body
+                    - name: refresh_token
+                      value: $.credentials.refreshToken
+                      in: body
+            - stepId: map_token_response
+              description: Map and persist the new access token and refresh token
+              stepFunction:
+                functionName: map_fields
+                version: '2'
+                parameters:
+                  dataSource: $.steps.refresh_token_request.output.data
+                  fields:
+                    - targetFieldKey: accessToken
+                      expression: $.access_token
+                      type: string
+                    - targetFieldKey: refreshToken
+                      expression: $.refresh_token
+                      type: string
+          result:
+            data: $.steps.map_token_response.output.data
+      environments:
+        - key: production
+          name: Production
+      testActions:
+        - action: list_users
+          required: true
+actions:
+  - actionId: append_block_children
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Block
+    label: Append Block Children
+    description: Append blocks to a parent block or page
+    details: "Creates and appends new children blocks to the specified parent block or page. The parent can be a page, database, or another block that supports children. Returns the updated block object with the new children. Use the position parameter to control where blocks are inserted (end, start, or after a specific block). Maximum 100 blocks per request."
+    resources: https://developers.notion.com/reference/patch-block-children
+    inputs:
+      - name: block_id
+        description: The ID of the parent block or page
+        type: string
+        in: path
+        required: true
+      - name: children
+        description: Array of block objects to append (maximum 100 items)
+        type: object
+        array: true
+        in: body
+        required: true
+      - name: position
+        description: Position to insert blocks. Object with type property (end, start, or after_block). For after_block type, include after_block.id to specify the block to insert after.
+        type: object
+        in: body
+        required: false
+    steps:
+      - stepId: append_block_children_request
+        description: Append block children via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/blocks/${inputs.block_id}/children"
+            method: patch
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: children
+                value: $.inputs.children
+                in: body
+              - name: position
+                value: $.inputs.position
+                in: body
+                condition: "{{present(inputs.position)}}"
+    result:
+      data: $.steps.append_block_children_request.output.data
+  - actionId: get_block
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Block
+    label: Get Block
+    description: Retrieve a block by ID
+    details: "Retrieves a block object by its ID. Returns the block type, content, and metadata. Does not include children blocks (use retrieve block children for that)."
+    resources: https://developers.notion.com/reference/retrieve-a-block
+    inputs:
+      - name: block_id
+        description: The ID of the block to retrieve
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_block_request
+        description: Retrieve block details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/blocks/${inputs.block_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.get_block_request.output.data
+  - actionId: get_block_children
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Block
+    label: Get Block Children
+    description: Retrieve children of a block with text content extraction ready
+    details: "Returns a paginated array of child block objects. Each text-based block (paragraph, heading, bulleted_list_item, etc.) contains a rich_text array with plain_text fields. Extract text by accessing block.TYPE.rich_text[].plain_text. Non-text blocks (tables, images, etc.) have type-specific data. Use for retrieving page content, nested blocks, or document structure."
+    resources: https://developers.notion.com/reference/get-block-children
+    inputs:
+      - name: block_id
+        description: The ID of the parent block or page
+        type: string
+        in: path
+        required: true
+      - name: start_cursor
+        description: Pagination cursor for the next page of results
+        type: string
+        in: query
+        required: false
+      - name: page_size
+        description: Number of items to return (max 100)
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: get_block_children_request
+        description: Retrieve block children from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/blocks/${inputs.block_id}/children"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: query
+                condition: "{{present(inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+    result:
+      results: $.steps.get_block_children_request.output.data.results
+      has_more: $.steps.get_block_children_request.output.data.has_more
+      next_cursor: $.steps.get_block_children_request.output.data.next_cursor
+  - actionId: update_block
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Block
+    label: Update Block
+    description: Update a block's content
+    details: "Updates the content for the specified block. Only some block types can be updated (e.g., paragraph, heading, to_do, toggle, callout, quote). Returns the updated block object."
+    resources: https://developers.notion.com/reference/update-a-block
+    inputs:
+      - name: block_id
+        description: The ID of the block to update
+        type: string
+        in: path
+        required: true
+      - name: paragraph
+        description: Updated paragraph block content
+        type: object
+        in: body
+        required: false
+      - name: heading_1
+        description: Updated heading 1 block content
+        type: object
+        in: body
+        required: false
+      - name: heading_2
+        description: Updated heading 2 block content
+        type: object
+        in: body
+        required: false
+      - name: heading_3
+        description: Updated heading 3 block content
+        type: object
+        in: body
+        required: false
+      - name: bulleted_list_item
+        description: Updated bulleted list item content
+        type: object
+        in: body
+        required: false
+      - name: numbered_list_item
+        description: Updated numbered list item content
+        type: object
+        in: body
+        required: false
+      - name: to_do
+        description: Updated to-do block content
+        type: object
+        in: body
+        required: false
+      - name: toggle
+        description: Updated toggle block content
+        type: object
+        in: body
+        required: false
+      - name: code
+        description: Updated code block content
+        type: object
+        in: body
+        required: false
+      - name: callout
+        description: Updated callout block content
+        type: object
+        in: body
+        required: false
+      - name: quote
+        description: Updated quote block content
+        type: object
+        in: body
+        required: false
+      - name: archived
+        description: Whether the block is archived (deleted)
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: update_block_request
+        description: Update block via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/blocks/${inputs.block_id}"
+            method: patch
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: paragraph
+                value: $.inputs.paragraph
+                in: body
+                condition: "{{present(inputs.paragraph)}}"
+              - name: heading_1
+                value: $.inputs.heading_1
+                in: body
+                condition: "{{present(inputs.heading_1)}}"
+              - name: heading_2
+                value: $.inputs.heading_2
+                in: body
+                condition: "{{present(inputs.heading_2)}}"
+              - name: heading_3
+                value: $.inputs.heading_3
+                in: body
+                condition: "{{present(inputs.heading_3)}}"
+              - name: bulleted_list_item
+                value: $.inputs.bulleted_list_item
+                in: body
+                condition: "{{present(inputs.bulleted_list_item)}}"
+              - name: numbered_list_item
+                value: $.inputs.numbered_list_item
+                in: body
+                condition: "{{present(inputs.numbered_list_item)}}"
+              - name: to_do
+                value: $.inputs.to_do
+                in: body
+                condition: "{{present(inputs.to_do)}}"
+              - name: toggle
+                value: $.inputs.toggle
+                in: body
+                condition: "{{present(inputs.toggle)}}"
+              - name: code
+                value: $.inputs.code
+                in: body
+                condition: "{{present(inputs.code)}}"
+              - name: callout
+                value: $.inputs.callout
+                in: body
+                condition: "{{present(inputs.callout)}}"
+              - name: quote
+                value: $.inputs.quote
+                in: body
+                condition: "{{present(inputs.quote)}}"
+              - name: archived
+                value: $.inputs.archived
+                in: body
+                condition: "{{present(inputs.archived)}}"
+    result:
+      data: $.steps.update_block_request.output.data
+  - actionId: delete_block
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Block
+    label: Delete Block
+    description: Delete a block
+    details: "Sets a block object, including page blocks, to archived (deleted). Note that this does not permanently delete the block, it just marks it as archived in Notion."
+    resources: https://developers.notion.com/reference/delete-a-block
+    inputs:
+      - name: block_id
+        description: The ID of the block to delete
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: delete_block_request
+        description: Delete block via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/blocks/${inputs.block_id}"
+            method: delete
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.delete_block_request.output.data
+  - actionId: create_comment
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - Comment
+    label: Create Comment
+    description: Create a comment on a page, block, or discussion thread
+    details: "Creates a comment in a page, block, or adds a reply to an existing discussion thread. Provide either parent (with page_id or block_id) OR discussion_id - only one can be specified. Returns the created comment object. Requires insert comment capability."
+    resources: https://developers.notion.com/reference/create-a-comment
+    inputs:
+      - name: parent
+        description: Parent object with page_id or block_id. Required if discussion_id is not provided. Mutually exclusive with discussion_id.
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: page_id
+            description: ID of the parent page (for page-level comments)
+            type: string
+            required: false
+          - name: block_id
+            description: ID of the parent block (for block-level comments)
+            type: string
+            required: false
+      - name: discussion_id
+        description: ID of the discussion thread to reply to. Required if parent is not provided. Mutually exclusive with parent.
+        type: string
+        in: body
+        required: false
+      - name: rich_text
+        description: Comment content as an array of rich text objects (max 100)
+        type: object
+        array: true
+        in: body
+        required: true
+      - name: attachments
+        description: Array of file objects to attach to the comment (max 3)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: display_name
+        description: Display name configuration for the comment author
+        type: object
+        in: body
+        required: false
+    steps:
+      - stepId: create_comment_request
+        description: Create a comment via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/comments"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: parent
+                value: $.inputs.parent
+                in: body
+                condition: "{{present(inputs.parent)}}"
+              - name: discussion_id
+                value: $.inputs.discussion_id
+                in: body
+                condition: "{{present(inputs.discussion_id)}}"
+              - name: rich_text
+                value: $.inputs.rich_text
+                in: body
+              - name: attachments
+                value: $.inputs.attachments
+                in: body
+                condition: "{{present(inputs.attachments)}}"
+              - name: display_name
+                value: $.inputs.display_name
+                in: body
+                condition: "{{present(inputs.display_name)}}"
+    result:
+      data: $.steps.create_comment_request.output.data
+  - actionId: get_comments
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - Comment
+    label: Get Comments
+    description: Retrieve comments from a page or block
+    details: "Retrieves a list of un-resolved comments from a page or block. Returns a paginated list of comment objects. Resolved comments are not included in the response. Requires read comment capability."
+    resources: https://developers.notion.com/reference/list-comments
+    inputs:
+      - name: block_id
+        description: The ID of the block or page to retrieve comments from
+        type: string
+        in: query
+        required: true
+      - name: start_cursor
+        description: Pagination cursor for the next page of results
+        type: string
+        in: query
+        required: false
+      - name: page_size
+        description: Number of items to return (max 100)
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: get_comments_request
+        description: Retrieve comments from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/comments"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: block_id
+                value: $.inputs.block_id
+                in: query
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: query
+                condition: "{{present(inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+    result:
+      data: $.steps.get_comments_request.output.data
+  - actionId: retrieve_comment
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - Comment
+    label: Retrieve Comment
+    description: Retrieve a specific comment by ID
+    details: "Retrieves a Comment object by its comment_id. Returns the full comment object including its content, author, timestamps, and parent reference. Requires read comment capability."
+    resources: https://developers.notion.com/reference/retrieve-a-comment
+    inputs:
+      - name: comment_id
+        description: The ID of the comment to retrieve
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: retrieve_comment_request
+        description: Retrieve a specific comment from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/comments/${inputs.comment_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.retrieve_comment_request.output.data
+  - actionId: create_database
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Database
+    label: Create Database
+    description: Create a new database with initial data source
+    details: "Creates a new database as a subpage in the specified parent page or as a private page at workspace level. In API version 2025-09-03, this creates the database container and its initial data source in one call. Use initial_data_source to define the schema/properties. Requires insert content capability."
+    resources: https://developers.notion.com/reference/database-create
+    inputs:
+      - name: parent
+        description: Parent page or workspace where the database will be created. Use page_id for page parent or workspace:true for workspace level.
+        type: object
+        in: body
+        required: true
+        properties:
+          - name: type
+            description: Parent type (page_id or workspace)
+            type: string
+            required: true
+          - name: page_id
+            description: ID of the parent page (required when type is page_id)
+            type: string
+            required: false
+          - name: workspace
+            description: Set to true to create at workspace level (required when type is workspace)
+            type: boolean
+            required: false
+      - name: title
+        description: Title of the database (array of rich text objects, max 100)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: description
+        description: Description of the database (array of rich text objects, max 100)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: initial_data_source
+        description: Initial data source configuration with schema/properties for the database
+        type: object
+        in: body
+        required: false
+      - name: icon
+        description: Icon for the database (file upload, emoji, external, or custom emoji)
+        type: object
+        in: body
+        required: false
+      - name: cover
+        description: Cover image for the database (file upload or external)
+        type: object
+        in: body
+        required: false
+      - name: is_inline
+        description: Whether the database appears inline in the parent page (defaults to false)
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: create_database_request
+        description: Create a new database via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/databases"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: parent
+                value: $.inputs.parent
+                in: body
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: "{{present(inputs.title)}}"
+              - name: description
+                value: $.inputs.description
+                in: body
+                condition: "{{present(inputs.description)}}"
+              - name: initial_data_source
+                value: $.inputs.initial_data_source
+                in: body
+                condition: "{{present(inputs.initial_data_source)}}"
+              - name: icon
+                value: $.inputs.icon
+                in: body
+                condition: "{{present(inputs.icon)}}"
+              - name: cover
+                value: $.inputs.cover
+                in: body
+                condition: "{{present(inputs.cover)}}"
+              - name: is_inline
+                value: $.inputs.is_inline
+                in: body
+                condition: "{{present(inputs.is_inline)}}"
+    result:
+      data: $.steps.create_database_request.output.data
+  - actionId: get_database
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Database
+    label: Get Database
+    description: Retrieve a database by ID
+    details: "Retrieves a database object by its ID. In API version 2025-09-03, this returns database-level information including the list of data sources with their IDs and names. To get the schema (properties) of a specific data source, use the retrieve data source endpoint. Does not return the database rows (use query database for that)."
+    resources: https://developers.notion.com/reference/database-retrieve
+    inputs:
+      - name: database_id
+        description: The ID of the database to retrieve (returns data sources list in API version 2025-09-03)
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_database_request
+        description: Retrieve database details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/databases/${inputs.database_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.get_database_request.output.data
+  - actionId: update_database
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Database
+    label: Update Database
+    description: Update database-level properties
+    details: "Updates database-level properties such as title, parent, icon, cover, and is_inline. In API version 2025-09-03, this endpoint operates on the database container only. To update the schema (properties) of a data source, use the update data source endpoint instead. Note that 'properties' parameter is deprecated for this endpoint in 2025-09-03 and will be ignored."
+    resources: https://developers.notion.com/reference/database-update
+    inputs:
+      - name: database_id
+        description: The ID of the database to update
+        type: string
+        in: path
+        required: true
+      - name: parent
+        description: New parent for the database (page_id or workspace) - allows moving the database
+        type: object
+        in: body
+        required: false
+      - name: title
+        description: New title for the database (array of rich text objects)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: description
+        description: New description for the database (array of rich text objects)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: icon
+        description: Icon for the database (emoji or external file)
+        type: object
+        in: body
+        required: false
+      - name: cover
+        description: Cover image for the database (external file, not supported when is_inline is true)
+        type: object
+        in: body
+        required: false
+      - name: is_inline
+        description: Whether the database appears inline in the parent page
+        type: boolean
+        in: body
+        required: false
+      - name: in_trash
+        description: Whether the database is archived (moved to trash)
+        type: boolean
+        in: body
+        required: false
+      - name: is_locked
+        description: Whether the database is locked from editing in the Notion app UI
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: update_database_request
+        description: Update database via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/databases/${inputs.database_id}"
+            method: patch
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: parent
+                value: $.inputs.parent
+                in: body
+                condition: "{{present(inputs.parent)}}"
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: "{{present(inputs.title)}}"
+              - name: description
+                value: $.inputs.description
+                in: body
+                condition: "{{present(inputs.description)}}"
+              - name: icon
+                value: $.inputs.icon
+                in: body
+                condition: "{{present(inputs.icon)}}"
+              - name: cover
+                value: $.inputs.cover
+                in: body
+                condition: "{{present(inputs.cover)}}"
+              - name: is_inline
+                value: $.inputs.is_inline
+                in: body
+                condition: "{{present(inputs.is_inline)}}"
+              - name: in_trash
+                value: $.inputs.in_trash
+                in: body
+                condition: "{{present(inputs.in_trash)}}"
+              - name: is_locked
+                value: $.inputs.is_locked
+                in: body
+                condition: "{{present(inputs.is_locked)}}"
+    result:
+      data: $.steps.update_database_request.output.data
+  - actionId: create_data_source
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Data Source
+    label: Create Data Source
+    description: Create a new data source in an existing database
+    details: "Adds an additional data source to an existing database. This allows a database to have multiple data sources with different schemas. A standard 'table' view is created alongside the new data source. Returns the created data source object. In API version 2025-09-03, databases can contain multiple data sources."
+    resources: https://developers.notion.com/reference/create-a-data-source
+    inputs:
+      - name: parent
+        description: Parent object specifying the database for the new data source
+        type: object
+        in: body
+        required: true
+        properties:
+          - name: database_id
+            description: The ID of the parent database
+            type: string
+            required: true
+      - name: properties
+        description: Property schema for the data source (defines columns/fields)
+        type: object
+        in: body
+        required: true
+      - name: title
+        description: Title of data source as it appears in Notion (array of rich text objects, max 100)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: icon
+        description: Icon for the data source (file upload, emoji, external, or custom emoji)
+        type: object
+        in: body
+        required: false
+    steps:
+      - stepId: create_data_source_request
+        description: Create a new data source via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/data_sources"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: parent
+                value: $.inputs.parent
+                in: body
+              - name: properties
+                value: $.inputs.properties
+                in: body
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: "{{present(inputs.title)}}"
+              - name: icon
+                value: $.inputs.icon
+                in: body
+                condition: "{{present(inputs.icon)}}"
+    result:
+      data: $.steps.create_data_source_request.output.data
+  - actionId: retrieve_data_source
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Data Source
+    label: Retrieve Data Source
+    description: Retrieve a data source by ID
+    details: "Retrieves a data source object — information that describes the structure and columns (properties/schema) of a data source. To fetch data source rows (child pages) rather than columns, use the query_data_source endpoint instead. The response includes the data source's properties, name, description, and parent database ID."
+    resources: https://developers.notion.com/reference/retrieve-a-data-source
+    inputs:
+      - name: data_source_id
+        description: The ID of the data source to retrieve (get this from the retrieve_database endpoint or 'Copy data source ID' in Notion app)
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: retrieve_data_source_request
+        description: Retrieve data source details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/data_sources/${inputs.data_source_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.retrieve_data_source_request.output.data
+  - actionId: update_data_source
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Data Source
+    label: Update Data Source
+    description: Update a data source's properties and metadata
+    details: "Updates the data source object — the properties (schema/columns), title, icon, or trash status. Can also move the data source to a different database using the parent parameter. To update property values in data source rows, use the update_page endpoint instead. Schema size should not exceed 50KB."
+    resources: https://developers.notion.com/reference/update-a-data-source
+    inputs:
+      - name: data_source_id
+        description: The ID of the data source to update
+        type: string
+        in: path
+        required: true
+      - name: title
+        description: Title of data source as it appears in Notion (array of rich text objects, max 100)
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: icon
+        description: Icon for the data source (file upload, emoji, external, or custom emoji)
+        type: object
+        in: body
+        required: false
+      - name: properties
+        description: Property schema updates for the data source (add, update, or remove properties). Set property to null to remove it.
+        type: object
+        in: body
+        required: false
+      - name: in_trash
+        description: Whether the data source should be moved to or from the trash
+        type: boolean
+        in: body
+        required: false
+      - name: archived
+        description: Whether the data source should be moved to or from the trash (equivalent to in_trash)
+        type: boolean
+        in: body
+        required: false
+      - name: parent
+        description: Parent object to move the data source to a different database
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: database_id
+            description: The ID of the new parent database
+            type: string
+            required: true
+    steps:
+      - stepId: update_data_source_request
+        description: Update data source via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/data_sources/${inputs.data_source_id}"
+            method: patch
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: title
+                value: $.inputs.title
+                in: body
+                condition: "{{present(inputs.title)}}"
+              - name: icon
+                value: $.inputs.icon
+                in: body
+                condition: "{{present(inputs.icon)}}"
+              - name: properties
+                value: $.inputs.properties
+                in: body
+                condition: "{{present(inputs.properties)}}"
+              - name: in_trash
+                value: $.inputs.in_trash
+                in: body
+                condition: "{{present(inputs.in_trash)}}"
+              - name: archived
+                value: $.inputs.archived
+                in: body
+                condition: "{{present(inputs.archived)}}"
+              - name: parent
+                value: $.inputs.parent
+                in: body
+                condition: "{{present(inputs.parent)}}"
+    result:
+      data: $.steps.update_data_source_request.output.data
+  - actionId: query_data_source
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Data Source
+    label: Query Data Source
+    description: Query a data source and retrieve pages
+    details: "Gets a list of pages from a data source that match the filter and sort criteria. Supports filtering by property values and sorting. Returns a paginated list of page objects. For wiki data sources, returns both pages and data source children. Use the result_type filter to limit results to only pages or data_sources. Replaces the deprecated query_database endpoint."
+    resources: https://developers.notion.com/reference/query-a-data-source
+    inputs:
+      - name: data_source_id
+        description: The ID of the data source to query
+        type: string
+        in: path
+        required: true
+      - name: filter
+        description: Filter conditions to apply (uses Notion's filter syntax)
+        type: object
+        in: body
+        required: false
+      - name: sorts
+        description: Array of sort objects to apply
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: start_cursor
+        description: Pagination cursor for the next page of results
+        type: string
+        in: body
+        required: false
+      - name: page_size
+        description: Number of items to return (max 100)
+        type: number
+        in: body
+        required: false
+      - name: archived
+        description: Filter by archived status
+        type: boolean
+        in: body
+        required: false
+      - name: in_trash
+        description: Filter by trash status
+        type: boolean
+        in: body
+        required: false
+      - name: result_type
+        description: Filter results to only include pages or data sources (for wiki databases)
+        type: enum
+        in: body
+        required: false
+        oneOf:
+          values:
+            - page
+            - data_source
+      - name: filter_properties
+        description: Array of property IDs or names to include in the response (improves performance)
+        type: string
+        array: true
+        in: query
+        required: false
+    steps:
+      - stepId: query_data_source_request
+        description: Query data source via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/data_sources/${inputs.data_source_id}/query"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: filter
+                value: $.inputs.filter
+                in: body
+                condition: "{{present(inputs.filter)}}"
+              - name: sorts
+                value: $.inputs.sorts
+                in: body
+                condition: "{{present(inputs.sorts)}}"
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: body
+                condition: "{{present(inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: body
+                condition: "{{present(inputs.page_size)}}"
+              - name: archived
+                value: $.inputs.archived
+                in: body
+                condition: "{{present(inputs.archived)}}"
+              - name: in_trash
+                value: $.inputs.in_trash
+                in: body
+                condition: "{{present(inputs.in_trash)}}"
+              - name: result_type
+                value: $.inputs.result_type
+                in: body
+                condition: "{{present(inputs.result_type)}}"
+              - name: filter_properties
+                value: $.inputs.filter_properties
+                in: query
+                condition: "{{present(inputs.filter_properties)}}"
+    result:
+      data: $.steps.query_data_source_request.output.data
+  - actionId: list_data_source_templates
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Data Source
+    label: List Data Source Templates
+    description: List all page templates for a data source
+    details: "Retrieves details of all page templates available for a data source. Returns template ID, name, and whether it's the default template. Templates are also valid Notion pages that can be retrieved using the retrieve_page endpoint. The bot must have access to the parent database to list templates."
+    resources: https://developers.notion.com/reference/list-data-source-templates
+    inputs:
+      - name: data_source_id
+        description: The ID of the data source to list templates for
+        type: string
+        in: path
+        required: true
+      - name: name
+        description: Filter templates by name (case-insensitive substring match)
+        type: string
+        in: query
+        required: false
+      - name: start_cursor
+        description: Pagination cursor for the next page of results
+        type: string
+        in: query
+        required: false
+      - name: page_size
+        description: Number of items to return (max 100)
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_templates_request
+        description: Retrieve templates list from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/data_sources/${inputs.data_source_id}/templates"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: name
+                value: $.inputs.name
+                in: query
+                condition: "{{present(inputs.name)}}"
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: query
+                condition: "{{present(inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+    result:
+      data: $.steps.list_templates_request.output.data
+  - actionId: list_file_uploads
+    categories:
+      - files
+    actionType: custom
+    tags:
+      - File Upload
+    label: List File Uploads
+    description: List all file uploads for the bot integration
+    details: "Retrieves file uploads for the current bot integration, sorted by most recent first. Returns a paginated list of file upload objects with metadata including file name, size, type, and URL. Use pagination parameters to navigate through large result sets."
+    resources: https://developers.notion.com/reference/list-file-uploads
+    inputs:
+      - name: status
+        description: Filter file uploads by status
+        type: enum
+        in: query
+        required: false
+        oneOf:
+          values:
+            - pending
+            - uploaded
+            - expired
+            - failed
+      - name: start_cursor
+        description: Pagination cursor for the next page of results
+        type: string
+        in: query
+        required: false
+      - name: page_size
+        description: Number of items to return per page (max 100)
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_file_uploads_request
+        description: Retrieve file uploads list from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/file_uploads"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: status
+                value: $.inputs.status
+                in: query
+                condition: "{{present(inputs.status)}}"
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: query
+                condition: "{{present(inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+    result:
+      data: $.steps.list_file_uploads_request.output.data
+  - actionId: retrieve_file_upload
+    categories:
+      - files
+    actionType: custom
+    releaseStage: preview
+    tags:
+      - File Upload
+    label: Retrieve File Upload
+    description: Get details of a specific file upload by ID
+    details: "Retrieves a File Upload object by its file_upload_id. Returns complete file metadata including file name, size, type, URL, upload status, and timestamps. Use this to check the details of a previously uploaded file."
+    resources: https://developers.notion.com/reference/retrieve-a-file-upload
+    inputs:
+      - name: file_upload_id
+        description: The ID of the file upload to retrieve
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: retrieve_file_upload_request
+        description: Retrieve file upload details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/file_uploads/${inputs.file_upload_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.retrieve_file_upload_request.output.data
+  - actionId: create_page
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Page
+    label: Create Page
+    description: Create a new page in a Notion workspace
+    details: "Creates a new page as a child of an existing page, data source, or (public integrations only) at workspace level. If parent is a page, only title is valid in properties; if parent is a data source, property keys must match the data source's properties. Do not set rollup, created_by, created_time, last_edited_by, or last_edited_time via the API. When using template, children is not allowed. Requires Insert Content capabilities on the target parent (403 otherwise)."
+    resources: https://developers.notion.com/reference/post-page
+    inputs:
+      - name: parent
+        description: Parent for the new page. Use page_id, data_source_id, database_id, or workspace (workspace only for public integrations; internal integrations require page or data source).
+        type: object
+        in: body
+        required: true
+        properties:
+          - name: type
+            description: Parent type. One of page_id, data_source_id, database_id, or workspace. Use data_source_id for database rows in API version 2025-09-03.
+            type: string
+            required: true
+          - name: page_id
+            description: ID of the parent page (when type is page_id)
+            type: string
+            required: false
+          - name: data_source_id
+            description: ID of the parent data source (when type is data_source_id, recommended for database rows)
+            type: string
+            required: false
+          - name: database_id
+            description: ID of the parent database (when type is database_id, backward compatibility)
+            type: string
+            required: false
+          - name: workspace
+            description: Set to true for workspace-level private page (public integrations only; omit parent or use type workspace)
+            type: boolean
+            required: false
+      - name: properties
+        description: Property values for the page. Cannot include rollup, created_by, created_time, last_edited_by, or last_edited_time (API returns error).
+        type: object
+        in: body
+        required: true
+      - name: children
+        description: Array of block objects for initial page content (max 100). Not allowed when template is used.
+        type: object
+        array: true
+        in: body
+        required: false
+      - name: icon
+        description: Page icon (emoji or external file)
+        type: object
+        in: body
+        required: false
+      - name: cover
+        description: Page cover image (external file)
+        type: object
+        in: body
+        required: false
+      - name: template
+        description: Template to apply. Use type none (default), default (data source default template), or template_id with template_id. When set, children is not allowed.
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: type
+            description: none, default, or template_id
+            type: string
+            required: false
+          - name: template_id
+            description: Page ID to use as template (when type is template_id). Must be in same workspace and accessible to the bot.
+            type: string
+            required: false
+      - name: position
+        description: Where to place the page. after_block (with id), page_start, or page_end.
+        type: object
+        in: body
+        required: false
+    steps:
+      - stepId: create_page_request
+        description: Create a new page via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/pages"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: parent
+                value: $.inputs.parent
+                in: body
+              - name: properties
+                value: $.inputs.properties
+                in: body
+              - name: children
+                value: $.inputs.children
+                in: body
+                condition: "{{present(inputs.children)}}"
+              - name: icon
+                value: $.inputs.icon
+                in: body
+                condition: "{{present(inputs.icon)}}"
+              - name: cover
+                value: $.inputs.cover
+                in: body
+                condition: "{{present(inputs.cover)}}"
+              - name: template
+                value: $.inputs.template
+                in: body
+                condition: "{{present(inputs.template)}}"
+              - name: position
+                value: $.inputs.position
+                in: body
+                condition: "{{present(inputs.position)}}"
+    result:
+      data: $.steps.create_page_request.output.data
+  - actionId: get_page
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Page
+    label: Get Page
+    description: Retrieve a page by ID
+    details: "Retrieves a page object by its ID. Response contains page properties and metadata, not page content (use Retrieve block children for content). Properties are limited to 25 references per property; for more, use Retrieve a page property. If parent is a database, property values match the database schema; if not, only title is available. Requires read content capabilities (403 otherwise)."
+    resources: https://developers.notion.com/reference/retrieve-a-page
+    inputs:
+      - name: page_id
+        description: The ID of the page to retrieve
+        type: string
+        in: path
+        required: true
+      - name: filter_properties
+        description: List of property IDs to include in the response (max 100). If omitted, all properties are returned. Properties the page does not have are omitted from the response.
+        type: string
+        array: true
+        in: query
+        required: false
+    steps:
+      - stepId: get_page_request
+        description: Retrieve page details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/pages/${inputs.page_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: filter_properties
+                value: $.inputs.filter_properties
+                in: query
+                condition: "{{present(inputs.filter_properties)}}"
+    result:
+      data: $.steps.get_page_request.output.data
+  - actionId: update_page
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Page
+    label: Update Page
+    description: Update page properties, icon, cover, or apply template
+    details: "Modifies page attributes. Use properties only when the page parent is a data source (schema must match), or title only for pages outside a data source. Can update icon, cover, in_trash (archive/restore), and is_locked (UI lock; does not affect API updates). Rollup property values cannot be updated; parent cannot be changed. Use template to apply default or template_id; use erase_content to delete all block children (destructive, cannot be reversed). To add content, use append block children. Requires update content capabilities (403 otherwise)."
+    resources: https://developers.notion.com/reference/patch-page
+    inputs:
+      - name: page_id
+        description: The ID of the page to update
+        type: string
+        in: path
+        required: true
+      - name: properties
+        description: Property values to update. Only valid when page parent is a data source (keys must match data source schema), or title only for non-data-source pages. Rollup values cannot be updated.
+        type: object
+        in: body
+        required: false
+      - name: archived
+        description: Whether the page is archived (deprecated, use in_trash instead)
+        type: boolean
+        in: body
+        required: false
+      - name: in_trash
+        description: Whether the page is in trash (archive or restore)
+        type: boolean
+        in: body
+        required: false
+      - name: is_locked
+        description: Whether the page is locked from editing in the Notion app UI. Does not affect API updates.
+        type: boolean
+        in: body
+        required: false
+      - name: icon
+        description: Page icon (emoji or external file)
+        type: object
+        in: body
+        required: false
+      - name: cover
+        description: Page cover image (external file)
+        type: object
+        in: body
+        required: false
+      - name: template
+        description: Apply a template to the page. Use type default (data source default template) or template_id with template_id. Notion merges template content and properties after the request.
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: type
+            description: default or template_id
+            type: string
+            required: false
+          - name: template_id
+            description: Page ID to use as template (when type is template_id). Must be accessible to the bot in the same workspace.
+            type: string
+            required: false
+      - name: erase_content
+        description: If true, deletes all block children of the page. Destructive and cannot be reversed. Use with template to replace content with template, or alone to clear the page.
+        type: boolean
+        in: body
+        required: false
+    steps:
+      - stepId: update_page_request
+        description: Update page via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/pages/${inputs.page_id}"
+            method: patch
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: properties
+                value: $.inputs.properties
+                in: body
+                condition: "{{present(inputs.properties)}}"
+              - name: archived
+                value: $.inputs.archived
+                in: body
+                condition: "{{present(inputs.archived)}}"
+              - name: in_trash
+                value: $.inputs.in_trash
+                in: body
+                condition: "{{present(inputs.in_trash)}}"
+              - name: is_locked
+                value: $.inputs.is_locked
+                in: body
+                condition: "{{present(inputs.is_locked)}}"
+              - name: icon
+                value: $.inputs.icon
+                in: body
+                condition: "{{present(inputs.icon)}}"
+              - name: cover
+                value: $.inputs.cover
+                in: body
+                condition: "{{present(inputs.cover)}}"
+              - name: template
+                value: $.inputs.template
+                in: body
+                condition: "{{present(inputs.template)}}"
+              - name: erase_content
+                value: $.inputs.erase_content
+                in: body
+                condition: "{{present(inputs.erase_content)}}"
+    result:
+      data: $.steps.update_page_request.output.data
+  - actionId: get_page_property
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Page
+    label: Get Page Property
+    description: Retrieve a page property item
+    details: "Retrieves a property_item object for the given page_id and property_id. Response is either a single value or a paginated list depending on property type. Use this endpoint when a property has more than 25 references (Retrieve a page returns an incomplete list). Paginated types (title, rich_text, relation, people) include next_url for further pages. Rollups: 'Show original' returns a flattened list; aggregations return rollup value and relations (next_cursor when large); show_unique, unique, and median are not computed and return a list of property_item objects. Get property_id from Retrieve a database. Requires read content capabilities (403 otherwise)."
+    resources: https://developers.notion.com/reference/retrieve-a-page-property
+    inputs:
+      - name: page_id
+        description: The ID of the page
+        type: string
+        in: path
+        required: true
+      - name: property_id
+        description: The ID of the property. Obtain from the Retrieve a database endpoint.
+        type: string
+        in: path
+        required: true
+      - name: start_cursor
+        description: Pagination cursor from the previous response (next_cursor or next_url) to fetch the next page
+        type: string
+        in: query
+        required: false
+      - name: page_size
+        description: Number of items to return per page (max 100). Response may contain fewer items.
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: get_page_property_request
+        description: Retrieve page property from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/pages/${inputs.page_id}/properties/${inputs.property_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: query
+                condition: "{{present(inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+    result:
+      data: $.steps.get_page_property_request.output.data
+  - actionId: move_page
+    categories:
+      - documents
+    actionType: custom
+    tags:
+      - Page
+    label: Move Page
+    description: Move a page to a new parent location
+    details: "Moves an existing Notion page to a new parent. Requires bearer token with page edit (content) capabilities. The page to move must be a regular Notion page, not a database or other block type. The bot must have edit access to the new parent. New parent is either a page (type page_id) or a database (type data_source_id). When moving under a page, parent page_id must be a regular page, not another block type; for databases with a single data source, database_id under page_id is a limited exception but not recommended (can cause 400 if a second data source is added). When moving into a database, use data_source_id from Retrieve a database, not database_id."
+    resources: https://developers.notion.com/reference/move-page
+    inputs:
+      - name: page_id
+        description: The ID of the page to move (UUIDv4, with or without dashes). Must be a regular Notion page, not a database or other block type.
+        type: string
+        in: path
+        required: true
+      - name: parent
+        description: The new parent for the page. Bot must have edit access to this parent.
+        type: object
+        in: body
+        required: true
+        properties:
+          - name: type
+            description: Always page_id (move under a page) or data_source_id (move into a database).
+            type: string
+            required: true
+          - name: page_id
+            description: UUID of the parent page with or without dashes (when type is page_id). Must be a regular page, not another block type.
+            type: string
+            required: false
+          - name: data_source_id
+            description: UUID of the database's data source with or without dashes (when type is data_source_id). Get from Retrieve a database.
+            type: string
+            required: false
+    steps:
+      - stepId: move_page_request
+        description: Move page to new parent via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/pages/${inputs.page_id}/move"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: parent
+                value: $.inputs.parent
+                in: body
+    result:
+      data: $.steps.move_page_request.output.data
+  - actionId: search
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - Search
+    label: Search
+    description: Search all pages and data sources
+    details: "Searches all pages and data sources that have been shared with the integration. Supports filtering by object type (page or data_source) and sorting by last edited time. Returns a paginated list of matching pages and data sources. Note that in API version 2025-09-03, databases return their data sources in search results."
+    resources: https://developers.notion.com/reference/post-search
+    inputs:
+      - name: query
+        description: Text to search for in page and data source titles. If omitted, returns all pages and data sources shared with the integration.
+        type: string
+        in: body
+        required: false
+      - name: filter
+        description: Limit results to pages only or data sources only
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: property
+            description: Must be "object" (the only supported filter property)
+            type: enum
+            required: true
+            oneOf:
+              values:
+                - object
+          - name: value
+            description: Object type to return (page or data_source)
+            type: enum
+            required: true
+            oneOf:
+              values:
+                - page
+                - data_source
+      - name: sort
+        description: Sort order for results (by last edited time)
+        type: object
+        in: body
+        required: false
+        properties:
+          - name: timestamp
+            description: Sort key (only last_edited_time is supported)
+            type: enum
+            required: true
+            oneOf:
+              values:
+                - last_edited_time
+          - name: direction
+            description: Sort direction
+            type: enum
+            required: true
+            oneOf:
+              values:
+                - ascending
+                - descending
+      - name: start_cursor
+        description: Pagination cursor (UUID) for the next page. Use next_cursor from the previous response.
+        type: string
+        in: body
+        required: false
+      - name: page_size
+        description: Number of items to return per page (paginated response)
+        type: number
+        in: body
+        required: false
+    steps:
+      - stepId: search_request
+        description: Search pages and data sources via Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/search"
+            method: post
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: query
+                value: $.inputs.query
+                in: body
+                condition: "{{present($.inputs.query)}}"
+              - name: filter
+                value: $.inputs.filter
+                in: body
+                condition: "{{present($.inputs.filter)}}"
+              - name: sort
+                value: $.inputs.sort
+                in: body
+                condition: "{{present($.inputs.sort)}}"
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: body
+                condition: "{{present($.inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: body
+                condition: "{{present($.inputs.page_size)}}"
+    result:
+      data: $.steps.search_request.output.data
+  - actionId: list_users
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - User
+    label: List Users
+    description: List all users in the workspace
+    details: "Returns a paginated list of all users in the workspace. The response may contain fewer than page_size results. Includes both people (workspace members) and bots; guests are not included. The API does not support filtering users by email or name. Requires user information capabilities."
+    resources: https://developers.notion.com/reference/get-users
+    inputs:
+      - name: start_cursor
+        description: Pagination cursor from the previous response (next_cursor) to fetch the next page
+        type: string
+        in: query
+        required: false
+      - name: page_size
+        description: Number of items to return per page (max 100). The response may contain fewer items.
+        type: number
+        in: query
+        required: false
+    steps:
+      - stepId: list_users_request
+        description: Retrieve users from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/users"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+              - name: start_cursor
+                value: $.inputs.start_cursor
+                in: query
+                condition: "{{present($.inputs.start_cursor)}}"
+              - name: page_size
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present($.inputs.page_size)}}"
+    result:
+      data: $.steps.list_users_request.output.data
+  - actionId: get_user
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - User
+    label: Get User
+    description: Retrieve a user by ID
+    details: "Retrieves a user object by their ID. Returns information about the user including their name, avatar, type (person or bot), and email (for workspace members). Requires user information capabilities."
+    resources: https://developers.notion.com/reference/get-user
+    inputs:
+      - name: user_id
+        description: The ID of the user to retrieve
+        type: string
+        in: path
+        required: true
+    steps:
+      - stepId: get_user_request
+        description: Retrieve user details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/users/${inputs.user_id}"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.get_user_request.output.data
+  - actionId: get_bot_user
+    categories:
+      - general
+    actionType: custom
+    tags:
+      - User
+    label: Get Bot User
+    description: Retrieve information about the bot user
+    details: "Retrieves the bot user associated with the API token. The response includes an owner field with information about the person who authorized the integration, plus name, avatar, type, and workspace details. Accessible with any level of integration capabilities."
+    resources: https://developers.notion.com/reference/get-self
+    steps:
+      - stepId: get_bot_user_request
+        description: Retrieve bot user details from Notion API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: "/users/me"
+            method: get
+            args:
+              - name: Notion-Version
+                value: "2025-09-03"
+                in: headers
+    result:
+      data: $.steps.get_bot_user_request.output.data

@@ -1,0 +1,80 @@
+StackOne: 1.0.0
+info:
+  title: UKG Pro
+  key: ukgpro
+  version: 1.1.0
+  assets:
+    icon: https://stackone-logos.com/api/ukgpro/filled/png
+  description: UKG Pro is a comprehensive human capital management (HCM) platform that provides workforce management, payroll, and HR solutions.
+
+baseUrl: "https://${credentials.subdomain}.${credentials.domain}"
+
+authentication:
+  - custom:
+      type: custom
+      label: Service Account
+      support:
+        link: https://hub.stackone.com/connection-guides/hris/ukg-pro
+        description: Access to UKG Pro Service Account and Web Services credentials is required.
+      authorization:
+        type: basic
+        username: ${credentials.username}
+        password: ${credentials.password}
+        encoding: base64
+      configFields:
+        - key: username
+          label: Service Account Username
+          type: text
+          required: true
+          secret: false
+          placeholder: UKGProConnector
+          description: The username of the UKG Pro service account created in System Configuration > Security > Service Account Administration.
+          tooltip: This is the User Name entered when creating the service account.
+        - key: password
+          label: Service Account Password
+          type: password
+          required: true
+          secret: true
+          placeholder: •••••••••••••••••••••••••••••••••••••••
+          description: The password generated when creating the UKG Pro service account. This password is only shown once during creation.
+          tooltip: If you've lost this password, you'll need to create a new service account or reset the existing one.
+        - key: user_api_key
+          label: User API Key
+          type: password
+          required: true
+          secret: true
+          placeholder: •••••••••••••••••••••••••••••••••••••••
+          description: The User API Key associated with your service account. Found in System Configuration > Security > Web Services.
+          tooltip: This API key is specific to the service account you created.
+        - key: customer_api_key
+          label: Customer API Key
+          type: password
+          required: true
+          secret: true
+          placeholder: •••••••••••••••••••••••••••••••••••••••
+          description: The Customer API Key displayed at the top of the Web Services page. Found in System Configuration > Security > Web Services.
+          tooltip: This is your organization's Customer API Key, shared across all API integrations.
+        - key: domain
+          label: API Domain
+          type: text
+          required: true
+          secret: false
+          placeholder: ultipro.com
+          description: Enter your UKG Pro Web Services domain. For instance, if a service endpoint is *service2*.ultipro.com/services/.., input ultipro.com
+          tooltip: Found in System Configuration > Security > Web Services as the API Host URL. Do not include 'https://' prefix.
+        - key: subdomain
+          label: API Subdomain
+          type: text
+          required: true
+          secret: false
+          placeholder: CompanyName
+          description: Enter your UKG Pro Web Services subdomain. For instance, if a service endpoint is **service2**.ultipro.com/services/.., input service2
+          tooltip: This is part of the API URL path that identifies your specific UKG Pro instance.
+      environments:
+        - key: production
+          name: Production
+
+actions:
+  $ref: ukgpro.employeesMetadata
+  $ref: ukgpro.employee
+

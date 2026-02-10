@@ -1,0 +1,652 @@
+- actionId: create_employee_usa
+  categories:
+    - hris
+  actionType: custom
+  label: Create Employee (USA)
+  description: |
+    Create a single employee in UKG Pro using the SOAP API. Field order must match the SOAP schema exactly.
+    
+    **Required Fields:**
+    - FirstName, LastName
+    - AddressLine1, City, StateOrProvince, ZipOrPostalCode, Country
+    - BirthDate, Gender, SSN
+    - CompanyIdentifier, HireDate
+    - JobCode, LocationCode, EmployeeType, FullOrPartTime
+    - SeniorityDate, BenefitSeniorityDate
+    - HourlyOrSalaried, EarningsGroup, PayGroup, PayRate, PayRateType, ScheduledHours
+    - FederalFilingStatus, ResidentStateFilingStatus, WorkStateFilingStatus
+    - DeductionBenefitGroup, I9Verification
+    
+    **Conditional Requirements:**
+    - OtherPhoneType: Required when OtherPhone is provided
+    - DirectDeposits: AccountNumber, AccountType, RoutingNumber are required if DirectDeposits array is provided
+    - FlatOrPercentAmount: Required when DirectDeposits.AmountRule is "D" (Flat Amount) or "P" (Percent Amount)
+    - WorkStateDisabilityPlanType: Required for CA, CO, CT, DC, MA, NJ, NY, OR, PR, WA
+    - StateOccupationalCode: Required for AK, LA, or employees with IN work location
+    
+    **Date Format:** YYYY-MM-DDTHH:mm:ss (e.g., 2025-11-01T00:00:00)
+  inputs:
+    - name: FirstName
+      description: Employee's first name
+      type: string
+      in: body
+      required: true
+    - name: LastName
+      description: Employee's last name
+      type: string
+      in: body
+      required: true
+    - name: AddressLine1
+      description: Street address line 1
+      type: string
+      in: body
+      required: true
+    - name: City
+      description: City name
+      type: string
+      in: body
+      required: true
+    - name: StateOrProvince
+      description: Two-letter US state code (e.g., CA, NY, TX)
+      type: string
+      in: body
+      required: true
+    - name: ZipOrPostalCode
+      description: ZIP or postal code
+      type: string
+      in: body
+      required: true
+    - name: Country
+      description: 'Country code (default: USA)'
+      type: string
+      in: body
+      required: true
+    - name: BirthDate
+      description: Birth date in format YYYY-MM-DDTHH:mm:ss
+      type: datetime_string
+      in: body
+      required: true
+    - name: Gender
+      description: Gender code from code table
+      type: string
+      in: body
+      required: true
+    - name: SSN
+      description: Social Security Number
+      type: string
+      in: body
+      required: true
+    - name: CompanyIdentifier
+      description: Company identifier code
+      type: string
+      in: body
+      required: true
+    - name: HireDate
+      description: Hire date in format YYYY-MM-DDTHH:mm:ss
+      type: datetime_string
+      in: body
+      required: true
+    - name: JobCode
+      description: Job code identifier
+      type: string
+      in: body
+      required: true
+    - name: LocationCode
+      description: Location code identifier
+      type: string
+      in: body
+      required: true
+    - name: EmployeeType
+      description: Employee type code
+      type: string
+      in: body
+      required: true
+    - name: FullOrPartTime
+      description: Full-time or part-time indicator
+      type: string
+      in: body
+      required: true
+    - name: SeniorityDate
+      description: Seniority date in format YYYY-MM-DDTHH:mm:ss
+      type: datetime_string
+      in: body
+      required: true
+    - name: BenefitSeniorityDate
+      description: Benefit seniority date in format YYYY-MM-DDTHH:mm:ss
+      type: datetime_string
+      in: body
+      required: true
+    - name: HourlyOrSalaried
+      description: Hourly or salaried indicator
+      type: string
+      in: body
+      required: true
+    - name: EarningsGroup
+      description: Earnings group code
+      type: string
+      in: body
+      required: true
+    - name: PayGroup
+      description: Pay group code
+      type: string
+      in: body
+      required: true
+    - name: PayRate
+      description: Pay rate amount
+      type: number
+      in: body
+      required: true
+    - name: PayRateType
+      description: Pay rate type code
+      type: string
+      in: body
+      required: true
+    - name: ScheduledHours
+      description: Scheduled hours per period
+      type: number
+      in: body
+      required: true
+    - name: FederalFilingStatus
+      description: Federal tax filing status code
+      type: string
+      in: body
+      required: true
+    - name: ResidentStateFilingStatus
+      description: Resident state filing status code
+      type: string
+      in: body
+      required: true
+    - name: WorkStateFilingStatus
+      description: Work state filing status code
+      type: string
+      in: body
+      required: true
+    - name: DeductionBenefitGroup
+      description: Deduction benefit group code
+      type: string
+      in: body
+      required: true
+    - name: I9Verification
+      description: I9 verification code
+      type: string
+      in: body
+      required: true
+    # Optional fields
+    - name: MiddleName
+      description: Employee's middle name
+      type: string
+      in: body
+      required: false
+    - name: PreferredFirstName
+      description: Preferred first name
+      type: string
+      in: body
+      required: false
+    - name: Prefix
+      description: Name prefix (e.g., Mr., Mrs., Dr.)
+      type: string
+      in: body
+      required: false
+    - name: Suffix
+      description: Name suffix (e.g., Jr., Sr., III)
+      type: string
+      in: body
+      required: false
+    - name: AddressLine2
+      description: Street address line 2
+      type: string
+      in: body
+      required: false
+    - name: County
+      description: County name
+      type: string
+      in: body
+      required: false
+    - name: EmailAddress
+      description: Primary email address
+      type: string
+      in: body
+      required: false
+    - name: AlternateEmailAddress
+      description: Alternate email address
+      type: string
+      in: body
+      required: false
+    - name: HomePhone
+      description: Home phone number
+      type: string
+      in: body
+      required: false
+    - name: OtherPhone
+      description: Other phone number
+      type: string
+      in: body
+      required: false
+    - name: OtherPhoneExtension
+      description: Other phone extension
+      type: string
+      in: body
+      required: false
+    - name: OtherPhoneType
+      description: Other phone type code (required if OtherPhone is provided)
+      type: string
+      in: body
+      required: false
+    - name: FormerLastName
+      description: Former last name
+      type: string
+      in: body
+      required: false
+    - name: EthnicOrigin
+      description: Ethnic origin code
+      type: string
+      in: body
+      required: false
+    - name: MaritalStatus
+      description: Marital status code
+      type: string
+      in: body
+      required: false
+    - name: HireSource
+      description: Hire source code
+      type: string
+      in: body
+      required: false
+    - name: JobGroup
+      description: Job group code
+      type: string
+      in: body
+      required: false
+    - name: DistributionCenterCode
+      description: Distribution center code
+      type: string
+      in: body
+      required: false
+    - name: OrgLevel1
+      description: Organization level 1 code
+      type: string
+      in: body
+      required: false
+    - name: OrgLevel2
+      description: Organization level 2 code
+      type: string
+      in: body
+      required: false
+    - name: OrgLevel3
+      description: Organization level 3 code
+      type: string
+      in: body
+      required: false
+    - name: EmployeeNumber
+      description: Employee number
+      type: string
+      in: body
+      required: false
+    - name: PayAutomatically
+      description: Whether to pay automatically
+      type: boolean
+      in: body
+      required: false
+    - name: PayScaleCode
+      description: Pay scale code
+      type: string
+      in: body
+      required: false
+    - name: DirectDeposits
+      description: Array of direct deposit configurations
+      type: object
+      array: true
+      in: body
+      required: false
+    - name: PTOPlans
+      description: Array of PTO plan configurations
+      type: object
+      array: true
+      in: body
+      required: false
+    - name: WorkStateDisabilityPlanType
+      description: Work state disability plan type (required for CA, CO, CT, DC, MA, NJ, NY, OR, PR, WA)
+      type: string
+      in: body
+      required: false
+    - name: StateOccupationalCode
+      description: State occupational code (required for AK, LA, or IN work location)
+      type: string
+      in: body
+      required: false
+    # Federal Tax Fields
+    - name: FederalAdditionalAmountWithheld
+      description: Federal additional amount withheld
+      type: number
+      in: body
+      required: false
+    - name: FederalDeductionAmount
+      description: Federal deduction amount
+      type: number
+      in: body
+      required: false
+    - name: FederalDependentAmount
+      description: Federal dependent amount
+      type: number
+      in: body
+      required: false
+    - name: FederalEmployeeClaimsExempt
+      description: Whether employee claims exempt for federal taxes
+      type: boolean
+      in: body
+      required: false
+    - name: FederalOtherIncome
+      description: Federal other income amount
+      type: number
+      in: body
+      required: false
+    - name: FederalSubjectToBackupWitholding
+      description: Whether subject to federal backup withholding
+      type: boolean
+      in: body
+      required: false
+    - name: FederalW2Pension
+      description: Whether federal W2 pension applies
+      type: boolean
+      in: body
+      required: false
+    # Work State Tax Fields
+    - name: LocalWorkInTaxResidentStatus
+      description: Local work in tax resident status (N=Non resident, R=Resident)
+      type: string
+      in: body
+      required: false
+    - name: WorkStateTotalAllowancesClaimed
+      description: Work state total allowances claimed
+      type: number
+      in: body
+      required: false
+    - name: WorkStateAdditionalAmountWithheld
+      description: Work state additional amount withheld
+      type: number
+      in: body
+      required: false
+    - name: WorkStateAdditionalAllowances
+      description: Work state additional allowances
+      type: number
+      in: body
+      required: false
+    - name: WorkStateEmployeeClaimsExempt
+      description: Whether employee claims exempt for work state taxes
+      type: boolean
+      in: body
+      required: false
+    - name: WorkStatePlan
+      description: Work state plan code
+      type: string
+      in: body
+      required: false
+    - name: WorkStateDeductionAmount
+      description: Work state deduction amount
+      type: number
+      in: body
+      required: false
+    - name: WorkStateDependentAmount
+      description: Work state dependent amount
+      type: number
+      in: body
+      required: false
+    - name: WorkOtherIncome
+      description: Work state other income amount
+      type: number
+      in: body
+      required: false
+    # Resident State Tax Fields
+    - name: ResidentStateTotalAllowancesClaimed
+      description: Resident state total allowances claimed
+      type: number
+      in: body
+      required: false
+    # Additional Fields
+    - name: ShiftCode
+      description: Shift code identifier
+      type: string
+      in: body
+      required: false
+    - name: ShiftGroup
+      description: Shift group code
+      type: string
+      in: body
+      required: false
+    - name: StateGeographicCode
+      description: State geographic code
+      type: string
+      in: body
+      required: false
+    - name: TimeClock
+      description: Time clock identifier
+      type: string
+      in: body
+      required: false
+    - name: WorkExtension
+      description: Work phone extension
+      type: string
+      in: body
+      required: false
+    - name: WorkPhone
+      description: Work phone number
+      type: string
+      in: body
+      required: false
+    - name: StepNo
+      description: Step number
+      type: number
+      in: body
+      required: false
+    - name: UnionLocal
+      description: Union local code
+      type: string
+      in: body
+      required: false
+    - name: UnionNational
+      description: Union national code
+      type: string
+      in: body
+      required: false
+    # Additional missing fields from XSD
+    - name: AlternateTitle
+      description: Alternate title
+      type: string
+      in: body
+      required: false
+    - name: FederalMultiPensionJob
+      description: Federal multi pension job
+      type: number
+      in: body
+      required: false
+    - name: FederalTotalAllowancesClaimed
+      description: Federal total allowances claimed
+      type: number
+      in: body
+      required: false
+    - name: NextSalaryReviewDate
+      description: Next salary review date in format YYYY-MM-DDTHH:mm:ss
+      type: datetime_string
+      in: body
+      required: false
+    - name: OrgLevel4
+      description: Organization level 4 code
+      type: string
+      in: body
+      required: false
+    - name: OtherRate1
+      description: Other rate 1
+      type: number
+      in: body
+      required: false
+    - name: OtherRate2
+      description: Other rate 2
+      type: number
+      in: body
+      required: false
+    - name: OtherRate3
+      description: Other rate 3
+      type: number
+      in: body
+      required: false
+    - name: OtherRate4
+      description: Other rate 4
+      type: number
+      in: body
+      required: false
+    - name: OverrideCompanyLevelRate
+      description: Override company level rate
+      type: boolean
+      in: body
+      required: false
+    - name: ResidentCounty
+      description: Resident county
+      type: string
+      in: body
+      required: false
+    - name: ResidentStateAdoptedDependentExemptions
+      description: Resident state adopted dependent exemptions
+      type: number
+      in: body
+      required: false
+    - name: ResidentStateAnnualWHAllowance
+      description: Resident state annual withholding allowance
+      type: string
+      in: body
+      required: false
+  steps:
+    - stepId: authenticate_soap
+      description: Authenticate with UKG Pro LoginService to get token
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /services/LoginService
+          method: post
+          args:
+            - name: soapBody
+              value: |-
+                <?xml version="1.0" encoding="utf-8"?>
+                <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
+                  <s:Header>
+                    <a:Action s:mustUnderstand="1">http://www.ultipro.com/services/loginservice/ILoginService/Authenticate</a:Action>
+                    <h:ClientAccessKey xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.customer_api_key}</h:ClientAccessKey>
+                    <h:Password xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.password}</h:Password>
+                    <h:UserAccessKey xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.user_api_key}</h:UserAccessKey>
+                    <h:UserName xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.username}</h:UserName>
+                  </s:Header>
+                  <s:Body>
+                    <TokenRequest xmlns="http://www.ultipro.com/contracts" />
+                  </s:Body>
+                </s:Envelope>
+              in: body
+            - name: Content-Type
+              value: application/soap+xml; charset=utf-8
+              in: headers
+
+    - stepId: extract_token
+      description: Extract UltiProToken from SOAP response
+      stepFunction:
+        functionName: map_fields
+        version: '2'
+        parameters:
+          dataSource: $.steps.authenticate_soap.output.data
+          fields:
+            - targetFieldKey: token
+              expression: $.['s:Envelope']['s:Body'].TokenResponse.Token
+              type: string
+
+    - stepId: create_employee_soap
+      description: Create employee via SOAP API
+      stepFunction:
+        functionName: request
+        parameters:
+          url: /services/EmployeeNewHire
+          method: post
+          args:
+            - name: soapBody
+              value: |-
+                <?xml version="1.0" encoding="utf-8"?>
+                <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
+                  <s:Header>
+                    <a:Action s:mustUnderstand="1">http://www.ultipro.com/services/employeenewhire/IEmployeeNewHire/NewHireUsa</a:Action>
+                    <h:UltiProToken xmlns:h="http://www.ultimatesoftware.com/foundation/authentication/ultiprotoken">${steps.extract_token.output.data.token}</h:UltiProToken>
+                    <h:ClientAccessKey xmlns:h="http://www.ultimatesoftware.com/foundation/authentication/clientaccesskey">${credentials.customer_api_key}</h:ClientAccessKey>
+                  </s:Header>
+                  <s:Body>
+                    <NewHireUsa xmlns="http://www.ultipro.com/services/employeenewhire">
+                      <entities xmlns:b="http://www.ultipro.com/contracts" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+                        <b:Employee>
+                          <b:AddressLine1>${inputs.AddressLine1}</b:AddressLine1>
+                          <b:AddressLine2>${inputs.AddressLine2}</b:AddressLine2>
+                          <b:AlternateEmailAddress>${inputs.AlternateEmailAddress}</b:AlternateEmailAddress>
+                          <b:BenefitSeniorityDate>${inputs.BenefitSeniorityDate}</b:BenefitSeniorityDate>
+                          <b:BirthDate>${inputs.BirthDate}</b:BirthDate>
+                          <b:City>${inputs.City}</b:City>
+                          <b:CompanyIdentifier i:type="b:CompanyCodeIdentifier"><b:CompanyCode>${inputs.CompanyIdentifier}</b:CompanyCode></b:CompanyIdentifier>
+                          <b:Country>${inputs.Country}</b:Country>
+                          <b:County>${inputs.County}</b:County>
+                          <b:DeductionBenefitGroup>${inputs.DeductionBenefitGroup}</b:DeductionBenefitGroup>
+                          <b:DistributionCenterCode>${inputs.DistributionCenterCode}</b:DistributionCenterCode>
+                          <b:EarningsGroup>${inputs.EarningsGroup}</b:EarningsGroup>
+                          <b:EmailAddress>${inputs.EmailAddress}</b:EmailAddress>
+                          <b:EmployeeNumber>${inputs.EmployeeNumber}</b:EmployeeNumber>
+                          <b:EmployeeType>${inputs.EmployeeType}</b:EmployeeType>
+                          <b:EthnicOrigin>${inputs.EthnicOrigin}</b:EthnicOrigin>
+                          <b:FederalFilingStatus>${inputs.FederalFilingStatus}</b:FederalFilingStatus>
+                          <b:FirstName>${inputs.FirstName}</b:FirstName>
+                          <b:FormerLastName>${inputs.FormerLastName}</b:FormerLastName>
+                          <b:FullOrPartTime>${inputs.FullOrPartTime}</b:FullOrPartTime>
+                          <b:Gender>${inputs.Gender}</b:Gender>
+                          <b:HireDate>${inputs.HireDate}</b:HireDate>
+                          <b:HireSource>${inputs.HireSource}</b:HireSource>
+                          <b:HomePhone>${inputs.HomePhone}</b:HomePhone>
+                          <b:HourlyOrSalaried>${inputs.HourlyOrSalaried}</b:HourlyOrSalaried>
+                          <b:I9Verification>${inputs.I9Verification}</b:I9Verification>
+                          <b:JobCode>${inputs.JobCode}</b:JobCode>
+                          <b:JobGroup>${inputs.JobGroup}</b:JobGroup>
+                          <b:LastName>${inputs.LastName}</b:LastName>
+                          <b:LocationCode>${inputs.LocationCode}</b:LocationCode>
+                          <b:MailStop>${inputs.MailStop}</b:MailStop>
+                          <b:MaritalStatus>${inputs.MaritalStatus}</b:MaritalStatus>
+                          <b:MiddleName>${inputs.MiddleName}</b:MiddleName>
+                          <b:NextPerformanceReviewDate>${inputs.NextPerformanceReviewDate}</b:NextPerformanceReviewDate>
+                          <b:OrgLevel1>${inputs.OrgLevel1}</b:OrgLevel1>
+                          <b:OrgLevel2>${inputs.OrgLevel2}</b:OrgLevel2>
+                          <b:OrgLevel3>${inputs.OrgLevel3}</b:OrgLevel3>
+                          <b:OtherPhone>${inputs.OtherPhone}</b:OtherPhone>
+                          <b:OtherPhoneExtension>${inputs.OtherPhoneExtension}</b:OtherPhoneExtension>
+                          <b:OtherPhoneType>${inputs.OtherPhoneType}</b:OtherPhoneType>
+                          <b:PayAutomatically>${inputs.PayAutomatically}</b:PayAutomatically>
+                          <b:PayGroup>${inputs.PayGroup}</b:PayGroup>
+                          <b:PayRate>${inputs.PayRate}</b:PayRate>
+                          <b:PayRateType>${inputs.PayRateType}</b:PayRateType>
+                          <b:PayScaleCode>${inputs.PayScaleCode}</b:PayScaleCode>
+                          <b:PreferredFirstName>${inputs.PreferredFirstName}</b:PreferredFirstName>
+                          <b:Prefix>${inputs.Prefix}</b:Prefix>
+                          <b:Project>${inputs.Project}</b:Project>
+                          <b:ResidentStateFilingStatus>${inputs.ResidentStateFilingStatus}</b:ResidentStateFilingStatus>
+                          <b:SSN>${inputs.SSN}</b:SSN>
+                          <b:ScheduledHours>${inputs.ScheduledHours}</b:ScheduledHours>
+                          <b:SeniorityDate>${inputs.SeniorityDate}</b:SeniorityDate>
+                          <b:StateOccupationalCode>${inputs.StateOccupationalCode}</b:StateOccupationalCode>
+                          <b:StateOrProvince>${inputs.StateOrProvince}</b:StateOrProvince>
+                          <b:Suffix>${inputs.Suffix}</b:Suffix>
+                          <b:TimeClock>${inputs.TimeClock}</b:TimeClock>
+                          <b:UnionLocal>${inputs.UnionLocal}</b:UnionLocal>
+                          <b:UnionNational>${inputs.UnionNational}</b:UnionNational>
+                          <b:WorkExtension>${inputs.WorkExtension}</b:WorkExtension>
+                          <b:WorkPhone>${inputs.WorkPhone}</b:WorkPhone>
+                          <b:WorkStateDisabilityPlanType>${inputs.WorkStateDisabilityPlanType}</b:WorkStateDisabilityPlanType>
+                          <b:WorkStateFilingStatus>${inputs.WorkStateFilingStatus}</b:WorkStateFilingStatus>
+                          <b:ZipOrPostalCode>${inputs.ZipOrPostalCode}</b:ZipOrPostalCode>
+                        </b:Employee>
+                      </entities>
+                    </NewHireUsa>
+                  </s:Body>
+                </s:Envelope>
+              in: body
+            - name: Content-Type
+              value: application/soap+xml; charset=utf-8
+              in: headers
+  result:
+    provider_response: $.steps.create_employee_soap.output.data['s:Envelope']['s:Body']['NewHireUsaResponse']['NewHireUsaResult']
