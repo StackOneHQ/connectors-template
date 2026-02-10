@@ -4040,7 +4040,7 @@ actions:
         stepFunction:
           functionName: request
           parameters:
-            url: '/../../public/admin/searchItem/v1/Items'
+            url: '/public/admin/searchItem/v1/Items'
             method: get
             args:
               - name: '{{"$filter"}}'

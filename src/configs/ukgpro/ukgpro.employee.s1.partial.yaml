@@ -526,23 +526,21 @@
             type: basic
             username: ${credentials.username}
             password: ${credentials.password}
+          body: |-
+            <?xml version="1.0" encoding="utf-8"?>
+            <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
+              <s:Header>
+                <a:Action s:mustUnderstand="1">http://www.ultipro.com/services/loginservice/ILoginService/Authenticate</a:Action>
+                <h:ClientAccessKey xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.customer_api_key}</h:ClientAccessKey>
+                <h:Password xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.password}</h:Password>
+                <h:UserAccessKey xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.user_api_key}</h:UserAccessKey>
+                <h:UserName xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.username}</h:UserName>
+              </s:Header>
+              <s:Body>
+                <TokenRequest xmlns="http://www.ultipro.com/contracts" />
+              </s:Body>
+            </s:Envelope>
           args:
-            - name: soapBody
-              in: body
-              value: |-
-                <?xml version="1.0" encoding="utf-8"?>
-                <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
-                  <s:Header>
-                    <a:Action s:mustUnderstand="1">http://www.ultipro.com/services/loginservice/ILoginService/Authenticate</a:Action>
-                    <h:ClientAccessKey xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.customer_api_key}</h:ClientAccessKey>
-                    <h:Password xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.password}</h:Password>
-                    <h:UserAccessKey xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.user_api_key}</h:UserAccessKey>
-                    <h:UserName xmlns:h="http://www.ultipro.com/services/loginservice">${credentials.username}</h:UserName>
-                  </s:Header>
-                  <s:Body>
-                    <TokenRequest xmlns="http://www.ultipro.com/contracts" />
-                  </s:Body>
-                </s:Envelope>
             - name: Content-Type
               in: headers
               value: application/soap+xml; charset=utf-8
@@ -569,89 +567,87 @@
           authorization:
             type: bearer
             token: ${steps.extract_token.output.data.token}
+          body: |-
+            <?xml version="1.0" encoding="utf-8"?>
+            <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
+              <s:Header>
+                <a:Action s:mustUnderstand="1">http://www.ultipro.com/services/employeenewhire/IEmployeeNewHire/NewHireUsa</a:Action>
+                <UltiProToken xmlns="http://www.ultimatesoftware.com/foundation/authentication/ultiprotoken">${steps.extract_token.output.data.token}</UltiProToken>
+                <ClientAccessKey xmlns="http://www.ultimatesoftware.com/foundation/authentication/clientaccesskey">${credentials.customer_api_key}</ClientAccessKey>
+              </s:Header>
+              <s:Body>
+                <NewHireUsa xmlns="http://www.ultipro.com/services/employeenewhire">
+                  <entities xmlns:b="http://www.ultipro.com/contracts" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+                    <b:Employee>
+                      <b:AddressLine1>${inputs.AddressLine1}</b:AddressLine1>
+                      <b:AddressLine2>${inputs.AddressLine2}</b:AddressLine2>
+                      <b:AlternateEmailAddress>${inputs.AlternateEmailAddress}</b:AlternateEmailAddress>
+                      <b:BenefitSeniorityDate>${inputs.BenefitSeniorityDate}</b:BenefitSeniorityDate>
+                      <b:BirthDate>${inputs.BirthDate}</b:BirthDate>
+                      <b:City>${inputs.City}</b:City>
+                      <b:CompanyIdentifier i:type="b:CompanyCodeIdentifier"><b:CompanyCode>${inputs.CompanyIdentifier}</b:CompanyCode></b:CompanyIdentifier>
+                      <b:Country>${inputs.Country}</b:Country>
+                      <b:County>${inputs.County}</b:County>
+                      <b:DeductionBenefitGroup>${inputs.DeductionBenefitGroup}</b:DeductionBenefitGroup>
+                      <b:DistributionCenterCode>${inputs.DistributionCenterCode}</b:DistributionCenterCode>
+                      <b:EarningsGroup>${inputs.EarningsGroup}</b:EarningsGroup>
+                      <b:EmailAddress>${inputs.EmailAddress}</b:EmailAddress>
+                      <b:EmployeeNumber>${inputs.EmployeeNumber}</b:EmployeeNumber>
+                      <b:EmployeeType>${inputs.EmployeeType}</b:EmployeeType>
+                      <b:EthnicOrigin>${inputs.EthnicOrigin}</b:EthnicOrigin>
+                      <b:FederalFilingStatus>${inputs.FederalFilingStatus}</b:FederalFilingStatus>
+                      <b:FirstName>${inputs.FirstName}</b:FirstName>
+                      <b:FormerLastName>${inputs.FormerLastName}</b:FormerLastName>
+                      <b:FullOrPartTime>${inputs.FullOrPartTime}</b:FullOrPartTime>
+                      <b:Gender>${inputs.Gender}</b:Gender>
+                      <b:HireDate>${inputs.HireDate}</b:HireDate>
+                      <b:HireSource>${inputs.HireSource}</b:HireSource>
+                      <b:HomePhone>${inputs.HomePhone}</b:HomePhone>
+                      <b:HourlyOrSalaried>${inputs.HourlyOrSalaried}</b:HourlyOrSalaried>
+                      <b:I9Verification>${inputs.I9Verification}</b:I9Verification>
+                      <b:JobCode>${inputs.JobCode}</b:JobCode>
+                      <b:JobGroup>${inputs.JobGroup}</b:JobGroup>
+                      <b:LastName>${inputs.LastName}</b:LastName>
+                      <b:LocationCode>${inputs.LocationCode}</b:LocationCode>
+                      <b:MailStop>${inputs.MailStop}</b:MailStop>
+                      <b:MaritalStatus>${inputs.MaritalStatus}</b:MaritalStatus>
+                      <b:MiddleName>${inputs.MiddleName}</b:MiddleName>
+                      <b:NextPerformanceReviewDate>${inputs.NextPerformanceReviewDate}</b:NextPerformanceReviewDate>
+                      <b:OrgLevel1>${inputs.OrgLevel1}</b:OrgLevel1>
+                      <b:OrgLevel2>${inputs.OrgLevel2}</b:OrgLevel2>
+                      <b:OrgLevel3>${inputs.OrgLevel3}</b:OrgLevel3>
+                      <b:OtherPhone>${inputs.OtherPhone}</b:OtherPhone>
+                      <b:OtherPhoneExtension>${inputs.OtherPhoneExtension}</b:OtherPhoneExtension>
+                      <b:OtherPhoneType>${inputs.OtherPhoneType}</b:OtherPhoneType>
+                      <b:PayAutomatically>${inputs.PayAutomatically}</b:PayAutomatically>
+                      <b:PayGroup>${inputs.PayGroup}</b:PayGroup>
+                      <b:PayRate>${inputs.PayRate}</b:PayRate>
+                      <b:PayRateType>${inputs.PayRateType}</b:PayRateType>
+                      <b:PayScaleCode>${inputs.PayScaleCode}</b:PayScaleCode>
+                      <b:PreferredFirstName>${inputs.PreferredFirstName}</b:PreferredFirstName>
+                      <b:Prefix>${inputs.Prefix}</b:Prefix>
+                      <b:Project>${inputs.Project}</b:Project>
+                      <b:ResidentStateFilingStatus>${inputs.ResidentStateFilingStatus}</b:ResidentStateFilingStatus>
+                      <b:SSN>${inputs.SSN}</b:SSN>
+                      <b:ScheduledHours>${inputs.ScheduledHours}</b:ScheduledHours>
+                      <b:SeniorityDate>${inputs.SeniorityDate}</b:SeniorityDate>
+                      <b:StateOccupationalCode>${inputs.StateOccupationalCode}</b:StateOccupationalCode>
+                      <b:StateOrProvince>${inputs.StateOrProvince}</b:StateOrProvince>
+                      <b:Suffix>${inputs.Suffix}</b:Suffix>
+                      <b:TimeClock>${inputs.TimeClock}</b:TimeClock>
+                      <b:UnionLocal>${inputs.UnionLocal}</b:UnionLocal>
+                      <b:UnionNational>${inputs.UnionNational}</b:UnionNational>
+                      <b:WorkExtension>${inputs.WorkExtension}</b:WorkExtension>
+                      <b:WorkPhone>${inputs.WorkPhone}</b:WorkPhone>
+                      <b:WorkStateDisabilityPlanType>${inputs.WorkStateDisabilityPlanType}</b:WorkStateDisabilityPlanType>
+                      <b:WorkStateFilingStatus>${inputs.WorkStateFilingStatus}</b:WorkStateFilingStatus>
+                      <b:ZipOrPostalCode>${inputs.ZipOrPostalCode}</b:ZipOrPostalCode>
+                    </b:Employee>
+                  </entities>
+                </NewHireUsa>
+              </s:Body>
+            </s:Envelope>
           args:
-            - name: soapBody
-              in: body
-              value: |-
-                <?xml version="1.0" encoding="utf-8"?>
-                <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing">
-                  <s:Header>
-                    <a:Action s:mustUnderstand="1">http://www.ultipro.com/services/employeenewhire/IEmployeeNewHire/NewHireUsa</a:Action>
-                    <h:UltiProToken xmlns:h="http://www.ultimatesoftware.com/foundation/authentication/ultiprotoken">${steps.extract_token.output.data.token}</h:UltiProToken>
-                    <h:ClientAccessKey xmlns:h="http://www.ultimatesoftware.com/foundation/authentication/clientaccesskey">${credentials.customer_api_key}</h:ClientAccessKey>
-                  </s:Header>
-                  <s:Body>
-                    <NewHireUsa xmlns="http://www.ultipro.com/services/employeenewhire">
-                      <entities xmlns:b="http://www.ultipro.com/contracts" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-                        <b:Employee>
-                          <b:AddressLine1>${inputs.AddressLine1}</b:AddressLine1>
-                          <b:AddressLine2>${inputs.AddressLine2}</b:AddressLine2>
-                          <b:AlternateEmailAddress>${inputs.AlternateEmailAddress}</b:AlternateEmailAddress>
-                          <b:BenefitSeniorityDate>${inputs.BenefitSeniorityDate}</b:BenefitSeniorityDate>
-                          <b:BirthDate>${inputs.BirthDate}</b:BirthDate>
-                          <b:City>${inputs.City}</b:City>
-                          <b:CompanyIdentifier i:type="b:CompanyCodeIdentifier"><b:CompanyCode>${inputs.CompanyIdentifier}</b:CompanyCode></b:CompanyIdentifier>
-                          <b:Country>${inputs.Country}</b:Country>
-                          <b:County>${inputs.County}</b:County>
-                          <b:DeductionBenefitGroup>${inputs.DeductionBenefitGroup}</b:DeductionBenefitGroup>
-                          <b:DistributionCenterCode>${inputs.DistributionCenterCode}</b:DistributionCenterCode>
-                          <b:EarningsGroup>${inputs.EarningsGroup}</b:EarningsGroup>
-                          <b:EmailAddress>${inputs.EmailAddress}</b:EmailAddress>
-                          <b:EmployeeNumber>${inputs.EmployeeNumber}</b:EmployeeNumber>
-                          <b:EmployeeType>${inputs.EmployeeType}</b:EmployeeType>
-                          <b:EthnicOrigin>${inputs.EthnicOrigin}</b:EthnicOrigin>
-                          <b:FederalFilingStatus>${inputs.FederalFilingStatus}</b:FederalFilingStatus>
-                          <b:FirstName>${inputs.FirstName}</b:FirstName>
-                          <b:FormerLastName>${inputs.FormerLastName}</b:FormerLastName>
-                          <b:FullOrPartTime>${inputs.FullOrPartTime}</b:FullOrPartTime>
-                          <b:Gender>${inputs.Gender}</b:Gender>
-                          <b:HireDate>${inputs.HireDate}</b:HireDate>
-                          <b:HireSource>${inputs.HireSource}</b:HireSource>
-                          <b:HomePhone>${inputs.HomePhone}</b:HomePhone>
-                          <b:HourlyOrSalaried>${inputs.HourlyOrSalaried}</b:HourlyOrSalaried>
-                          <b:I9Verification>${inputs.I9Verification}</b:I9Verification>
-                          <b:JobCode>${inputs.JobCode}</b:JobCode>
-                          <b:JobGroup>${inputs.JobGroup}</b:JobGroup>
-                          <b:LastName>${inputs.LastName}</b:LastName>
-                          <b:LocationCode>${inputs.LocationCode}</b:LocationCode>
-                          <b:MailStop>${inputs.MailStop}</b:MailStop>
-                          <b:MaritalStatus>${inputs.MaritalStatus}</b:MaritalStatus>
-                          <b:MiddleName>${inputs.MiddleName}</b:MiddleName>
-                          <b:NextPerformanceReviewDate>${inputs.NextPerformanceReviewDate}</b:NextPerformanceReviewDate>
-                          <b:OrgLevel1>${inputs.OrgLevel1}</b:OrgLevel1>
-                          <b:OrgLevel2>${inputs.OrgLevel2}</b:OrgLevel2>
-                          <b:OrgLevel3>${inputs.OrgLevel3}</b:OrgLevel3>
-                          <b:OtherPhone>${inputs.OtherPhone}</b:OtherPhone>
-                          <b:OtherPhoneExtension>${inputs.OtherPhoneExtension}</b:OtherPhoneExtension>
-                          <b:OtherPhoneType>${inputs.OtherPhoneType}</b:OtherPhoneType>
-                          <b:PayAutomatically>${inputs.PayAutomatically}</b:PayAutomatically>
-                          <b:PayGroup>${inputs.PayGroup}</b:PayGroup>
-                          <b:PayRate>${inputs.PayRate}</b:PayRate>
-                          <b:PayRateType>${inputs.PayRateType}</b:PayRateType>
-                          <b:PayScaleCode>${inputs.PayScaleCode}</b:PayScaleCode>
-                          <b:PreferredFirstName>${inputs.PreferredFirstName}</b:PreferredFirstName>
-                          <b:Prefix>${inputs.Prefix}</b:Prefix>
-                          <b:Project>${inputs.Project}</b:Project>
-                          <b:ResidentStateFilingStatus>${inputs.ResidentStateFilingStatus}</b:ResidentStateFilingStatus>
-                          <b:SSN>${inputs.SSN}</b:SSN>
-                          <b:ScheduledHours>${inputs.ScheduledHours}</b:ScheduledHours>
-                          <b:SeniorityDate>${inputs.SeniorityDate}</b:SeniorityDate>
-                          <b:StateOccupationalCode>${inputs.StateOccupationalCode}</b:StateOccupationalCode>
-                          <b:StateOrProvince>${inputs.StateOrProvince}</b:StateOrProvince>
-                          <b:Suffix>${inputs.Suffix}</b:Suffix>
-                          <b:TimeClock>${inputs.TimeClock}</b:TimeClock>
-                          <b:UnionLocal>${inputs.UnionLocal}</b:UnionLocal>
-                          <b:UnionNational>${inputs.UnionNational}</b:UnionNational>
-                          <b:WorkExtension>${inputs.WorkExtension}</b:WorkExtension>
-                          <b:WorkPhone>${inputs.WorkPhone}</b:WorkPhone>
-                          <b:WorkStateDisabilityPlanType>${inputs.WorkStateDisabilityPlanType}</b:WorkStateDisabilityPlanType>
-                          <b:WorkStateFilingStatus>${inputs.WorkStateFilingStatus}</b:WorkStateFilingStatus>
-                          <b:ZipOrPostalCode>${inputs.ZipOrPostalCode}</b:ZipOrPostalCode>
-                        </b:Employee>
-                      </entities>
-                    </NewHireUsa>
-                  </s:Body>
-                </s:Envelope>
             - name: Content-Type
               in: headers
               value: application/soap+xml; charset=utf-8
