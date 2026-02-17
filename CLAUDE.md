@@ -78,6 +78,19 @@ This project has **skills** - documented workflows that you should follow when p
 - Custom headers must go in action args
 - API Key, OAuth 2.0, Client Credentials patterns
 
+### Falcon Technical Reference Skill
+
+**When to use**: User asks for "YAML syntax", "how to write step functions", "expression formats", "JSONPath vs JEXL", or general technical details.
+
+**Location**: `.claude/skills/falcon-technical-reference.md`
+
+**Summary**: Comprehensive technical reference for Falcon connector YAML structure, step functions, expression formats, and best practices:
+- File structure and partials ($ref)
+- Actions configuration (Inputs, Results)
+- Step Functions (Request, Paginated Request, SOAP, Group Data, Map, Typecast)
+- Dynamic Values (JSONPath, String Interpolation, JEXL)
+- GraphQL Best Practices
+
 ## Core Principles
 
 - **MAXIMUM COVERAGE**: Discover and include ALL useful actions that provide customer value
