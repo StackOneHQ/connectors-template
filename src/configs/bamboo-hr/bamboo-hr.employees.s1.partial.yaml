@@ -36,8 +36,13 @@ actions:
                 value: application/json
                 in: headers
               - name: page[limit]
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+              - name: page[limit]
                 value: 50
                 in: query
+                condition: "{{!present(inputs.page_size)}}"
               - name: page[after]
                 value: $.inputs.cursor
                 in: query
