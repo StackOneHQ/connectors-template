@@ -12,6 +12,11 @@ actions:
       pageSize: 50
 
     inputs:
+      - name: page_size
+        description: Maximum number of employees to return per page (1-100, defaults to 50)
+        type: number
+        in: query
+        required: false
       - name: cursor
         description: Pagination cursor for fetching the next page of results
         type: string
@@ -22,7 +27,7 @@ actions:
       - stepId: get_employees
         description: Fetch employees from BambooHR API
         stepFunction:
-          functionName: paginated_request
+          functionName: request
           parameters:
             url: /employees
             method: get
@@ -30,12 +35,13 @@ actions:
               - name: Accept
                 value: application/json
                 in: headers
-            response:
-              dataKey: data
-              nextKey: page.nextCursor
-            iterator:
-              key: page[after]
-              in: query
+              - name: page[limit]
+                value: 50
+                in: query
+              - name: page[after]
+                value: $.inputs.cursor
+                in: query
+                condition: "{{present(inputs.cursor)}}"
 
       - stepId: map_employees_data
         description: Map to unified schema
@@ -47,7 +53,7 @@ actions:
               - targetFieldKey: id
                 expression: $.employeeId
                 type: string
-            dataSource: $.steps.get_employees.output.data
+            dataSource: $.steps.get_employees.output.data.data
 
       - stepId: typecast_employees_data
         description: Apply unified types
@@ -62,3 +68,4 @@ actions:
 
     result:
       data: $.steps.typecast_employees_data.output.data
+      next: $.steps.get_employees.output.data.meta.page.nextCursor
