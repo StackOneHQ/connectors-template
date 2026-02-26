@@ -91,6 +91,78 @@ This project has **skills** - documented workflows that you should follow when p
 - Dynamic Values (JSONPath, String Interpolation, JEXL)
 - GraphQL Best Practices
 
+---
+
+## Unified Connector Skills
+
+These skills are for building connectors that map provider data to **customer-defined schemas** with unified pagination. Use these when the customer wants standardized output across multiple providers.
+
+### Unified Connector Build Skill
+
+**When to use**: User asks to "build unified connector", "standardized connector", "schema mapping", or needs to map provider data to a specific output schema.
+
+**Location**: `.claude/skills/unified-connector-build.md`
+
+**Summary**: Complete workflow for building unified/standardized connectors:
+1. Define output schema first (schema-first approach)
+2. Research provider endpoints with trade-off analysis
+3. Analyze scope requirements (narrower is better)
+4. Map fields to schema using `fieldConfigs`
+5. Configure unified pagination with `cursor`
+6. Build connector with `map_fields` and `typecast` steps
+7. Validate configuration
+8. Test and validate mappings
+9. Document schema coverage
+
+**Key Difference**: Unified connectors use `schemaType: unified` and transform provider data to match YOUR schema field names.
+
+### Unified Field Mapping Skill
+
+**When to use**: User asks about "field mapping", "fieldConfigs", "enumMapper", "map fields", or needs to translate provider fields to schema fields.
+
+**Location**: `.claude/skills/unified-field-mapping.md`
+
+**Summary**: Detailed guide for mapping provider fields to unified schemas:
+- `fieldConfigs` structure (`targetFieldKey` = YOUR schema name)
+- Enum mapping with `enumMapper` (translate provider values)
+- Nested objects and arrays
+- JEXL transformations for computed fields
+- Common mistakes (using provider field names instead of schema names)
+
+**Critical Rule**: `targetFieldKey` must ALWAYS use YOUR schema field names, never the provider's field names.
+
+### Unified Scope Decisions Skill
+
+**When to use**: User asks about "scopes", "permissions", "endpoint selection", "trade-offs", or needs to decide between multiple endpoint options.
+
+**Location**: `.claude/skills/unified-scope-decisions.md`
+
+**Summary**: Decision framework for selecting endpoints and scopes:
+- Narrow scopes are always preferred (easier customer approval)
+- Never use deprecated endpoints (even if they seem easier)
+- Endpoint evaluation criteria (scopes, performance, data depth)
+- `scopeDefinitions` syntax (NOT `scope_definitions` - this is a common error)
+- Performance vs security trade-off analysis
+
+**Common Error**: Using `scope_definitions` instead of `scopeDefinitions` (camelCase is correct).
+
+### Unified Connector Testing Skill
+
+**When to use**: User asks to "test unified connector", "validate mapping", "debug fields", "test pagination", or output doesn't match expected schema.
+
+**Location**: `.claude/skills/unified-connector-testing.md`
+
+**Summary**: Testing and validation for unified connectors:
+- Phase 1: Raw response validation (understand provider structure)
+- Phase 2: Field mapping validation (verify schema field names)
+- Phase 3: Pagination testing (cursor, next page, empty results)
+- Phase 4: Schema completeness validation
+- Debugging techniques for common mapping issues
+
+**Key Debug Technique**: Use `--debug` flag to see raw provider response before mapping.
+
+---
+
 ## Core Principles
 
 - **MAXIMUM COVERAGE**: Discover and include ALL useful actions that provide customer value
@@ -259,6 +331,23 @@ stepFunction:
 ```
 
 ### YAML Best Practices
+
+**Config Field Names - camelCase Only**:
+- ⚠️ ALL Falcon config field names use camelCase, never snake_case
+- This applies to EVERY config field, not just specific ones
+- Using snake_case causes silent failures or validation errors
+
+```yaml
+# CORRECT - camelCase
+scopeDefinitions:     fieldConfigs:      targetFieldKey:
+enumMapper:           matchExpression:   dataKey:
+nextKey:              pageSize:          indexField:
+stepFunction:         functionName:      dataSource:
+compositeIdentifiers: requiredScopes:    customErrors:
+
+# WRONG - snake_case will fail
+scope_definitions:    field_configs:     target_field_key:
+```
 
 **Reserved Characters**:
 - ⚠️ Never use `:` character in YAML values (use parentheses instead)

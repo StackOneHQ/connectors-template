@@ -1,0 +1,43 @@
+StackOne: 1.0.0
+info:
+  title: BambooHR Unified
+  key: bamboo-hr-unified
+  version: 1.0.0
+  assets:
+    icon: https://stackone-logos.com/api/bamboo_hr/filled/png
+  description: Unified connector for BambooHR HRIS that returns employee data in a standardized schema.
+
+baseUrl: https://api.bamboohr.com/api/gateway.php/${credentials.subdomain}/v1
+
+authentication:
+  - custom:
+      type: custom
+      label: API Key
+      support:
+        link: https://documentation.bamboohr.com/docs/getting-started
+        description: Generate an API key from your BambooHR account settings.
+      authorization:
+        type: basic
+        username: $.credentials.apiKey
+        password: "x"
+      configFields:
+        - key: apiKey
+          label: API Key
+          type: password
+          required: true
+          secret: true
+          placeholder: your-api-key
+          description: Your BambooHR API key. Generate from Account > API Keys in BambooHR.
+        - key: subdomain
+          label: Company Subdomain
+          type: text
+          required: true
+          placeholder: your-company
+          description: Your BambooHR company subdomain (e.g., if your URL is acme.bamboohr.com, enter acme).
+      environments:
+        - key: production
+          name: Production
+
+resources: https://documentation.bamboohr.com/reference
+
+$ref: bamboo-hr.employees

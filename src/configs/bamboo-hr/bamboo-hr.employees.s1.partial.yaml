@@ -1,0 +1,76 @@
+actions:
+  - actionId: list_employees
+    label: List Employees
+    categories:
+      - hris
+    actionType: custom
+    description: Lists all employees with unified schema mapping, returning only the employee ID. Uses cursor-based pagination.
+    resources: https://documentation.bamboohr.com/reference/get-employees-list
+
+    cursor:
+      enabled: true
+      pageSize: 50
+
+    inputs:
+      - name: page_size
+        description: Maximum number of employees to return per page (1-100, defaults to 50)
+        type: number
+        in: query
+        required: false
+      - name: cursor
+        description: Pagination cursor for fetching the next page of results
+        type: string
+        in: query
+        required: false
+
+    steps:
+      - stepId: get_employees
+        description: Fetch employees from BambooHR API
+        stepFunction:
+          functionName: request
+          parameters:
+            url: /employees
+            method: get
+            args:
+              - name: Accept
+                value: application/json
+                in: headers
+              - name: page[limit]
+                value: $.inputs.page_size
+                in: query
+                condition: "{{present(inputs.page_size)}}"
+              - name: page[limit]
+                value: 50
+                in: query
+                condition: "{{!present(inputs.page_size)}}"
+              - name: page[after]
+                value: $.inputs.cursor
+                in: query
+                condition: "{{present(inputs.cursor)}}"
+
+      - stepId: map_employees_data
+        description: Map to unified schema
+        stepFunction:
+          functionName: map_fields
+          version: '2'
+          parameters:
+            fields:
+              - targetFieldKey: id
+                expression: $.employeeId
+                type: string
+            dataSource: $.steps.get_employees.output.data.data
+
+      - stepId: typecast_employees_data
+        description: Apply unified types
+        stepFunction:
+          functionName: typecast
+          version: '2'
+          parameters:
+            fields:
+              - targetFieldKey: id
+                type: string
+            dataSource: $.steps.map_employees_data.output.data
+
+    result:
+      data: $.steps.typecast_employees_data.output.data
+      next: $.steps.get_employees.output.data.meta.page.nextCursor

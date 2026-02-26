@@ -151,21 +151,31 @@ result:
 
 **NOTE**: `fieldConfigs` are NOT required when building non-unified connectors.
 
-Maps provider response fields to StackOne unified response.
+Maps provider response fields to target schema. Can be defined at action level OR inline in map_fields parameters.
 
-- `targetFieldKey`: The key in the unified model.
-- `expression`: JSONPath selector or JEXL expression.
-  - **IMPORTANT**: Inputs are **not available** in fieldConfig JEXL context. Use JSONPath/JEXL to reference step outputs or external data.
-- `type`: `string`, `boolean`, `enum`, `datetime_string`, `number`.
-- `enumMapper`: Use with `type: enum`.
-  - `matcher`: Array of `matchExpression` (JEXL) and `value`.
+#### Expression Context Rules
+
+| Location | Expression Format | Example |
+|----------|------------------|---------|
+| Inline in `map_fields.parameters.fields` | Direct field reference | `$.email`, `$.work.department` |
+| Action-level `fieldConfigs` | Step ID prefix required | `$.get_employees.email` |
+
+#### Properties
+
+- `targetFieldKey`: The key in YOUR target schema
+- `expression`: JSONPath or JEXL to source data
+- `type`: `string`, `boolean`, `enum`, `datetime_string`, `number`
+- `enumMapper`: Required for enum type translations
+
+#### Example: Inline Fields (RECOMMENDED)
 
 ```yaml
-fieldConfigs:
+# In map_fields step parameters
+fields:
   - targetFieldKey: id
-    expression: $.accountId
+    expression: $.accountId      # Direct reference
     type: string
-  - targetFieldKey: type
+  - targetFieldKey: status
     expression: $.accountType
     type: enum
     enumMapper:
@@ -174,6 +184,23 @@ fieldConfigs:
           value: agent
         - matchExpression: '{{$.accountType == "app"}}'
           value: bot
+```
+
+#### Example: Action-Level fieldConfigs
+
+```yaml
+# At action level
+fieldConfigs:
+  - targetFieldKey: id
+    expression: $.get_data.accountId    # Step prefix required
+    type: string
+  - targetFieldKey: status
+    expression: $.get_data.accountType
+    type: enum
+    enumMapper:
+      matcher:
+        - matchExpression: '{{$.get_data.accountType == "admin"}}'
+          value: agent
 ```
 
 ## Step Functions
@@ -214,9 +241,55 @@ stepFunction:
 - Use JEXL (`{{...}}`) for `condition`.
 - **customErrors**: Optional remapping of provider error responses (e.g., 404 -> 400).
 
-### Paginated Request (Cursor-based)
+### Cursor Pagination with `request` (RECOMMENDED)
 
-Only for cursor-based pagination. Use `request` for others.
+**For list endpoints requiring dynamic inputs** (page_size, filters), use `request` with manual cursor handling:
+
+```yaml
+inputs:
+  - name: page_size
+    description: Maximum items per page
+    type: number
+    in: query
+    required: false
+  - name: cursor
+    description: Pagination cursor
+    type: string
+    in: query
+    required: false
+
+steps:
+  - stepId: fetch_data
+    stepFunction:
+      functionName: request
+      parameters:
+        url: /users
+        method: get
+        args:
+          # Dual-condition pattern for defaults
+          - name: limit
+            value: $.inputs.page_size
+            in: query
+            condition: "{{present(inputs.page_size)}}"
+          - name: limit
+            value: 50
+            in: query
+            condition: "{{!present(inputs.page_size)}}"
+          - name: cursor
+            value: $.inputs.cursor
+            in: query
+            condition: "{{present(inputs.cursor)}}"
+
+result:
+  data: $.steps.typecast_data.output.data
+  next: $.steps.fetch_data.output.data.meta.nextCursor
+```
+
+**CRITICAL**: Always implement cursor pagination for list endpoint unified actions.
+
+### Paginated Request (Alternative)
+
+Use `paginated_request` only when you don't need dynamic input parameters. Note that `$.inputs.*` may resolve to `undefined` in this function.
 
 ```yaml
 stepFunction:
@@ -288,35 +361,82 @@ stepFunction:
     isSingleRecord: false
 ```
 
-### Map
+### Map Fields
 
-Using the `fieldConfigs`, performs a mapping of the `dataSource`.
+Transforms data from provider format to target schema format.
 **NOTE**: This step is not required when building non-unified actions.
 
+#### Approach 1: Inline Fields (RECOMMENDED)
+
+Pass `fields` directly in parameters. This is more reliable and avoids schema inference issues.
+
 ```yaml
-- stepId: map_employee_data
-  description: Map employee data
+- stepId: map_data
+  description: Map to target schema
   stepFunction:
     functionName: map_fields
-    version: "2"
+    version: '2'
     parameters:
-      dataSource: $.steps.group_employee_data.output.data
+      fields:
+        - targetFieldKey: email
+          expression: $.email           # Direct reference, NO step prefix
+          type: string
+        - targetFieldKey: employee_id
+          expression: $.id
+          type: string
+        - targetFieldKey: department
+          expression: $.work.department  # Nested field
+          type: string
+      dataSource: $.steps.get_employees.output.data
 ```
+
+**CRITICAL**: In inline fields, expressions reference fields within each record directly (`$.email`), NOT with step prefix (`$.get_employees.email`).
+
+#### Approach 2: Action-Level fieldConfigs
+
+Define fields at action level, map_fields references them automatically.
+
+```yaml
+# At action level
+fieldConfigs:
+  - targetFieldKey: email
+    expression: $.get_employees.email    # Step prefix required here
+    type: string
+
+# In steps
+- stepId: map_data
+  stepFunction:
+    functionName: map_fields
+    version: '2'
+    parameters:
+      dataSource: $.steps.get_employees.output.data
+```
+
+**Note**: This approach can trigger schema inference issues with certain field names. Use inline fields if you encounter build errors.
 
 ### Typecast
 
-Applies the types as defined in `fieldConfigs`.
+Applies type conversions to mapped data.
 **NOTE**: This step is not required when building non-unified actions.
 
 ```yaml
-- stepId: typecast_employee_data
-  description: Typecast employee data
+- stepId: typecast_data
+  description: Apply types
   stepFunction:
     functionName: typecast
-    version: "2"
+    version: '2'
     parameters:
-      dataSource: $.steps.map_employee_data.output.data
+      fields:
+        - targetFieldKey: email
+          type: string
+        - targetFieldKey: employee_id
+          type: string
+        - targetFieldKey: department
+          type: string
+      dataSource: $.steps.map_data.output.data
 ```
+
+**CRITICAL**: Always use `version: '2'` for both map_fields and typecast. Without it, results may be empty.
 
 ## Dynamic Values & Expressions
 
@@ -444,9 +564,94 @@ value: "mutation($input: ResourceCreateInput!) { resourceCreate(input: $input) {
 
 ## YAML Best Practices
 
+### Config Field Naming - camelCase Only
+
+**PRINCIPLE**: ALL Falcon configuration field names use camelCase.
+
+This is a universal rule, not specific to any one field. Using snake_case causes validation errors or silent failures.
+
+```yaml
+# CORRECT - camelCase for ALL config fields
+scopeDefinitions:        # NOT scope_definitions
+fieldConfigs:            # NOT field_configs
+targetFieldKey:          # NOT target_field_key
+enumMapper:              # NOT enum_mapper
+matchExpression:         # NOT match_expression
+dataKey:                 # NOT data_key
+nextKey:                 # NOT next_key
+pageSize:                # NOT page_size
+indexField:              # NOT index_field
+stepFunction:            # NOT step_function
+functionName:            # NOT function_name
+dataSource:              # NOT data_source
+externalSources:         # NOT external_sources
+compositeIdentifiers:    # NOT composite_identifiers
+requiredScopes:          # NOT required_scopes
+customErrors:            # NOT custom_errors
+receivedStatus:          # NOT received_status
+targetStatus:            # NOT target_status
+authorizationUrl:        # NOT authorization_url
+tokenUrl:                # NOT token_url
+tokenExpiresIn:          # NOT token_expires_in
+configFields:            # NOT config_fields
+setupFields:             # NOT setup_fields
+refreshAuthentication:   # NOT refresh_authentication
+```
+
+### Other Best Practices
+
 - **Reserved Characters**: Never use `:` in values (e.g., descriptions). Use parentheses instead.
   - ❌ `description: Filter by status: active, inactive`
   - ✅ `description: Filter by status (active, inactive)`
 - **Indentation**: Use 2 spaces.
 - **Deprecated Fields**: Do not include deprecated fields or actions.
 - **Action Type**: Default to `custom` for non-unified actions.
+
+## Pagination Configuration Verification
+
+**PRINCIPLE**: Always implement cursor pagination for list endpoint unified actions.
+
+When configuring pagination, verify ALL these fields against the actual API response:
+
+### Action-Level
+```yaml
+cursor:
+  enabled: true       # Required for pagination
+  pageSize: 50        # Must be within API limits
+
+inputs:
+  - name: page_size
+    description: Maximum items per page
+    type: number
+    in: query
+    required: false
+  - name: cursor
+    description: Pagination cursor for next page
+    type: string
+    in: query
+    required: false
+```
+
+### Result Block (REQUIRED for cursor pagination)
+```yaml
+result:
+  data: $.steps.typecast_data.output.data
+  next: $.steps.fetch_data.output.data.meta.nextCursor  # Return cursor for next page
+```
+
+### Step-Level (when using `paginated_request`)
+```yaml
+response:
+  dataKey: path.to.data   # Exact path to data array (verify with --debug)
+  nextKey: path.to.cursor # Exact path to pagination cursor
+  indexField: id          # Unique identifier field in records
+
+iterator:
+  key: cursor            # API's expected parameter name (check docs!)
+  in: query              # Where API expects it (query, body, headers)
+```
+
+**CRITICAL**:
+- Never assume paths. Always verify with `stackone run --debug` to see actual response structure.
+- Use `request` function (not `paginated_request`) when inputs need to pass through dynamically.
+- Use dual-condition pattern for defaults: `"{{present(inputs.field)}}"` and `"{{!present(inputs.field)}}"`
