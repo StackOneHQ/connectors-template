@@ -123,16 +123,27 @@ These skills are for building connectors that map provider data to **customer-de
 
 **Location**: `.claude/skills/unified-connector-build.md`
 
-**Summary**: Complete workflow for building unified/standardized connectors:
+**Summary**: Complete 10-step workflow for building unified/standardized connectors:
 1. Define output schema first (schema-first approach)
-2. Research provider endpoints with trade-off analysis
-3. Analyze scope requirements (narrower is better)
-4. Map fields to schema using `fieldConfigs`
-5. Configure unified pagination with `cursor`
-6. Build connector with `map_fields` and `typecast` steps
-7. Validate configuration
-8. Test and validate mappings
-9. Document schema coverage
+2. **Research ALL provider endpoints (MANDATORY - DO NOT SKIP)**
+3. **Present options to user with trade-offs (MANDATORY CHECKPOINT)**
+4. Analyze scope requirements (narrower is better)
+5. Map fields to schema using `fieldConfigs`
+6. Configure unified pagination with `cursor`
+7. Build connector with `map_fields` and `typecast` steps
+8. Validate configuration
+9. Test and validate mappings
+10. Document schema coverage
+
+**🔴 CRITICAL - Research & User Checkpoint**:
+- You MUST research ALL available endpoints before implementation
+- You MUST present endpoint options to the user with trade-offs:
+  - Field coverage (which schema fields each endpoint returns)
+  - Performance (pagination, rate limits, request count)
+  - Permissions (scope requirements - narrower is better)
+  - Deprecation status (never use deprecated endpoints)
+- You MUST get explicit user approval before proceeding to implementation
+- NEVER assume which endpoint to use - let the user decide
 
 **Key Difference**: Unified connectors use `schemaType: unified` and transform provider data to match YOUR schema field names.
 
