@@ -2,7 +2,7 @@ StackOne: 1.0.0
 info:
   title: BambooHR Unified
   key: bamboo-hr-unified
-  version: 1.0.0
+  version: 1.1.0
   assets:
     icon: https://stackone-logos.com/api/bamboo_hr/filled/png
   description: Unified connector for BambooHR HRIS that returns employee data in a standardized schema.
