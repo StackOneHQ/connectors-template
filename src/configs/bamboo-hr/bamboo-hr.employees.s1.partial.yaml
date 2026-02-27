@@ -4,7 +4,7 @@ actions:
     categories:
       - hris
     actionType: custom
-    description: Lists all employees with unified schema mapping, returning only the employee ID. Uses cursor-based pagination.
+    description: Lists all employees with unified schema mapping. Returns email, employee_id, department, job_title, location, country, and manager_id.
     resources: https://documentation.bamboohr.com/reference/get-employees-list
 
     cursor:
@@ -55,8 +55,26 @@ actions:
           version: '2'
           parameters:
             fields:
-              - targetFieldKey: id
+              - targetFieldKey: email
+                expression: $.workEmail
+                type: string
+              - targetFieldKey: employee_id
                 expression: $.employeeId
+                type: string
+              - targetFieldKey: department
+                expression: $.department
+                type: string
+              - targetFieldKey: job_title
+                expression: $.jobTitle
+                type: string
+              - targetFieldKey: location
+                expression: $.location
+                type: string
+              - targetFieldKey: country
+                expression: $.country
+                type: string
+              - targetFieldKey: manager_id
+                expression: $.supervisorEId
                 type: string
             dataSource: $.steps.get_employees.output.data.data
 
@@ -67,7 +85,19 @@ actions:
           version: '2'
           parameters:
             fields:
-              - targetFieldKey: id
+              - targetFieldKey: email
+                type: string
+              - targetFieldKey: employee_id
+                type: string
+              - targetFieldKey: department
+                type: string
+              - targetFieldKey: job_title
+                type: string
+              - targetFieldKey: location
+                type: string
+              - targetFieldKey: country
+                type: string
+              - targetFieldKey: manager_id
                 type: string
             dataSource: $.steps.map_employees_data.output.data
 
