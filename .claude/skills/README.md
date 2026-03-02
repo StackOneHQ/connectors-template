@@ -1,12 +1,48 @@
 # Claude Code Skills
 
-Skills are instructions that Claude automatically applies when relevant to your request. You don't invoke them with slash commands - just describe what you want naturally.
+This directory contains skills - documented workflows that Claude follows when performing specific tasks. Some skills are invoked automatically based on context, while others require explicit triggers.
 
-## Available Skills
+## Slash Commands
+
+These are explicit commands you can invoke:
+
+### /on-boarding
+**Usage**: `/on-boarding`
+
+The structured onboarding flow for building connectors. Walks you through:
+1. **Connector type selection** - Choose between Agentic Actions, Schema-Based, or Skip Walkthrough
+2. **Provider setup** - Specify provider name and version
+3. **Workflow guidance** - Step-by-step instructions for your chosen path
+
+Use this when starting a new connector or when you're unsure which approach to take.
+
+### /test-mcp-connector
+**Usage**: `/test-mcp-connector <provider>`
+
+Tests MCP connectors by building a real agent that sends natural language prompts. See skill file for setup requirements.
+
+---
+
+## Explicit Trigger Phrases
+
+These skills require specific phrases to trigger (not automatic):
+
+### Unified Connector Build
+**Trigger phrase**: `start unified build for [provider]`
+
+**Example**: `start unified build for BambooHR`
+
+Complete workflow for building connectors that transform provider data to standardized output schemas. Includes schema-first development, endpoint selection with trade-off analysis, field mapping configuration, and unified pagination setup.
+
+**DO NOT trigger for vague queries** - use `/on-boarding` first if unsure.
+
+---
+
+## Auto-Triggered Skills
+
+These skills are automatically applied when relevant to your request:
 
 ### Custom Connector Skills (Raw Provider Data)
-
-These skills are for building connectors that return raw provider data without schema mapping.
 
 #### Falcon Connector Build
 **Triggers**: "build connector", "create falcon config", "new connector"
@@ -30,19 +66,9 @@ Technical reference for YAML structure, step functions, and expression formats.
 
 ---
 
-### Unified Connector Skills (Schema-Mapped Data)
+### Unified Connector Support Skills
 
-These skills are for building connectors that map provider data to customer-defined schemas with unified pagination.
-
-#### Unified Connector Build
-**Triggers**: "unified connector", "standardized connector", "schema mapping", "customer connector"
-
-Complete workflow for building connectors that transform provider data to standardized output schemas. Includes:
-- Schema-first development approach
-- Endpoint selection with trade-off analysis
-- Scope decision framework
-- Field mapping configuration
-- Unified pagination setup
+These skills support the unified connector workflow but don't trigger the full build process:
 
 #### Unified Field Mapping
 **Triggers**: "field mapping", "fieldConfigs", "enumMapper", "map fields"
@@ -76,47 +102,20 @@ Testing and validation specific to unified connectors:
 
 ---
 
-### Other Skills
+## Quick Reference: Which Approach to Use
 
-#### test-mcp-connector
-
-Tests MCP connectors by building a real agent that sends natural language prompts.
-
-**Triggers when:**
-- User provides **Account ID + StackOne API Key + connector name**
-- User mentions "MCP" and "test" together
-- User asks to test "real cases" or "real prompts"
-- User wants to verify actions work "like an agent would"
-
-**Also available as:** `/test-mcp-connector <provider>`
-
-**What it does:**
-1. **Phase 1** (optional): Quick `stackone run` check for basic connectivity
-2. **Phase 2** (main): Builds a real agent using Claude Agent SDK with Haiku (native MCP support), sends natural language prompts, evaluates if the agent discovers and uses actions correctly
-3. **Fix loop**: Fixes connector YAML, pushes, retests until 100% pass
-
-**Key principle:** Tests via agent conversations, not direct tool calls. The goal is validating that action descriptions are good enough for an agent to understand.
-
-**Setup it will ask for:**
-- StackOne account ID
-- StackOne API key (`credentials:read` scope)
-- Anthropic API key (for the test agent)
-- CLI profile for pushing
+| Scenario | What to Use |
+|----------|-------------|
+| First time building a connector | `/on-boarding` |
+| Unsure which connector type to build | `/on-boarding` |
+| Building schema-based connector (know what you want) | `start unified build for [provider]` |
+| Building agentic connector (know what you want) | Just describe what you want to build |
+| Need help with field mapping | Describe your mapping issue |
+| Need help with auth setup | "help me set up authentication" |
+| Test a connector with AI agent | `/test-mcp-connector <provider>` |
 
 ## How Skills Work
 
-Unlike slash commands (`/commit`, `/help`), skills are **model-invoked**. Claude reads the skill definitions and decides when they're relevant based on your request. You just describe your goal in plain language.
+Skills are **model-invoked** based on your request. For auto-triggered skills, Claude reads the definitions and decides when they're relevant. For explicit triggers, you must use the exact phrase or command.
 
-## Quick Reference: Which Skill to Use
-
-| Goal | Skill |
-|------|-------|
-| Build connector returning raw provider data | Falcon Connector Build |
-| Build connector with schema mapping | Unified Connector Build |
-| Configure authentication | Falcon Authentication Setup |
-| Understand YAML syntax | Falcon Technical Reference |
-| Map fields to unified schema | Unified Field Mapping |
-| Decide which scopes/endpoints to use | Unified Scope Decisions |
-| Test custom connector | Falcon Connector Testing |
-| Test unified connector | Unified Connector Testing |
-| Test with AI agent | test-mcp-connector |
+**Key principle**: Use `/on-boarding` when you're starting fresh or uncertain. Use explicit triggers like `start unified build for [provider]` when you know exactly what you want.
