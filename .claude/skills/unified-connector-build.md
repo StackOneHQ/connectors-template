@@ -18,10 +18,10 @@ Example: `start unified build for BambooHR`
 
 ## Prerequisites
 
-- Customer-defined output schema (fields, types, required vs optional)
 - Provider name/API identified
 - StackOne CLI installed (`@stackone/cli`)
 - Access to provider API documentation
+- Schema definition (via skill file OR provided at runtime)
 
 ## Fundamental Principles
 
@@ -70,54 +70,123 @@ stackone run --debug --connector <file> --credentials <file> --action-id <action
 
 ## 10-Step Unified Connector Workflow
 
-### Step 1: Define Output Schema First
+### Step 1: Resolve Schema (Fast Path for Power Users)
 
-**CRITICAL**: Always start with the output schema before researching provider APIs.
+**CRITICAL**: Always have a schema before researching provider APIs. This step is designed to be instant for power users with existing schema skills.
 
-```yaml
-# Document the expected output schema
-# Example: HRIS Employee Schema
-schema:
-  name: employees
-  fields:
-    - name: id
-      type: string
-      required: true
-    - name: first_name
-      type: string
-      required: true
-    - name: last_name
-      type: string
-      required: true
-    - name: email
-      type: string
-      required: true
-    - name: employment_status
-      type: enum
-      values: [active, inactive, terminated, unknown]
-      required: true
-    - name: department
-      type: string
-      required: false
-    - name: hire_date
-      type: datetime_string
-      required: false
-    - name: work_location
-      type: object
-      required: false
-      properties:
-        - name: city
-          type: string
-        - name: country
-          type: string
+#### Flow: Check for Schema Skill First
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. Check for schema skill file                             │
+│     └─ Look for .claude/skills/*-schema.md or similar       │
+│     └─ Also check .claude/skills/schemas/*.md               │
+├─────────────────────────────────────────────────────────────┤
+│  2a. IF SKILL EXISTS → Use it immediately (no questions)    │
+│      └─ Read the schema from the skill file                 │
+│      └─ Confirm briefly: "Using your [X] schema skill"      │
+│      └─ Proceed to Step 2 (Research)                        │
+├─────────────────────────────────────────────────────────────┤
+│  2b. IF NO SKILL → Ask for schema (open-ended)              │
+│      └─ Single open-ended question, not predefined options  │
+│      └─ Accept any format (YAML, JSON, markdown table, etc) │
+│      └─ Offer to save as skill for future reuse             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Schema Checklist**:
+#### Implementation
+
+**Step 1a: Check for existing schema skill**
+
+```bash
+# Look for schema skill files
+ls .claude/skills/*schema*.md .claude/skills/schemas/*.md 2>/dev/null
+```
+
+If a schema skill exists, read it and confirm:
+> "Found your **[Use Case] Schema** skill. Using this schema for the [Provider] connector."
+
+Then proceed directly to Step 2 - no further questions needed.
+
+**Step 1b: If no schema skill exists, ask open-ended**
+
+Ask ONE simple question - do not provide predefined options:
+
+> "What's your target schema? Share your field requirements in any format:
+> - Field list with types (e.g., `email: string, status: enum[active,inactive]`)
+> - YAML/JSON schema definition
+> - Markdown table
+> - Or just describe what data you need"
+
+Accept whatever format they provide and normalize it.
+
+**Step 1c: Offer to save as skill (after receiving schema)**
+
+After the user provides their schema, offer once:
+
+> "Want me to save this as a schema skill so you can reuse it for future connectors? (yes/no)"
+
+If yes, create `.claude/skills/schemas/[use-case]-schema.md` using the template.
+
+#### Schema Skill Template
+
+Schema skills should be saved to `.claude/skills/schemas/` with this structure:
+
+```markdown
+---
+name: [Use Case] Schema
+description: Target schema for [use case] connectors
+category: [hris|ats|crm|lms|etc]
+---
+
+# [Use Case] Schema
+
+## Business Context
+[Brief description of what this schema is used for]
+
+## Target Schema
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier |
+| email | string | yes | Primary email |
+| first_name | string | yes | |
+| last_name | string | yes | |
+| status | enum | yes | Values: active, inactive, terminated |
+| department | string | no | |
+| hire_date | datetime_string | no | ISO 8601 format |
+
+## Enum Definitions
+
+### status
+| Provider Value | Schema Value |
+|----------------|--------------|
+| Active, active, ACTIVE | active |
+| Inactive, inactive, INACTIVE | inactive |
+| Terminated, terminated, TERMINATED | terminated |
+| * (default) | unknown |
+
+## Optional: Field Mapping Hints
+[Any provider-agnostic mapping hints, like "department is often nested under work.department"]
+```
+
+See `.claude/skills/templates/use-case-schema.template.md` for a full template.
+
+#### Power User Behavior
+
+For users with schema skills:
+- **Zero friction**: Skill detected → confirmed → proceed
+- **No questions**: Don't ask "is this the right schema?" - just use it
+- **Quick override**: If they want a different schema, they'll say so
+
+#### Schema Validation Checklist
+
+Before proceeding to Step 2, ensure:
 - [ ] All required fields identified
 - [ ] Field types specified (string, number, enum, datetime_string, object)
 - [ ] Enum values defined for enum fields
 - [ ] Nested object structures documented
-- [ ] Array fields marked with `array: true`
+- [ ] Array fields marked appropriately
 
 ### Step 2: Research Provider Endpoints (MANDATORY - DO NOT SKIP)
 

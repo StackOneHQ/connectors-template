@@ -204,21 +204,38 @@ stackone run --connector <file> --account-id <id> --action-id <test-action> --pr
 
 **CRITICAL**: Get the user's schema BEFORE researching endpoints.
 
-Ask the user:
-```
-Please share your target schema:
+#### Fast Path: Check for Schema Skill First
 
-1. What fields do you need?
-2. What are the field types? (string, number, boolean, enum, datetime_string)
-3. Which fields are required vs optional?
-4. What is your business use case?
-
-Example format:
-- email: string (required)
-- employee_id: string (required)
-- department: string (optional)
-- job_title: string (optional)
+```bash
+# Check for existing schema skills
+ls .claude/skills/*schema*.md .claude/skills/schemas/*.md 2>/dev/null
 ```
+
+**If exactly one schema skill exists:**
+- Read the schema from the skill file
+- Confirm briefly: "Using your [X] schema skill"
+- Proceed directly to Step 5 (no questions needed)
+
+**If multiple schema skills exist:**
+- List all available schema skills
+- Ask the user which schema to use for this connector using `AskUserQuestion`
+- Example: "Found multiple schema skills: [HRIS Schema, ATS Schema, CRM Schema]. Which schema should this connector use?"
+- Only proceed after user selects one
+
+**If no schema skill exists:**
+
+Ask ONE open-ended question (no predefined options):
+
+> "What's your target schema? Share your field requirements in any format:
+> - Field list with types (e.g., `email: string, status: enum[active,inactive]`)
+> - YAML/JSON schema definition
+> - Markdown table
+> - Or just describe what data you need"
+
+After receiving their schema, offer once:
+> "Want me to save this as a schema skill for future connectors? (yes/no)"
+
+If yes, create `.claude/skills/schemas/[use-case]-schema.md` using the template at `.claude/skills/templates/use-case-schema.template.md`.
 
 Document the schema before proceeding.
 
@@ -303,6 +320,8 @@ In future sessions, you can skip this onboarding:
 - **For Schema-Based connectors**: Use the phrase **"start unified build for [provider]"**
   Example: `start unified build for BambooHR`
 
+**Pro tip - Schema Skills**: If you saved your schema as a skill (in `.claude/skills/schemas/`), future unified builds will automatically use it with zero friction. Create schema skills for each use case you build connectors for.
+
 ---
 
 Now, let's begin building your connector following the path you selected.
@@ -333,3 +352,4 @@ stackone run --connector <file> --account-id <id> --action-id <action> --profile
 - **Unified Connector Build Skill**: Detailed unified connector workflow (trigger: "start unified build for [provider]")
 - **Falcon Authentication Setup Skill**: Auth configuration patterns
 - **Unified Field Mapping Skill**: Field mapping patterns
+- **Schema Skill Template**: `.claude/skills/templates/use-case-schema.template.md` - Create reusable schema definitions
