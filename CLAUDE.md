@@ -64,14 +64,14 @@ Use `/on-boarding` to launch the structured onboarding flow. This walks you thro
 
 ### Path B: Schema-Based Connector (Unified)
 
-When building Schema-Based connectors (via `/on-boarding` or `start unified build for [provider]`), follow this workflow:
+When building Schema-Based connectors, follow this workflow:
 
 #### Developer Workflow for Schema-Based Connectors
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  1. FORK CONNECTOR                                          │
-│     └─ Check if connector exists in StackOne               │
+│     └─ Run `stackone pull <provider>` to get existing      │
 │     └─ Fork existing or create new from template           │
 ├─────────────────────────────────────────────────────────────┤
 │  2. BUILD AUTH                                              │
@@ -114,14 +114,17 @@ When building Schema-Based connectors (via `/on-boarding` or `start unified buil
 
 **Step 1: Fork Connector**
 
-First, check if the provider already exists in StackOne:
+First, pull the existing connector from StackOne:
 ```bash
-# Check for existing connector
-ls src/configs/ | grep -i <provider>
+# Pull existing connector from StackOne registry
+stackone pull <provider>
 ```
 
-If exists: Fork and modify the existing connector
-If not: Create new from the template structure
+If pull succeeds: Fork and modify the existing connector
+If pull fails: Check local configs, then create new if needed:
+```bash
+ls src/configs/ | grep -i <provider>
+```
 
 **Step 2: Build Auth**
 
@@ -233,7 +236,7 @@ This project has **skills** - documented workflows that you should follow when p
 2. **Provider setup** - User specifies provider name and API version
 3. **Workflow guidance** - Step-by-step instructions for the chosen path
 
-**Important**: This skill is ONLY triggered by the `/on-boarding` command. Do NOT auto-trigger for vague queries.
+**Important**: This skill is ONLY triggered by the `/on-boarding` command. For vague queries like "build a connector", just ask "What provider?" directly and proceed with the appropriate workflow.
 
 ---
 
@@ -310,7 +313,7 @@ These skills are for building connectors that map provider data to **customer-de
 
 **Location**: `.claude/skills/unified-connector-build.md`
 
-**Important**: This skill requires the EXPLICIT trigger phrase. Do NOT trigger for vague queries like "build connector" or "schema mapping" - those should go through `/on-boarding` first.
+**Important**: For vague queries like "build connector" or "schema mapping", just ask "What provider?" directly and proceed. Do NOT trigger the onboarding flow unless explicitly requested.
 
 **Summary**: Complete 10-step workflow for building unified/standardized connectors:
 1. Define output schema first (schema-first approach)

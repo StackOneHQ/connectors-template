@@ -1,14 +1,24 @@
 ---
 name: Connector Onboarding
-trigger: /on-boarding command only
-description: Structured onboarding flow for building connectors. Invoked via /on-boarding command. Guides users through connector type selection, provider setup, and the appropriate workflow.
+trigger: /on-boarding command ONLY (explicit invocation required)
+description: Structured onboarding flow for building connectors. ONLY invoked via explicit /on-boarding command.
 ---
 
 # Connector Onboarding Skill
 
 **How to invoke**: Use the `/on-boarding` command
 
-**This skill should NOT auto-trigger**. It is only invoked when the user explicitly runs `/on-boarding`. This prevents accidental triggering from vague queries.
+## IMPORTANT: Explicit Trigger Only
+
+**This skill MUST NOT auto-trigger.** It is ONLY invoked when the user explicitly runs `/on-boarding`.
+
+**DO NOT trigger this skill for:**
+- "build a connector" → Just ask "What provider?" then proceed
+- "build a schema based connector" → Just ask "What provider?" then proceed with unified build
+- "create a connector for X" → Proceed directly with the appropriate workflow
+- Any vague or incomplete request → Ask for missing info directly (simple question), don't launch full onboarding
+
+**The onboarding flow is for users who want guided hand-holding through the entire process.** Most users just want to get started quickly.
 
 ## Phase 1: Connector Type Selection
 
@@ -50,13 +60,24 @@ After the user selects their connector type, ask:
 1. **Provider name**: What provider/API are you building a connector for?
 2. **API version** (if applicable): What API version should we target?
 
-Then check if the provider exists:
+### Fork Existing Connector (MANDATORY)
+
+**After getting the provider name, ALWAYS attempt to pull the existing connector from StackOne:**
+
+```bash
+stackone pull <provider>
+```
+
+This will:
+- Download the existing connector if it exists in StackOne's registry
+- Place files in `src/configs/<provider>/`
+- Provide a foundation to build upon
+
+**If pull succeeds**: Fork and modify the existing connector
+**If pull fails** (connector doesn't exist): Check local configs and create new if needed:
 ```bash
 ls src/configs/ | grep -i <provider>
 ```
-
-**If exists**: Offer to fork and modify the existing connector
-**If not exists**: Create new from template structure
 
 ---
 
@@ -78,9 +99,14 @@ If user selects **Agentic Actions**, follow the Falcon Connector Build workflow:
 ### Step-by-Step Process
 
 1. **Fork/Create Connector**
-   - Create folder: `src/configs/<provider>/`
-   - Create main file: `<provider>.connector.s1.yaml`
-   - Create partial files: `<provider>.<resource>.s1.partial.yaml`
+   ```bash
+   # First, try to pull existing connector from StackOne
+   stackone pull <provider>
+   ```
+   - If pull succeeds: Modify the existing connector files
+   - If pull fails: Create new folder and files:
+     - `src/configs/<provider>/<provider>.connector.s1.yaml`
+     - `src/configs/<provider>/<provider>.<resource>.s1.partial.yaml`
 
 2. **Build Authentication**
    - Determine auth type (API Key, OAuth 2.0, etc.)
@@ -135,15 +161,19 @@ If user selects **Schema-Based**, guide through this structured workflow:
 
 ### Step 1: Fork Connector
 
-Check if provider exists:
+**First, pull existing connector from StackOne:**
 ```bash
-ls src/configs/ | grep -i <provider>
+stackone pull <provider>
 ```
 
-**If exists**: Review and fork the existing structure
-**If not**: Create new folder and files:
-- `src/configs/<provider>/<provider>.connector.s1.yaml`
-- `src/configs/<provider>/<provider>.<resource>.s1.partial.yaml`
+- **If pull succeeds**: Review and modify the existing connector files
+- **If pull fails**: Check local configs and create new if needed:
+  ```bash
+  ls src/configs/ | grep -i <provider>
+  ```
+  If not found locally, create new folder and files:
+  - `src/configs/<provider>/<provider>.connector.s1.yaml`
+  - `src/configs/<provider>/<provider>.<resource>.s1.partial.yaml`
 
 ### Step 2: Build Auth
 
