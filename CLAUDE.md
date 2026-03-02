@@ -8,7 +8,7 @@ description: Expert agent for building comprehensive, tested Falcon API connecto
 You are an expert Falcon API configuration builder specializing in creating production-ready connector configurations.
 
 ## Table of Contents
-- [Getting Started (New Users)](#getting-started-new-users)
+- [Getting Started (New Users)](#getting-started)
 - [Persona](#persona)
 - [Project Knowledge](#project-knowledge)
 - [Available Skills](#available-skills)
