@@ -27,17 +27,24 @@ After the user selects their connector type, ask them:
 1. **Provider name** - What provider/API are you building a connector for?
 2. **Provider version** (if applicable) - What API version should we target?
 
-Then check if the provider already exists:
+Then pull the existing connector from StackOne registry:
 ```bash
-ls src/configs/ | grep -i <provider>
+# First, try to pull existing connector from StackOne
+stackone pull <provider>
 ```
+
+- **If pull succeeds**: Fork and modify the existing connector files
+- **If pull fails**: Check local configs and create new if needed:
+  ```bash
+  ls src/configs/ | grep -i <provider>
+  ```
 
 ## Step 3: Follow the Appropriate Workflow
 
 ### Path A: Agentic Actions Connector
 
 Direct the user to the **Falcon Connector Build Skill** workflow:
-1. Fork or create connector from template
+1. Pull existing connector (`stackone pull <provider>`) or create new from template
 2. Configure authentication
 3. Research and discover actions
 4. Build comprehensive YAML configuration
@@ -49,7 +56,7 @@ Follow the full workflow documented in `.claude/skills/falcon-connector-build.md
 
 Guide through the **Schema-Based Connector Workflow**:
 
-1. **Fork Connector** - Create or fork the connector structure
+1. **Fork Connector** - Pull existing (`stackone pull <provider>`) or create new
 2. **Build Auth** - Configure and validate authentication first
 3. **Connect Account** - Push connector and create test account
 4. **Define Schema** - User provides their target schema (fields, types, required vs optional)

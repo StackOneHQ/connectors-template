@@ -1,7 +1,6 @@
 ---
 name: Connector Onboarding
-trigger: /on-boarding command ONLY (explicit invocation required)
-description: Structured onboarding flow for building connectors. ONLY invoked via explicit /on-boarding command.
+description: Structured onboarding flow for building connectors. ONLY invoked via explicit /on-boarding command. Do not auto-trigger.
 ---
 
 # Connector Onboarding Skill

@@ -10,7 +10,7 @@ description: Complete workflow for building unified/standardized connectors that
 
 Example: `start unified build for BambooHR`
 
-**This skill requires an explicit trigger phrase** to avoid accidental invocation. Do NOT trigger this skill for vague queries like "build connector" or "schema mapping" - those should go through the `/on-boarding` flow first.
+**This skill requires an explicit trigger phrase** to avoid accidental invocation. For vague queries like "build connector" or "schema mapping", ask clarifying questions (e.g., "Which provider?") and proceed directly. If the user wants guided setup, tell them they can run `/on-boarding`.
 
 **When this skill applies**: User explicitly says "start unified build for [provider]" to build a connector that maps provider data to a specific output schema with standardized responses and unified pagination.
 

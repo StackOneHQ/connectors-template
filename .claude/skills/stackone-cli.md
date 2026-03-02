@@ -1,5 +1,6 @@
 ---
 name: stackone-cli
+trigger: stackone cli|stackone run|stackone validate|stackone push|stackone pull|stackone help
 description: |
   Automatically applies StackOne CLI knowledge when working with connectors.
 
