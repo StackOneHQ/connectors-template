@@ -19,6 +19,34 @@ description: Structured onboarding flow for building connectors. ONLY invoked vi
 
 **The onboarding flow is for users who want guided hand-holding through the entire process.** Most users just want to get started quickly.
 
+## Onboarding Flow Summary
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PHASE 1: Connector Type                                    │
+│  Ask: Agentic Actions / Schema-Based / Skip Walkthrough     │
+├─────────────────────────────────────────────────────────────┤
+│                         │                                   │
+│         ┌───────────────┼───────────────┐                   │
+│         ▼               ▼               ▼                   │
+│    [Agentic]      [Schema-Based]    [Skip]                  │
+│         │               │               │                   │
+│         ▼               │               └──► Proceed        │
+│  PHASE 1.5 (REQUIRED)   │                   directly        │
+│  Ask: New / Extend      │                                   │
+│         │               │                                   │
+│    ┌────┴────┐          │                                   │
+│    ▼         ▼          ▼                                   │
+│  [New]   [Extend]   [Schema]                                │
+│    │         │          │                                   │
+│    ▼         ▼          ▼                                   │
+│  PHASE 2: Provider Details (for all paths)                  │
+│  Ask: Provider name, API version                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Phase 1: Connector Type Selection
 
 **Always start by asking this question** using `AskUserQuestion`:
@@ -52,9 +80,44 @@ C) Skip Guided Walkthrough
 
 ---
 
+## Phase 1.5: Agentic Actions Sub-Selection (REQUIRED)
+
+**⚠️ MANDATORY**: If user selects "Agentic Actions Connector" in Phase 1, you MUST ask this follow-up question BEFORE asking about provider details.
+
+Use `AskUserQuestion` to ask:
+
+```
+Are you creating a new connector or extending an existing one?
+
+A) Create New Connector
+   - Build a connector from scratch
+   - Research API, configure auth, discover and build all actions
+   - Best for: Providers not yet in StackOne
+
+B) Extend Existing Connector
+   - Add new actions to an existing connector
+   - Uses StackOne Agent to analyse existing config and build new actions
+   - Best for: Adding specific use cases to established connectors
+```
+
+### Decision Criteria
+
+| Factor | Create New | Extend Existing |
+|--------|------------|-----------------|
+| Starting point | From scratch | Fork existing connector |
+| Research | Full API discovery | Targeted for new actions |
+| Agent assistance | Manual workflow | StackOne Agent guided |
+| Best for | New providers | Adding use cases |
+
+**After Phase 1.5**: Proceed to Phase 2 to get provider details.
+
+---
+
 ## Phase 2: Provider Details
 
-After the user selects their connector type, ask:
+**When to trigger**: After completing Phase 1 (and Phase 1.5 if Agentic Actions was selected).
+
+Ask the user:
 
 1. **Provider name**: What provider/API are you building a connector for?
 2. **API version** (if applicable): What API version should we target?
@@ -69,13 +132,13 @@ stackone pull <provider>
 
 This will:
 - Download the existing connector if it exists in StackOne's registry
-- Place files in `src/configs/<provider>/`
+- Place files in `connectors/<provider>/`
 - Provide a foundation to build upon
 
 **If pull succeeds**: Fork and modify the existing connector
 **If pull fails** (connector doesn't exist): Check local configs and create new if needed:
 ```bash
-ls src/configs/ | grep -i <provider>
+ls connectors/ | grep -i <provider>
 ```
 
 ---
@@ -93,9 +156,19 @@ If user selects **Skip Guided Walkthrough**:
 
 ## Path A: Agentic Actions Connector
 
-If user selects **Agentic Actions**, follow the Falcon Connector Build workflow:
+**⚠️ IMPORTANT**: If user selects **Agentic Actions** in Phase 1:
 
-### Step-by-Step Process
+1. **FIRST**: Ask the Phase 1.5 question (New vs Extend) - DO NOT SKIP THIS
+2. **THEN**: Ask Phase 2 questions (Provider name, API version)
+3. **FINALLY**: Follow Path A1 or A2 based on their selection
+
+---
+
+### Path A1: Create New Connector
+
+If user selects **Create New Connector**, follow the Falcon Connector Build workflow:
+
+#### Step-by-Step Process
 
 1. **Fork/Create Connector**
    ```bash
@@ -104,8 +177,8 @@ If user selects **Agentic Actions**, follow the Falcon Connector Build workflow:
    ```
    - If pull succeeds: Modify the existing connector files
    - If pull fails: Create new folder and files:
-     - `src/configs/<provider>/<provider>.connector.s1.yaml`
-     - `src/configs/<provider>/<provider>.<resource>.s1.partial.yaml`
+     - `connectors/<provider>/<provider>.connector.s1.yaml`
+     - `connectors/<provider>/<provider>.<resource>.s1.partial.yaml`
 
 2. **Build Authentication**
    - Determine auth type (API Key, OAuth 2.0, etc.)
@@ -116,7 +189,7 @@ If user selects **Agentic Actions**, follow the Falcon Connector Build workflow:
 3. **Connect Account**
    ```bash
    # Push connector to your profile
-   stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile <profile>
+   stackone push connectors/<provider>/<provider>.connector.s1.yaml --profile <profile>
    ```
    - User creates account in StackOne dashboard
    - Verify connection works
@@ -133,11 +206,73 @@ If user selects **Agentic Actions**, follow the Falcon Connector Build workflow:
 
 6. **Validate & Test**
    ```bash
-   stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
+   stackone validate connectors/<provider>/<provider>.connector.s1.yaml
    stackone run --connector <file> --account-id <id> --action-id <action> --profile <profile>
    ```
 
 **Full workflow**: See `.claude/skills/falcon-connector-build.md`
+
+---
+
+### Path A2: Extend Existing Connector
+
+If user selects **Extend Existing Connector**, follow the StackOne Agent workflow:
+
+#### Step-by-Step Process
+
+1. **Fork Existing Connector**
+   ```bash
+   # Pull the existing connector from StackOne
+   stackone pull <provider>
+   ```
+   - This downloads the existing connector configuration
+   - Places files in `connectors/<provider>/`
+   - **If pull fails**: The connector doesn't exist - redirect to Path A1 (Create New Connector)
+
+2. **Set Up the StackOne Agent**
+   - Ensure the StackOne Agent is configured in the project
+   - Verify access to the connector configuration files
+
+3. **Prompt the Agent with Use Case Description**
+   - User describes the specific actions or functionality they want to add
+   - Be specific about the data or operations needed
+   - Example: "I need to add actions to sync employee time-off requests"
+
+4. **Agent Analyses Existing Action Configurations**
+   - Agent reviews the current connector structure
+   - Identifies existing actions, authentication setup, and patterns
+   - Maps out how the connector currently works
+
+5. **Agent Runs Existing Actions to Test API and Scope the Use Case**
+   - Agent executes existing actions to understand API behavior
+   - Tests authentication and validates connectivity
+   - Explores API responses to inform new action design
+
+6. **Coding Agent Creates a Plan**
+   - Agent proposes the new actions to be created
+   - Outlines the endpoints, inputs, and outputs required
+   - Presents the plan for user approval before proceeding
+
+7. **Coding Agent Executes the Plan and Writes New Config Code**
+   - Agent writes the new action configurations
+   - Creates or updates partial files as needed
+   - Follows existing connector patterns for consistency
+
+8. **Coding Agent Provides a Summary**
+   - Summary of what was accomplished
+   - List of new actions added
+   - Any limitations or follow-up items
+   - Validation and testing instructions
+
+#### Key Differences from Creating New
+
+| Aspect | Create New | Extend Existing |
+|--------|------------|-----------------|
+| Starting point | Empty or minimal config | Full existing connector |
+| Auth setup | Build from scratch | Already configured |
+| Research scope | Full API discovery | Targeted for new actions |
+| Agent role | Optional assistance | Primary driver |
+| Pattern matching | Establish patterns | Follow existing patterns |
 
 ---
 
@@ -168,11 +303,11 @@ stackone pull <provider>
 - **If pull succeeds**: Review and modify the existing connector files
 - **If pull fails**: Check local configs and create new if needed:
   ```bash
-  ls src/configs/ | grep -i <provider>
+  ls connectors/ | grep -i <provider>
   ```
   If not found locally, create new folder and files:
-  - `src/configs/<provider>/<provider>.connector.s1.yaml`
-  - `src/configs/<provider>/<provider>.<resource>.s1.partial.yaml`
+  - `connectors/<provider>/<provider>.connector.s1.yaml`
+  - `connectors/<provider>/<provider>.<resource>.s1.partial.yaml`
 
 ### Step 2: Build Auth
 
@@ -192,7 +327,7 @@ stackone pull <provider>
 
 ```bash
 # Push connector to your profile
-stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile <profile>
+stackone push connectors/<provider>/<provider>.connector.s1.yaml --profile <profile>
 ```
 
 User creates account in StackOne dashboard, then verify:
@@ -314,8 +449,11 @@ Once the user has completed the flow and selected their path, inform them:
 
 In future sessions, you can skip this onboarding:
 
-- **For Agentic Actions connectors**: Just tell me what you want to build directly
-  Example: "add a list_users action to the Slack connector"
+- **For new Agentic Actions connectors**: Just tell me what you want to build directly
+  Example: "build a connector for Linear API"
+
+- **For extending existing connectors**: Tell me you want to add actions to an existing connector
+  Example: "add time-off sync actions to the BambooHR connector"
 
 - **For Schema-Based connectors**: Use the phrase **"start unified build for [provider]"**
   Example: `start unified build for BambooHR`
@@ -332,10 +470,10 @@ Now, let's begin building your connector following the path you selected.
 
 ```bash
 # Validate connector
-stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
+stackone validate connectors/<provider>/<provider>.connector.s1.yaml
 
 # Push connector
-stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile <profile>
+stackone push connectors/<provider>/<provider>.connector.s1.yaml --profile <profile>
 
 # Test action
 stackone run --connector <file> --account-id <id> --action-id <action> --profile <profile>

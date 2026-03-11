@@ -1,7 +1,7 @@
 # CORE STRUCTURE REFERENCE
 
 <system_context>
-YAML structure patterns for Falcon connectors. Complete spec: src/configs/README.md (993 lines).
+YAML structure patterns for Falcon connectors. Complete spec: connectors/README.md (993 lines).
 </system_context>
 
 <paved_path>
@@ -158,7 +158,7 @@ parameters:
 </critical_notes>
 
 <file_map>
-**Full Spec:** src/configs/README.md (993 lines)
+**Full Spec:** connectors/README.md (993 lines)
 
 **Auth Examples:**
 - jira/ - Basic auth (lines 136-164)

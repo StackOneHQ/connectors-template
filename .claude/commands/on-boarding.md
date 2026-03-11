@@ -36,7 +36,7 @@ stackone pull <provider>
 - **If pull succeeds**: Fork and modify the existing connector files
 - **If pull fails**: Check local configs and create new if needed:
   ```bash
-  ls src/configs/ | grep -i <provider>
+  ls connectors/ | grep -i <provider>
   ```
 
 ## Step 3: Follow the Appropriate Workflow

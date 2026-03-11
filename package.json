@@ -10,8 +10,8 @@
         "build": "node --import=tsx ./scripts/build.ts",
         "prebuild:watch": "npm run clean && npm run build",
         "build:watch": "node --import=tsx ./scripts/build-watch.ts",
-        "lint": "biome check ./src ./scripts",
-        "lint:fix": "biome check --write ./src ./scripts",
+        "lint": "biome check ./connectors ./scripts",
+        "lint:fix": "biome check --write ./connectors ./scripts",
         "loop-claude": "bash claude-iterations/run.sh",
         "setup:hooks": "sh scripts/setup-git-hooks.sh",
         "setup:mcp": "node --import=tsx ./scripts/generate-mcp-config.ts",
@@ -20,7 +20,7 @@
     "dependencies": {
         "@stackone/agent-config": "^1.3.0",
         "@stackone/cli": "1.16.0",
-        "@stackone/connect-sdk": "2.31.0",
+        "@stackone/connect-sdk": "2.34.0",
         "@stackone/core": "2.3.4",
         "@stackone/expressions": "0.18.0",
         "@stackone/utils": "0.14.0"

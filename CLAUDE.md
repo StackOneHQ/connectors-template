@@ -123,7 +123,7 @@ stackone pull <provider>
 If pull succeeds: Fork and modify the existing connector
 If pull fails: Check local configs, then create new if needed:
 ```bash
-ls src/configs/ | grep -i <provider>
+ls connectors/ | grep -i <provider>
 ```
 
 **Step 2: Build Auth**
@@ -138,7 +138,7 @@ Before anything else, configure and validate authentication:
 Push connector and create a test account:
 ```bash
 # Push to your profile
-stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile <your-profile>
+stackone push connectors/<provider>/<provider>.connector.s1.yaml --profile <your-profile>
 
 # User creates account in StackOne dashboard
 # Get account ID for testing
@@ -214,12 +214,12 @@ Test, refine, and push updates as needed.
 - MCP (Model Context Protocol) tools for research and testing
 
 **File Structure:**
-- `src/configs/` – Provider-specific folders with YAML connector configs
+- `connectors/` – Provider-specific folders with YAML connector configs
 
 **Naming Convention:**
-- Provider folder: `src/configs/provider-name/` (lowercase)
+- Provider folder: `connectors/provider-name/` (lowercase)
 - Config file: `provider.connector.s1.yaml`
-- Example: `src/configs/slack/slack.connector.s1.yaml`
+- Example: `connectors/slack/slack.connector.s1.yaml`
 
 ## Available Skills
 
@@ -400,7 +400,7 @@ Follow this **exact sequence** when building Falcon API configurations:
 2. **Synchronization** → Collect and integrate subagent results
 3. **Version Validation** → `analyze_versioning()` → Detect/resolve API version conflicts
 4. **Config Building** → Create comprehensive YAML with all discovered operations
-5. **YAML Validation** → `stackone validate src/configs/<provider>/<provider>.connector.s1.yaml`
+5. **YAML Validation** → `stackone validate connectors/<provider>/<provider>.connector.s1.yaml`
 6. **Coverage Validation** → `check_all_endpoints()` → Confirm ≥80% coverage
 7. **Action Tracking Setup** → **MANDATORY** - Save action inventory to `/tmp/<provider>_actions_tracking.json`
 8. **Testing Phase** → `test_actions()` → Test EVERY operation with real API calls for EVERY auth type
@@ -416,7 +416,7 @@ Follow this **exact sequence** when building Falcon API configurations:
 
 ### Quick Reference Workflow
 
-**Step 0:** Reference existing connector → `src/configs/` (same category/auth type)
+**Step 0:** Reference existing connector → `connectors/` (same category/auth type)
 **Step 1:** StackOne context → `get_stackone_categories()`, `get_stackone_actions(category)`
 **Step 2:** Action discovery → `discover_actions()` (PRIMARY - autonomous subagent)
 **Step 3:** Auth research → `vector_search()`, `web_search()`
@@ -502,7 +502,7 @@ get_analyze_versioning_task_status(taskId, provider)
 **⚠️ ALWAYS use the partials approach - never create monolithic connector files.**
 
 ```
-src/configs/{provider}/
+connectors/{provider}/
 ├── {provider}.connector.s1.yaml              # Main: info, auth, $refs only
 └── {provider}.{resource}.s1.partial.yaml     # Actions grouped by resource
 ```
@@ -513,7 +513,7 @@ src/configs/{provider}/
 
 **Example:**
 ```
-src/configs/clickup/
+connectors/clickup/
 ├── clickup.connector.s1.yaml      # Main file
 ├── clickup.tasks.s1.partial.yaml  # Task actions
 └── clickup.users.s1.partial.yaml  # User actions
@@ -1059,7 +1059,7 @@ stackone validate [pathToYaml]
 2. Similar connectors (same auth type or structure)
 3. Provider API documentation
 4. Working actions in same connector
-5. `src/configs/DEVELOPERS.md`
+5. `connectors/DEVELOPERS.md`
 
 ### Action Tracking Setup (MANDATORY)
 

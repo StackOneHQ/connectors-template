@@ -284,7 +284,7 @@ testActions:
 3. **Use JSONPath** for credential references: `$.credentials.field`
 4. **Custom headers go in action args**, not auth config
 5. **Test actions** should verify connection works
-6. **Reference similar connectors** in `src/configs/` for patterns
+6. **Reference similar connectors** in `connectors/` for patterns
 7. **Read provider docs carefully** for auth requirements
 
 ## Common Patterns

@@ -5,7 +5,40 @@ import ora from 'ora';
 import path from 'path';
 import { buildFile } from './buildFile';
 
-const CONFIGS_DIR = path.resolve(__dirname, '../src/configs');
+const getConfigsDir = (): string => {
+    const newPath = path.resolve(__dirname, '../connectors');
+    const legacyPath = path.resolve(__dirname, '../src/configs');
+    const newPathExists = fs.existsSync(newPath);
+    const legacyPathExists = fs.existsSync(legacyPath);
+
+    if (newPathExists && legacyPathExists) {
+        // biome-ignore lint/suspicious/noConsole: valid use case
+        console.warn(
+            chalk.yellow(
+                'Warning: Both "connectors/" and "src/configs/" exist. Using "connectors/". Please remove "src/configs/" to avoid confusion.',
+            ),
+        );
+        return newPath;
+    }
+
+    if (newPathExists) {
+        return newPath;
+    }
+
+    if (legacyPathExists) {
+        // biome-ignore lint/suspicious/noConsole: valid use case
+        console.warn(
+            chalk.yellow(
+                'Warning: Using deprecated path "src/configs/". Please rename to "connectors/".',
+            ),
+        );
+        return legacyPath;
+    }
+
+    return newPath;
+};
+
+const CONFIGS_DIR = getConfigsDir();
 const DIST_DIR = path.resolve(__dirname, '../dist');
 
 const print = (text: string) => {

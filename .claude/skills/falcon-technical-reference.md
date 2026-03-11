@@ -15,7 +15,7 @@ description: Comprehensive technical reference for Falcon connector YAML structu
 **⚠️ ALWAYS use the partials approach - never create monolithic connector files.**
 
 ```
-src/configs/{connector-name}/
+connectors/{connector-name}/
 ├── {connector-name}.connector.s1.yaml              # Main: info, auth, $refs only
 └── {connector-name}.{resource}.s1.partial.yaml     # Actions grouped by resource
 ```

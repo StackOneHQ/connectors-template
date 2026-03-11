@@ -51,11 +51,11 @@ The Account ID is a linked account where provider credentials (API keys, tokens,
 
 ```bash
 # Test single action
-stackone run src/configs/<provider>/<provider>.connector.s1.yaml \
+stackone run connectors/<provider>/<provider>.connector.s1.yaml \
   --account-id <ACCOUNT_ID> --action-id <key>_<action> --profile=<profile>
 
 # Push after changes
-stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile=<profile>
+stackone push connectors/<provider>/<provider>.connector.s1.yaml --profile=<profile>
 ```
 
 ---
@@ -179,7 +179,7 @@ User: "Update its status to active"     → update_item (same ID)
 - Naming conflicts: 1 fix
 
 ### Files Modified
-- src/configs/<provider>/<provider>.connector.s1.yaml
+- connectors/<provider>/<provider>.connector.s1.yaml
 ```
 
 **Required in report:** Total vs tested (must equal), before/after pass rates, every fix, files modified.

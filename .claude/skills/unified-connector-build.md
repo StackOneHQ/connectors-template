@@ -649,7 +649,7 @@ actions:
 
 ```bash
 # YAML validation
-stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
+stackone validate connectors/<provider>/<provider>.connector.s1.yaml
 ```
 
 **Validation Checklist**:

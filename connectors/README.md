@@ -14,7 +14,7 @@ Connectors can contain both unified and non-unified actions.
 ## Directory Structure
 
 ```
-src/configs/{connector-name}/
+connectors/{connector-name}/
 ├── {connector-name}.connector.s1.yaml          # Main connector file with authentication config
 └── {connector-name}.{resource}.s1.partial.yaml     # For each provider resource that contains respective actions
 ```
@@ -468,7 +468,7 @@ Custom enum matchers are used when you need to map provider values to large Stac
 See the implementation in:
 
 - Enum: `connect/packages/utils/src/shared/documents/fileFormats.ts`
-- Usage: `connectors/src/configs/googledrive/googledrive.files.s1.partial.yaml`
+- Usage: `connectors/googledrive/googledrive.files.s1.partial.yaml`
 
 ### Steps
 

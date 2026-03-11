@@ -74,7 +74,7 @@ Return a summary of improvements made:
 ```json
 {
   "connector_analyzed": "provider_name",
-  "file_path": "src/configs/provider/provider.connector.s1.yaml",
+  "file_path": "connectors/provider/provider.connector.s1.yaml",
   "operations_improved": 15,
   "improvements_summary": [
     {

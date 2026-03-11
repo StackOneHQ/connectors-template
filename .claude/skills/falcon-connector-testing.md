@@ -268,7 +268,7 @@ cat /tmp/<provider>_actions_tracking.json | jq '.actions[].test_results[][] | se
 
 ```bash
 # YAML validation
-stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
+stackone validate connectors/<provider>/<provider>.connector.s1.yaml
 
 # Coverage validation (≥80%)
 check_all_endpoints(discoveredActions, stackOneOperations, config)
