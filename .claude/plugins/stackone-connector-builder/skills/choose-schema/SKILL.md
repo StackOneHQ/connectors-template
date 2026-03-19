@@ -1,0 +1,173 @@
+---
+name: choose-schema
+description: First step of building a unified connector. Guides the builder to choose or define the output schema — StackOne built-in, custom file, or define inline. Saves schema choice to session file.
+invoke: choose-schema
+---
+
+# Choose Schema
+
+Step 1 of the unified connector build process.
+
+## Session File
+
+Read `.connector-build-session.json` from the project root if it exists.
+
+If it exists and `schema` is already set, greet the builder:
+> "Resuming session — schema already set to `{{schema}}` ({{schema_source}}). Run `/check-connector` to continue, or type `reset` to start over."
+
+If it does not exist or `schema` is empty, proceed below.
+
+---
+
+## Step 1: Ask for the provider name
+
+Ask:
+> "What is the name of the provider you want to build a connector for? (e.g., `bamboohr`, `workday`, `salesforce`)"
+
+Save as `provider` in session (lowercase, hyphenated).
+
+---
+
+## Step 2: Choose schema source
+
+Ask:
+> "What output schema will your connector map data to? Choose one:
+>
+> **A) StackOne built-in schema** — HRIS, ATS, CRM, LMS, IAM, Ticketing, Documents, Marketing
+> **B) Point to an existing schema file** — You have a JSON/YAML schema in your project
+> **C) Define a new custom schema** — I'll help you define fields interactively
+>
+> Which fits your use case? (A/B/C)"
+
+---
+
+## Path A: StackOne built-in schema
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/unified-schemas.md` for the category index.
+
+Present the category table and ask:
+> "Which StackOne category fits your use case? (hris / ats / crm / marketing / lms / iam / ticketing / documents / accounting)"
+
+**Once the category is chosen, load only that category's schema file:**
+
+| Category chosen | File to read |
+|----------------|-------------|
+| `hris` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/hris.md` |
+| `ats` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/ats.md` |
+| `crm` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/crm.md` |
+| `lms` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/lms.md` |
+| `iam` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/iam.md` |
+| `ticketing` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/ticketing.md` |
+| `documents` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/documents.md` |
+| `marketing` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/marketing.md` |
+| `accounting` | `${CLAUDE_PLUGIN_ROOT}/references/schemas/accounting.md` |
+
+Read the schema file. Use the **Endpoints** section to show the builder what API operations are available, and the **Models** section to show the fields for each resource.
+
+Ask:
+> "Which resource(s) do you need to expose? Here's what's available in `{{category}}`:"
+
+List the model names from the schema file (e.g., `Employee`, `Employment`, `HRISDepartment`).
+
+Once resources are chosen, show the fields table for each from the loaded schema file.
+
+Ask:
+> "Do these fields cover your needs, or are there fields in your use case that aren't listed here?"
+
+If fields are missing, note them — they may need custom field mapping or a different resource.
+
+Save to session:
+```json
+{
+  "schema_source": "builtin",
+  "schema": "<category>",
+  "schema_file": "references/schemas/<category>.md",
+  "resources": ["<resource1>", "<resource2>"],
+  "schema_fields": []
+}
+```
+
+---
+
+## Path B: Existing schema file
+
+Ask:
+> "What is the path to your schema file? (e.g., `schemas/employee.json`)"
+
+Read the file. Identify the fields: name, type, whether required.
+
+Present a summary:
+> "Found {{N}} fields in your schema:
+> - `id` (string, required)
+> - `first_name` (string, required)
+> - ..."
+
+Ask:
+> "Does this look correct? Any fields I should know are enums or nested objects?"
+
+Save to session:
+```json
+{
+  "schema_source": "file",
+  "schema": "custom",
+  "schema_file": "<path>",
+  "resources": ["custom"],
+  "schema_fields": [{ "name": "...", "type": "...", "required": true }]
+}
+```
+
+---
+
+## Path C: Define custom schema interactively
+
+Explain:
+> "Let's define your schema field by field. For each field I'll ask for:
+> - **Name** — the field key in your output (e.g., `first_name`)
+> - **Type** — string, number, boolean, date, datetime, enum, array, object
+> - **Required** — yes or no
+>
+> For enum fields I'll also ask for the allowed values. Type `done` when finished."
+
+Collect fields one at a time. For `enum` types, ask for the allowed values. For `array` types, ask for the item type.
+
+Show a running summary after each field is added.
+
+When done, present the full schema:
+> "Here's your schema:
+>
+> | Field | Type | Required |
+> |-------|------|---------|
+> | `id` | string | yes |
+> | `status` | enum (active, inactive) | yes |
+> | ... |
+>
+> Does this look right?"
+
+Save to session:
+```json
+{
+  "schema_source": "custom",
+  "schema": "custom",
+  "resources": ["custom"],
+  "schema_fields": [
+    { "name": "id", "type": "string", "required": true },
+    { "name": "status", "type": "enum", "required": true, "enum_values": ["active", "inactive"] }
+  ]
+}
+```
+
+---
+
+## Handoff
+
+After saving the session file, confirm:
+> "Schema saved. ✓
+>
+> **Provider:** `{{provider}}`
+> **Schema:** `{{schema}}` ({{schema_source}})
+> **Resources:** {{resources}}
+>
+> Next step: check if your connector already exists and set up the project.
+> Run `/check-connector` to continue."
+
+Update `session_step` to `"check-connector"` in the session file.
