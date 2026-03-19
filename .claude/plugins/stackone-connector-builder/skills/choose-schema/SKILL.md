@@ -1,6 +1,6 @@
 ---
 name: choose-schema
-description: First step of building a unified connector. Guides the builder to choose or define the output schema — StackOne built-in, custom file, or define inline. Saves schema choice to session file.
+description: First step of building a unified connector. Guides the builder to choose or define the output schema — StackOne built-in, import from a document (CSV/JSON/YAML), point to an existing schema file, or define inline. Saves schema choice to session file.
 invoke: choose-schema
 ---
 
@@ -33,11 +33,12 @@ Save as `provider` in session (lowercase, hyphenated).
 Ask:
 > "What output schema will your connector map data to? Choose one:
 >
-> **A) StackOne built-in schema** — HRIS, ATS, CRM, LMS, IAM, Ticketing, Documents, Marketing
-> **B) Point to an existing schema file** — You have a JSON/YAML schema in your project
-> **C) Define a new custom schema** — I'll help you define fields interactively
+> **A) StackOne built-in schema** — HRIS, ATS, CRM, LMS, IAM, Ticketing, Documents, Marketing, Accounting
+> **B) Import from a schema document** — You have a CSV, JSON, YAML, or spreadsheet that defines your fields
+> **C) Point to an existing schema file** — You have a JSON/YAML schema already in connector-builder format
+> **D) Define a new custom schema** — I'll help you define fields interactively
 >
-> Which fits your use case? (A/B/C)"
+> Which fits your use case? (A/B/C/D)"
 
 ---
 
@@ -89,7 +90,22 @@ Save to session:
 
 ---
 
-## Path B: Existing schema file
+## Path B: Import from schema document
+
+Execute the full `/import-schema` skill logic inline.
+
+This handles CSV, JSON, YAML, TSV, and plain field lists. It will:
+1. Read the file at the path the builder provides
+2. Parse field names and infer types from structure or sample data
+3. Flag likely enum fields and collect their allowed values
+4. Present the parsed schema for the builder to review and correct
+5. Save `schema_fields` to session
+
+Once `/import-schema` completes, the session will have `schema_source: "imported"` and the full `schema_fields` array. Continue to the **Handoff** section below.
+
+---
+
+## Path C: Existing schema file
 
 Ask:
 > "What is the path to your schema file? (e.g., `schemas/employee.json`)"
@@ -118,7 +134,7 @@ Save to session:
 
 ---
 
-## Path C: Define custom schema interactively
+## Path D: Define custom schema interactively
 
 Explain:
 > "Let's define your schema field by field. For each field I'll ask for:

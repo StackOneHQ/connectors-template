@@ -14,7 +14,8 @@ Run steps in order, or invoke any sub-skill directly to jump to that phase:
 
 | Step | Command | What it does |
 |------|---------|-------------|
-| 1 | `/choose-schema` | Pick or define your output schema |
+| 1 | `/choose-schema` | Pick or define your output schema (built-in, import, or define inline) |
+| — | `/import-schema` | Import schema fields from a CSV, JSON, YAML, or spreadsheet |
 | 2 | `/check-connector` | Check if connector exists, pull or scaffold |
 | 3 | `/scope-actions` | Decide which resources and operations to expose |
 | 4 | `/map-fields` | Map provider API fields to your schema |
@@ -22,6 +23,8 @@ Run steps in order, or invoke any sub-skill directly to jump to that phase:
 | 6 | `/test-connector` | Test live against the provider API |
 
 Each step saves progress to `.connector-build-session.json` — you can pause and resume at any time.
+
+`/import-schema` can be run standalone at any point to load schema fields from a document. It feeds directly into `/map-fields`.
 
 ---
 
