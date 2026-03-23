@@ -36,7 +36,7 @@ Before running tests:
 ```bash
 # Run with debug to see raw response
 stackone run \
-  --connector src/configs/<provider>/<provider>.connector.s1.yaml \
+  --connector connectors/<provider>/<provider>.connector.s1.yaml \
   --credentials credentials.json \
   --action-id list_employees \
   --debug
@@ -79,7 +79,7 @@ stackone run \
 
 ```bash
 stackone run \
-  --connector src/configs/<provider>/<provider>.connector.s1.yaml \
+  --connector connectors/<provider>/<provider>.connector.s1.yaml \
   --credentials credentials.json \
   --action-id list_employees
 ```
@@ -561,8 +561,8 @@ After any changes:
 
 ```bash
 # Quick validation script
-stackone validate src/configs/<provider>/<provider>.connector.s1.yaml && \
-stackone run --connector src/configs/<provider>/<provider>.connector.s1.yaml \
+stackone validate connectors/<provider>/<provider>.connector.s1.yaml && \
+stackone run --connector connectors/<provider>/<provider>.connector.s1.yaml \
   --credentials credentials.json \
   --action-id list_employees \
   --params '{"limit": 1}' | jq '.data[0] | keys'

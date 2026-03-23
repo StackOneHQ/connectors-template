@@ -4,8 +4,39 @@ import path from 'path';
 
 const errors: { file: string; error: unknown }[] = [];
 
+const getConfigsPath = (): string => {
+    const newPath = path.resolve(__dirname, '../connectors');
+    const legacyPath = path.resolve(__dirname, '../src/configs');
+    const newPathExists = fs.existsSync(newPath);
+    const legacyPathExists = fs.existsSync(legacyPath);
+
+    if (newPathExists && legacyPathExists) {
+        // biome-ignore lint/suspicious/noConsole: Dedicated logging not required
+        console.warn(
+            '\x1b[33m%s\x1b[0m',
+            'Warning: Both "connectors/" and "src/configs/" exist. Using "connectors/". Please remove "src/configs/" to avoid confusion.',
+        );
+        return newPath;
+    }
+
+    if (newPathExists) {
+        return newPath;
+    }
+
+    if (legacyPathExists) {
+        // biome-ignore lint/suspicious/noConsole: Dedicated logging not required
+        console.warn(
+            '\x1b[33m%s\x1b[0m',
+            'Warning: Using deprecated path "src/configs/". Please rename to "connectors/".',
+        );
+        return legacyPath;
+    }
+
+    return newPath;
+};
+
 export const build = async () => {
-    const configsPath = path.resolve(__dirname, '../src/configs');
+    const configsPath = getConfigsPath();
     const distPath = path.resolve(__dirname, '../dist');
 
     const entries = await fs.promises.readdir(configsPath, { withFileTypes: true });

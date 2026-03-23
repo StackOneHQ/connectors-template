@@ -43,7 +43,7 @@ discover_actions({
 #### B. While Waiting, Research in Parallel (Minutes 0-5)
 
 **Reference Existing Connectors**:
-- Read similar connector in `src/configs/` (same category or auth type)
+- Read similar connector in `connectors/` (same category or auth type)
 - Understand YAML structure patterns
 
 **StackOne Context**:
@@ -130,7 +130,7 @@ get_analyze_versioning_task_status(taskId, provider)
 #### File Structure (MANDATORY: Use Partials)
 
 ```
-src/configs/{provider-name}/
+connectors/{provider-name}/
 ├── {provider-name}.connector.s1.yaml              # Main: info, auth, $refs only
 └── {provider-name}.{resource}.s1.partial.yaml     # Actions grouped by resource
 ```
@@ -218,7 +218,7 @@ actions:
 ### Step 5: YAML Validation (MANDATORY)
 
 ```bash
-stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
+stackone validate connectors/<provider>/<provider>.connector.s1.yaml
 ```
 
 **MUST pass before proceeding to testing.**

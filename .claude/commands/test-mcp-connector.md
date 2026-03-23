@@ -31,7 +31,7 @@ Update todo status as you complete each phase.
 
 ### Phase 1: Read Configuration
 
-1. Search for connector files: `src/configs/[provider]/*.yaml`
+1. Search for connector files: `connectors/[provider]/*.yaml`
 2. Read main connector and all partial files
 3. **Output to user**:
    ```

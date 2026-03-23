@@ -130,7 +130,7 @@ This removes all stored credentials and generated configuration files.
 
 For comprehensive guides on building and converting connectors, see:
 
-- **[Building Falcon Connectors](src/configs/README.md)** - Complete guide to YAML structure, authentication, operations, and step functions
+- **[Building Falcon Connectors](connectors/README.md)** - Complete guide to YAML structure, authentication, operations, and step functions
 
 ## How to Contribute
 

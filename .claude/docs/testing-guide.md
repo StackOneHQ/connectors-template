@@ -50,7 +50,7 @@
 
 ```bash
 #!/bin/bash
-CONNECTOR="src/configs/provider/provider.connector.s1.yaml"
+CONNECTOR="connectors/provider/provider.connector.s1.yaml"
 ACCOUNT="account.json"
 CREDS="credentials.json"
 KEY="provider"  # Match info.key in YAML

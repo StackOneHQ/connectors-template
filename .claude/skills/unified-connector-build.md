@@ -1,21 +1,27 @@
 ---
 name: Unified Connector Build
-trigger: unified connector|standardized connector|schema mapping|build unified|customer connector
+trigger: start unified build for
 description: Complete workflow for building unified/standardized connectors that map provider data to customer-defined schemas with consistent pagination and cursor handling.
 ---
 
 # Unified Connector Build Skill
 
-**When to use**: User asks to build a connector that maps provider data to a specific output schema, needs standardized responses across providers, or wants unified pagination/cursor handling.
+**How to trigger**: Use the specific phrase **"start unified build for [provider]"**
+
+Example: `start unified build for BambooHR`
+
+**This skill requires an explicit trigger phrase** to avoid accidental invocation. For vague queries like "build connector" or "schema mapping", ask clarifying questions (e.g., "Which provider?") and proceed directly. If the user wants guided setup, tell them they can run `/on-boarding`.
+
+**When this skill applies**: User explicitly says "start unified build for [provider]" to build a connector that maps provider data to a specific output schema with standardized responses and unified pagination.
 
 **Key Difference from Custom Connectors**: Unified connectors transform provider-specific data into a standardized schema defined by the customer. Custom connectors return raw provider data.
 
 ## Prerequisites
 
-- Customer-defined output schema (fields, types, required vs optional)
 - Provider name/API identified
 - StackOne CLI installed (`@stackone/cli`)
 - Access to provider API documentation
+- Schema definition (via skill file OR provided at runtime)
 
 ## Fundamental Principles
 
@@ -62,112 +68,253 @@ stackone run --debug --connector <file> --credentials <file> --action-id <action
 | Multiple providers | Same schema across all | Different per provider |
 | Use case | Reduce integration work | Maximum flexibility |
 
-## 9-Step Unified Connector Workflow
+## 10-Step Unified Connector Workflow
 
-### Step 1: Define Output Schema First
+### Step 1: Resolve Schema (Fast Path for Power Users)
 
-**CRITICAL**: Always start with the output schema before researching provider APIs.
+**CRITICAL**: Always have a schema before researching provider APIs. This step is designed to be instant for power users with existing schema skills.
 
-```yaml
-# Document the expected output schema
-# Example: HRIS Employee Schema
-schema:
-  name: employees
-  fields:
-    - name: id
-      type: string
-      required: true
-    - name: first_name
-      type: string
-      required: true
-    - name: last_name
-      type: string
-      required: true
-    - name: email
-      type: string
-      required: true
-    - name: employment_status
-      type: enum
-      values: [active, inactive, terminated, unknown]
-      required: true
-    - name: department
-      type: string
-      required: false
-    - name: hire_date
-      type: datetime_string
-      required: false
-    - name: work_location
-      type: object
-      required: false
-      properties:
-        - name: city
-          type: string
-        - name: country
-          type: string
+#### Flow: Check for Schema Skill First
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. Check for schema skill file                             │
+│     └─ Look for .claude/skills/*-schema.md or similar       │
+│     └─ Also check .claude/skills/schemas/*.md               │
+├─────────────────────────────────────────────────────────────┤
+│  2a. IF SKILL EXISTS → Use it immediately (no questions)    │
+│      └─ Read the schema from the skill file                 │
+│      └─ Confirm briefly: "Using your [X] schema skill"      │
+│      └─ Proceed to Step 2 (Research)                        │
+├─────────────────────────────────────────────────────────────┤
+│  2b. IF NO SKILL → Ask for schema (open-ended)              │
+│      └─ Single open-ended question, not predefined options  │
+│      └─ Accept any format (YAML, JSON, markdown table, etc) │
+│      └─ Offer to save as skill for future reuse             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Schema Checklist**:
+#### Implementation
+
+**Step 1a: Check for existing schema skill**
+
+```bash
+# Look for schema skill files
+ls .claude/skills/*schema*.md .claude/skills/schemas/*.md 2>/dev/null
+```
+
+If a schema skill exists, read it and confirm:
+> "Found your **[Use Case] Schema** skill. Using this schema for the [Provider] connector."
+
+Then proceed directly to Step 2 - no further questions needed.
+
+**Step 1b: If no schema skill exists, ask open-ended**
+
+Ask ONE simple question - do not provide predefined options:
+
+> "What's your target schema? Share your field requirements in any format:
+> - Field list with types (e.g., `email: string, status: enum[active,inactive]`)
+> - YAML/JSON schema definition
+> - Markdown table
+> - Or just describe what data you need"
+
+Accept whatever format they provide and normalize it.
+
+**Step 1c: Offer to save as skill (after receiving schema)**
+
+After the user provides their schema, offer once:
+
+> "Want me to save this as a schema skill so you can reuse it for future connectors? (yes/no)"
+
+If yes, create `.claude/skills/schemas/[use-case]-schema.md` using the template.
+
+#### Schema Skill Template
+
+Schema skills should be saved to `.claude/skills/schemas/` with this structure:
+
+```markdown
+---
+name: [Use Case] Schema
+description: Target schema for [use case] connectors
+category: [hris|ats|crm|lms|etc]
+---
+
+# [Use Case] Schema
+
+## Business Context
+[Brief description of what this schema is used for]
+
+## Target Schema
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier |
+| email | string | yes | Primary email |
+| first_name | string | yes | |
+| last_name | string | yes | |
+| status | enum | yes | Values: active, inactive, terminated |
+| department | string | no | |
+| hire_date | datetime_string | no | ISO 8601 format |
+
+## Enum Definitions
+
+### status
+| Provider Value | Schema Value |
+|----------------|--------------|
+| Active, active, ACTIVE | active |
+| Inactive, inactive, INACTIVE | inactive |
+| Terminated, terminated, TERMINATED | terminated |
+| * (default) | unknown |
+
+## Optional: Field Mapping Hints
+[Any provider-agnostic mapping hints, like "department is often nested under work.department"]
+```
+
+See `.claude/skills/templates/use-case-schema.template.md` for a full template.
+
+#### Power User Behavior
+
+For users with schema skills:
+- **Zero friction**: Skill detected → confirmed → proceed
+- **No questions**: Don't ask "is this the right schema?" - just use it
+- **Quick override**: If they want a different schema, they'll say so
+
+#### Schema Validation Checklist
+
+Before proceeding to Step 2, ensure:
 - [ ] All required fields identified
 - [ ] Field types specified (string, number, enum, datetime_string, object)
 - [ ] Enum values defined for enum fields
 - [ ] Nested object structures documented
-- [ ] Array fields marked with `array: true`
+- [ ] Array fields marked appropriately
 
-### Step 2: Research Provider Endpoints
+### Step 2: Research Provider Endpoints (MANDATORY - DO NOT SKIP)
 
-**Goal**: Find the best endpoint(s) to fulfill the schema requirements.
+**CRITICAL**: This step is MANDATORY. You MUST thoroughly research ALL available endpoints before presenting options to the user. Never skip this phase or make assumptions about which endpoint to use.
 
-#### A. Evaluate Endpoints Against Trade-offs
+**Goal**: Discover ALL viable endpoints that could fulfill the schema requirements, then present options to the user.
 
-| Trade-off | Preference | Rationale |
-|-----------|------------|-----------|
-| **Scopes** | Narrower is better | Easier customer approval, less security risk |
-| **Requests** | Fewer is better | Better performance, lower rate limit impact |
-| **Data depth** | Required fields first | Critical fields must be present |
+#### A. Research Checklist (Complete ALL before proceeding)
 
-#### B. Endpoint Selection Decision Tree
+- [ ] Search official API documentation for ALL endpoints related to the resource
+- [ ] Check for multiple API versions (v1, v2, v1_2, etc.)
+- [ ] Identify deprecated endpoints and their sunset dates
+- [ ] Check for bulk/batch endpoints vs single-record endpoints
+- [ ] Look for report/export endpoints that may offer more fields
+- [ ] Review rate limits for each endpoint
+- [ ] Identify required scopes/permissions for each endpoint
+- [ ] Check which fields each endpoint returns
 
-```
-1. Does ONE endpoint return ALL required fields?
-   ├─ YES → Use single endpoint (ideal)
-   └─ NO → Continue to #2
+#### B. Evaluate Each Endpoint Against Trade-offs
 
-2. Can required fields be obtained with 2 endpoints?
-   ├─ YES → Use group_data to combine
-   └─ NO → Continue to #3
+For EACH discovered endpoint, document these trade-offs:
 
-3. Do additional endpoints require broader scopes?
-   ├─ YES → Document scope trade-off, ask customer
-   └─ NO → Add endpoints as needed
+| Dimension | Questions to Answer |
+|-----------|---------------------|
+| **Field Coverage** | Which schema fields does this endpoint return? What's missing? |
+| **Performance** | Single request vs multiple? Pagination support? Rate limits? |
+| **Permissions** | What scopes/permissions required? Are they narrow or broad? |
+| **Deprecation** | Is it deprecated? What's the sunset date? Is there a successor? |
+| **Complexity** | Simple GET vs POST with body? Special headers required? |
 
-4. Are any endpoints deprecated?
-   ├─ YES → NEVER use deprecated endpoints
-   │        Find alternative or document limitation
-   └─ NO → Proceed with selected endpoints
-```
+#### C. Document ALL Endpoint Options
 
-#### C. Document Endpoint Analysis
+**MANDATORY**: Create a comparison table for ALL viable endpoints before presenting to user.
 
 ```markdown
-## Endpoint Analysis: [Provider]
+## Endpoint Analysis: [Provider] - [Resource]
 
-### Option A: /v2/employees (Recommended)
-- Scopes: `employees:read`
-- Returns: id, first_name, last_name, email, status
-- Missing: department, hire_date
-- Pagination: cursor-based (next_cursor field)
+### Option A: GET /v2/employees
+| Dimension | Assessment |
+|-----------|------------|
+| Field Coverage | Returns: id, name, email, status. Missing: department, location, manager |
+| Performance | Single paginated request, 100/page max, cursor-based |
+| Permissions | Requires: `employees:read` (narrow scope) |
+| Deprecation | Active - no deprecation notice |
+| Complexity | Simple GET with query params |
 
-### Option B: /v2/employees/detailed
-- Scopes: `employees:read`, `org:read`
-- Returns: All fields including department, hire_date
-- Trade-off: Requires additional `org:read` scope
+### Option B: POST /v1/reports/custom
+| Dimension | Assessment |
+|-----------|------------|
+| Field Coverage | Returns: ALL fields - fully customizable field selection |
+| Performance | Single request returns all records, no pagination needed |
+| Permissions | Requires: `reports:read` (moderate scope) |
+| Deprecation | Active - no deprecation notice |
+| Complexity | POST with JSON body specifying fields |
 
-### Option C: /v1/employees (DEPRECATED)
-- Status: DEPRECATED - DO NOT USE
-- Scheduled removal: Q3 2024
+### Option C: POST /v1/datasets/employee
+| Dimension | Assessment |
+|-----------|------------|
+| Field Coverage | Returns: customizable fields via request body |
+| Performance | Single request, supports filtering |
+| Permissions | Requires: `data:read` (broad scope) |
+| Deprecation | ⚠️ DEPRECATED - Sunset: June 2026. Successor: /v2/datasets |
+| Complexity | POST with JSON body |
+
+### Option D: GET /v2/datasets/employee/data
+| Dimension | Assessment |
+|-----------|------------|
+| Field Coverage | Unknown - endpoint not publicly documented yet |
+| Performance | Unknown |
+| Permissions | Unknown |
+| Deprecation | Successor to v1, but not yet available |
+| Complexity | Unknown |
 ```
 
-### Step 3: Analyze Scope Requirements
+### Step 3: Present Options to User (MANDATORY CHECKPOINT)
+
+**CRITICAL**: You MUST present the endpoint options to the user and get their decision BEFORE proceeding to implementation. Never assume which endpoint to use.
+
+#### Required Information to Present
+
+Use `AskUserQuestion` or present a clear summary with:
+
+1. **Summary table of all viable options**
+2. **Recommendation with rationale**
+3. **Trade-offs for each option**
+
+#### Example Presentation Format
+
+```markdown
+## Endpoint Options for [Resource]
+
+I've researched the available endpoints. Here are your options:
+
+| Option | Endpoint | Field Coverage | Performance | Permissions | Status |
+|--------|----------|----------------|-------------|-------------|--------|
+| A | GET /v2/employees | Basic only (70%) | Fast, paginated | Narrow | ✅ Active |
+| B | POST /reports/custom | Full (100%) | Medium, single request | Moderate | ✅ Active |
+| C | POST /v1/datasets | Full (100%) | Medium | Broad | ⚠️ Deprecated |
+
+### Recommendation: Option B (Custom Reports)
+
+**Why**: Provides 100% field coverage with moderate permissions. Not deprecated.
+
+### Trade-off Analysis:
+
+**Option A** - Best if you only need basic fields and want minimal permissions
+- Pro: Narrowest scope, fastest response
+- Con: Missing department, location, manager fields
+
+**Option B** - Best for full field coverage (RECOMMENDED)
+- Pro: All fields available, flexible, not deprecated
+- Con: Slightly broader permissions than Option A
+
+**Option C** - NOT RECOMMENDED
+- Pro: Full field coverage
+- Con: Deprecated with June 2026 sunset date
+
+Which approach would you like me to implement?
+```
+
+#### Decision Gate
+
+**DO NOT PROCEED** to Step 4 until the user has:
+- [ ] Reviewed the endpoint options
+- [ ] Understood the trade-offs
+- [ ] Made an explicit choice
+
+### Step 4: Analyze Scope Requirements
 
 **See Unified Scope Decisions Skill** for complete framework.
 
@@ -191,7 +338,7 @@ scopeDefinitions:
     description: Read access to organization structure
 ```
 
-### Step 4: Map Fields to Schema
+### Step 5: Map Fields to Schema
 
 **See Unified Field Mapping Skill** for detailed patterns.
 
@@ -251,7 +398,7 @@ fields:
 3. **type**: Must match your schema definition
 4. **version**: ALWAYS use `version: '2'` for map_fields and typecast
 
-### Step 5: Configure Unified Pagination
+### Step 6: Configure Unified Pagination
 
 **PRINCIPLE**: Always implement cursor pagination for list endpoint unified actions. Never assume response structure - verify ALL paths with `--debug`.
 
@@ -391,7 +538,7 @@ stackone run --debug \
 | Wrong iterator parameter | `iterator.key: cursor` when API expects `page_token` | `iterator.key: page_token` |
 | Not implementing pagination on list actions | List action without cursor support | Always add cursor pagination for list endpoints |
 
-### Step 6: Build Connector Configuration
+### Step 7: Build Connector Configuration
 
 #### Main File Structure
 
@@ -498,11 +645,11 @@ actions:
       data: $.steps.typecast_employees_data.output.data
 ```
 
-### Step 7: Validate Configuration
+### Step 8: Validate Configuration
 
 ```bash
 # YAML validation
-stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
+stackone validate connectors/<provider>/<provider>.connector.s1.yaml
 ```
 
 **Validation Checklist**:
@@ -513,7 +660,7 @@ stackone validate src/configs/<provider>/<provider>.connector.s1.yaml
 - [ ] `fieldConfigs` present for all unified actions
 - [ ] `map_fields` and `typecast` steps present
 
-### Step 8: Test and Validate Mappings
+### Step 9: Test and Validate Mappings
 
 **See Unified Connector Testing Skill** for complete workflow.
 
@@ -563,7 +710,7 @@ stackone run --connector <file> --credentials <file> --action-id list_employees 
    - [ ] Subsequent pages work
    - [ ] Empty results handled
 
-### Step 9: Document Schema Coverage
+### Step 10: Document Schema Coverage
 
 Create a coverage document:
 
@@ -646,8 +793,16 @@ response:
 
 ## Success Criteria
 
+### Research Phase (MANDATORY)
+- [ ] ALL available endpoints discovered and documented
+- [ ] Each endpoint evaluated for: field coverage, performance, permissions, deprecation status
+- [ ] Comparison table created with all viable options
+- [ ] Trade-offs clearly documented for each option
+- [ ] **User presented with options and made explicit choice** (BLOCKING)
+
+### Implementation Phase
 - [ ] Output schema defined before development
-- [ ] Endpoint selection documented with trade-off analysis
+- [ ] User-selected endpoint implemented (not agent's assumption)
 - [ ] Scopes are narrowest possible for required functionality
 - [ ] No deprecated endpoints used
 - [ ] `fieldConfigs` map all schema fields
