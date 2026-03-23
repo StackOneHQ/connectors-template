@@ -1,0 +1,11 @@
+{
+  "name": "stackone-unified-builder",
+  "version": "1.0.0",
+  "description": "Interactive step-by-step wizard for building unified Falcon connectors. Walks external builders through schema selection, connector scaffolding, action scoping, field mapping, validation, and testing.",
+  "author": {
+    "name": "StackOne",
+    "email": "engineering@stackone.com"
+  },
+  "license": "MIT",
+  "keywords": ["connector", "falcon", "unified", "schema", "stackone", "builder"]
+}

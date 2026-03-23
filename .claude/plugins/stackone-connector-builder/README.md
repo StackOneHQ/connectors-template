@@ -1,68 +1,52 @@
 # stackone-connector-builder
 
-Interactive step-by-step wizard for building unified Falcon connectors. Guides external builders through every phase — from choosing an output schema to live API testing.
+Claude Code plugin for building generic Falcon connectors that return raw provider API responses.
 
-## Installation
+## When to use this plugin
 
-```bash
-/plugin install stackone-connector-builder@stackone-claude-marketplace
+Use **this plugin** when you want direct API access — actions use `actionType: custom` and return the provider's response as-is, with no schema normalisation.
+
+Use **`stackone-unified-builder`** (via `/build-unified-connector`) when your connector needs to map provider data to a StackOne unified schema (HRIS, ATS, CRM, etc.).
+
+## Workflow
+
+| Step | Command | What it does |
+|------|---------|--------------|
+| 1 | `/setup-connector` | Provider setup, checks StackOne index, CLI pull or scaffold |
+| 2 | `/configure-auth` | Auth configuration (API key, OAuth2, Basic Auth, custom) |
+| 3 | `/discover-actions` | Choose scoped or maximal discovery (MCP-powered) |
+| 4 | `/build-config` | Generate YAML with `actionType: custom` for all actions |
+| 5 | `/validate-connector` | Validate YAML structure |
+| 6 | `/test-connector` | Live test + automatic cleanup of test records |
+
+## Quick start
+
 ```
-
-## Usage
-
-### Full wizard (recommended)
-
-```bash
 /build-connector
 ```
 
-Walks through all 6 steps in sequence. Progress is saved to `.connector-build-session.json` so you can pause and resume at any time.
+This runs the full workflow from start to finish, guiding you through each step.
 
-### Individual steps
+## Key features
 
-Each step can also be run independently. It reads the session file and picks up from the right context:
+- **Session persistence** — progress is saved to `.connector-build-session.json` so you can pause and resume at any step
+- **Two discovery modes**:
+  - *Scoped* — describe your use case and relevant endpoints are found via vector search
+  - *Maximal* — discovers all provider endpoints via MCP (async, 5–15 min); use when you want full coverage
+- **Test cleanup** — every record created during testing is tracked and deleted afterwards; any records that cannot be deleted are reported
+- **Credential security** — `scramble_credentials` is always called after testing to invalidate live credentials
 
-| Command | Step | What it does |
-|---------|------|-------------|
-| `/choose-schema` | 1 | Pick a StackOne built-in schema, point to your own, or define one interactively |
-| `/check-connector` | 2 | Check if a base connector exists, pull it or scaffold a new one |
-| `/scope-actions` | 3 | Choose which resources and CRUD operations to expose |
-| `/map-fields` | 4 | Map provider API fields to your schema, writes YAML partials |
-| `/validate-connector` | 5 | Validate the YAML config structure |
-| `/test-connector` | 6 | Test live against the provider API and verify field output |
+## MCP tools used
 
-### Resume a session
+| Tool | Purpose |
+|------|---------|
+| `map_provider_key`, `get_provider_actions` | Check StackOne connector index |
+| `discover_actions`, `get_discover_actions_task_status` | Maximal endpoint discovery (async) |
+| `analyze_versioning` | Detect API versioning patterns |
+| `vector_search` | Scoped discovery — find relevant endpoints by description |
+| `test_actions`, `get_test_actions_task_status` | Automated live testing (async) |
+| `scramble_credentials` | Invalidate credentials after testing |
 
-```bash
-/build-connector
-```
+---
 
-If a `.connector-build-session.json` exists, the wizard will offer to resume from where you left off.
-
-## What it builds
-
-A set of YAML configuration files in `src/configs/<provider>/` that expose provider API data through StackOne's unified API. Supports both StackOne built-in schemas (HRIS, ATS, CRM, etc.) and custom schemas you define.
-
-## Schema options
-
-| Option | When to use |
-|--------|-------------|
-| **StackOne built-in** | Your data fits HRIS, ATS, CRM, LMS, IAM, Ticketing, Documents, or Marketing |
-| **Existing schema file** | You already have a JSON/YAML schema in your project |
-| **Define inline** | You want to define fields interactively during the wizard |
-
-## Requirements
-
-- `connectors-template` project structure (`src/configs/` directory)
-- Node.js — for the StackOne CLI (optional but recommended)
-- Provider API credentials in `.env`
-
-## How sessions work
-
-Each step reads and writes `.connector-build-session.json` at the project root. This file stores:
-- Provider name and schema choice
-- CLI availability and connector setup status
-- Action scope and known limitations
-- Validation and test results
-
-You can safely delete this file to start fresh.
+For unified connectors (HRIS/ATS/CRM/etc), see the `stackone-unified-builder` plugin and `/build-unified-connector`.

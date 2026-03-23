@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__stackone-agent-global__get_docs",
+      "mcp__stackone-agent-global__get_stackone_categories",
+      "mcp__stackone-agent-global__map_provider_key",
+      "mcp__stackone-agent-global__web_search",
+      "mcp__stackone-agent-global__fetch",
+      "mcp__stackone-agent-global__vector_search",
+      "Bash(grep:*)",
+      "Bash(stackone validate:*)"
+    ]
+  }
+}

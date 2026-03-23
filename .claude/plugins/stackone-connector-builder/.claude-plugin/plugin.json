@@ -1,11 +1,11 @@
 {
   "name": "stackone-connector-builder",
   "version": "1.0.0",
-  "description": "Interactive step-by-step guide for building unified Falcon connectors. Walks external builders through schema selection, connector scaffolding, action scoping, field mapping, validation, and testing.",
+  "description": "Interactive wizard for building generic Falcon connectors. Guides builders through provider setup, authentication, action discovery (scoped or maximal), config generation, validation, and testing with full cleanup.",
   "author": {
     "name": "StackOne",
     "email": "engineering@stackone.com"
   },
   "license": "MIT",
-  "keywords": ["connector", "falcon", "unified", "schema", "stackone", "builder"]
+  "keywords": ["connector", "falcon", "generic", "stackone", "builder", "discovery"]
 }

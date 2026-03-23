@@ -22,6 +22,26 @@ If `schema_source` is `"builtin"` and `schema_file` is set in session, also read
 
 ---
 
+## Step 0: Check StackOne action coverage
+
+Before mapping fields, check whether StackOne has coverage data for this provider:
+
+```
+get_provider_coverage("{{provider_key}}")
+```
+
+If coverage data exists, use it to pre-populate likely field paths and flag any known gaps.
+
+Also run a vector search to find similar connectors as reference:
+
+```
+vector_search("{{schema}} {{provider}} field mapping")
+```
+
+Use any matching results to inform the fieldConfigs you build.
+
+---
+
 ## Step 1: Get the raw provider response
 
 Getting a real sample response makes field mapping accurate.

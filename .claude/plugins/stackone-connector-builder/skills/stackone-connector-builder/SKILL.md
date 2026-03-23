@@ -1,30 +1,27 @@
 ---
 name: stackone-connector-builder
-description: Interactive wizard for building a unified Falcon connector from scratch. Guides external builders through schema selection, connector setup, action scoping, field mapping, validation, and testing. Auto-triggers when someone asks to build a new connector, integrate with a new provider, or create a unified connector.
+description: Interactive wizard for building a generic Falcon connector. Guides builders through provider setup, authentication, action discovery (scoped or maximal), YAML config generation, validation, and live testing with cleanup. Auto-triggers when someone asks to build a new connector, add a new provider, or create a Falcon config.
 invoke: build-connector
 ---
 
 # Build Connector
 
-End-to-end wizard for building a unified StackOne Falcon connector.
+End-to-end wizard for building a generic StackOne Falcon connector.
+Use this when you want to expose a provider's raw API responses — no schema mapping required.
+For connectors that normalise data to a standard schema, use `/build-unified-connector` instead.
 
 ## Quick Reference
 
-Run steps in order, or invoke any sub-skill directly to jump to that phase:
-
 | Step | Command | What it does |
 |------|---------|-------------|
-| 1 | `/choose-schema` | Pick your schema: built-in (A), import from file (B), or define inline (C) |
-| — | `/import-schema` | Import schema fields from a CSV, JSON, YAML, or any schema document |
-| 2 | `/check-connector` | Check if connector exists, pull or scaffold |
-| 3 | `/scope-actions` | Decide which resources and operations to expose |
-| 4 | `/map-fields` | Map provider API fields to your schema |
-| 5 | `/validate-connector` | Validate the YAML configuration |
-| 6 | `/test-connector` | Test live against the provider API |
+| 1 | `/setup-connector` | Provider name, index check, CLI pull or scaffold |
+| 2 | `/configure-auth` | Set up authentication (API key, OAuth2, Basic Auth) |
+| 3 | `/discover-actions` | Choose scoped actions or discover everything |
+| 4 | `/build-config` | Generate YAML for all confirmed actions |
+| 5 | `/validate-connector` | Validate the YAML config |
+| 6 | `/test-connector` | Live test + clean up all test records |
 
-Each step saves progress to `.connector-build-session.json` — you can pause and resume at any time.
-
-`/import-schema` can be run standalone at any point to load schema fields from a document. It feeds directly into `/map-fields`.
+Progress is saved to `.connector-build-session.json` — pause and resume any time.
 
 ---
 
@@ -33,107 +30,63 @@ Each step saves progress to `.connector-build-session.json` — you can pause an
 Check for an existing `.connector-build-session.json`. If found:
 > "Found an existing session:
 > - **Provider:** `{{provider}}`
-> - **Schema:** `{{schema}}`
-> - **Last step completed:** `{{session_step}}`
+> - **Last step:** `{{session_step}}`
 >
-> Would you like to:
-> - **Resume** from `{{session_step}}`
-> - **Restart** from the beginning (clears session)"
+> Resume or restart?"
 
-If no session exists, greet the builder and proceed to Step 1:
-> "Welcome to the StackOne connector builder. I'll guide you through building a unified Falcon connector step by step.
+If no session, greet:
+> "Welcome to the StackOne connector builder. I'll help you build a Falcon connector that exposes `{{provider}}`'s API through StackOne.
 >
-> You can run `/build-connector` to go through the full flow, or jump to any individual step with `/choose-schema`, `/check-connector`, `/scope-actions`, `/map-fields`, `/validate-connector`, or `/test-connector`."
+> If you want to map the data to a standard schema (HRIS, ATS, CRM, etc.), use `/build-unified-connector` instead."
 
 ---
 
-## Step 1 — Choose Schema
+## Steps
 
-Execute the full `/choose-schema` skill logic.
+### Step 1 — Setup
+Execute `/setup-connector` logic. Saves: `provider`, `provider_key`, `cli_available`, `connector_exists`, `connector_path`.
 
-**Outcome saved to session:**
-- `provider` — the provider name (e.g., `bamboohr`)
-- `schema` — the target category or `custom`
-- `schema_source` — `builtin`, `file`, or `custom`
-- `resources` — list of resources to build
-- `schema_fields` — field definitions (for custom/file schemas)
+### Step 2 — Configure Auth
+Execute `/configure-auth` logic. Saves: `auth_type`. Writes auth block to connector YAML.
 
----
+### Step 3 — Discover Actions
+Execute `/discover-actions` logic. Saves: `discovery_mode`, `action_scope`, `use_case`.
 
-## Step 2 — Check Connector
+### Step 4 — Build Config
+Execute `/build-config` logic. Writes action YAML to `src/configs/{{provider}}/`.
 
-Execute the full `/check-connector` skill logic.
+### Step 5 — Validate
+Execute `/validate-connector` logic. Saves: `validated: true`.
 
-**Outcome saved to session:**
-- `cli_available` — whether the StackOne CLI is usable
-- `connector_exists` — whether a base config was pulled from the index
-- `connector_path` — where the config lives
-- `auth_type` — the authentication method
-
----
-
-## Step 3 — Scope Actions
-
-Execute the full `/scope-actions` skill logic.
-
-**Outcome saved to session:**
-- `action_scope` — `{ resource: [actions] }` map
-- `use_case` — builder's description of their goal
-- `known_limitations` — any flagged gaps
-
----
-
-## Step 4 — Map Fields
-
-Execute the full `/map-fields` skill logic.
-
-**Outcome:** Partial YAML files written to `src/configs/{{provider}}/`
-
----
-
-## Step 5 — Validate
-
-Execute the full `/validate-connector` skill logic.
-
-**Outcome saved to session:**
-- `validated: true`
-
----
-
-## Step 6 — Test
-
-Execute the full `/test-connector` skill logic.
-
-**Outcome saved to session:**
-- `tested: true`
-- `completed_at`
+### Step 6 — Test
+Execute `/test-connector` logic. Saves: `tested: true`, `test_artifacts`, `completed_at`.
 
 ---
 
 ## Session File Schema
 
-`.connector-build-session.json` lives at the project root and carries all state between steps:
-
 ```json
 {
-  "provider": "bamboohr",
-  "schema": "hris",
-  "schema_source": "builtin",
-  "schema_fields": [],
-  "resources": ["employees", "time_off"],
+  "provider": "workday",
+  "provider_key": "workday",
+  "connector_path": "src/configs/workday",
   "cli_available": true,
   "connector_exists": false,
-  "connector_path": "src/configs/bamboohr",
-  "auth_type": "api_key",
+  "auth_type": "oauth2",
+  "discovery_mode": "scoped",
   "action_scope": {
-    "employees": ["list", "get"],
-    "time_off": ["list", "get", "create"]
+    "employees": ["list", "get", "create"],
+    "departments": ["list", "get"]
   },
-  "use_case": "Sync HR data into customer's internal system",
+  "use_case": "Read employee and department data",
   "known_limitations": [],
+  "test_artifacts": [
+    { "resource": "employees", "id": "EMP_test_001", "cleaned_up": true },
+    { "resource": "departments", "id": "DEP_test_007", "cleaned_up": false, "reason": "no delete endpoint" }
+  ],
   "validated": false,
   "tested": false,
-  "session_step": "map-fields",
+  "session_step": "build-config",
   "completed_at": null
 }
 ```
@@ -142,7 +95,8 @@ Execute the full `/test-connector` skill logic.
 
 ## Rules
 
-- Do not write YAML files until Step 4 (`map-fields`)
-- Do not run live tests until Step 5 (`validate-connector`) has passed
-- Do not delete the session file unless the builder explicitly requests a reset
-- Always read session context at the start of each step — never ask the builder for information already in the session
+- Do not write YAML until Step 4 (`build-config`)
+- Do not run tests until Step 5 (`validate-connector`) passes
+- Always clean up test records — log anything that cannot be removed
+- Always run `scramble_credentials` after testing
+- Never ask for information already in the session

@@ -40,4 +40,5 @@ authentication:
 
 resources: https://documentation.bamboohr.com/reference
 
-$ref: bamboo-hr.employees
+actions:
+  $ref: bamboo-hr.employees

@@ -18,6 +18,27 @@ Greet with context:
 
 ---
 
+## Step 0: Check StackOne provider index
+
+Before checking the CLI, look up the provider in StackOne's index:
+
+```
+map_provider_key("{{provider}}")
+```
+
+If a provider key is returned, save as `provider_key` in session and run:
+
+```
+get_provider_actions("{{provider_key}}")
+```
+
+If indexed actions exist, tell the builder:
+> "Found `{{provider}}` in the StackOne index with {{N}} known actions. I'll use this as a reference when building your connector."
+
+If nothing is found, continue — we'll scaffold from scratch.
+
+---
+
 ## Step 1: Detect CLI availability
 
 Run:
