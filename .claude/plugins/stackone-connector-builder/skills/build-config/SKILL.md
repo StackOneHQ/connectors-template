@@ -35,83 +35,140 @@ Create `src/configs/{{provider}}/{{provider}}.{{resource}}.s1.partial.yaml` for 
 
 ### list action
 ```yaml
-- name: list_{{resource}}
+- actionId: list_{{resource}}
+  categories:
+    - {{category}}
   actionType: custom
-  entrypointUrl: "/{{resource}}"
-  entrypointHttpMethod: GET
-  inputs:
-    page:
-      type: number
-      required: false
-    per_page:
-      type: number
-      required: false
+  label: List {{Resource}}
+  description: List all {{resource}}
   steps:
-    - type: request
-      id: fetch_{{resource}}
+    - stepId: fetch_{{resource}}
+      description: Retrieve all {{resource}}
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/{{resource}}'
+          method: get
+  result:
+    data: $.steps.fetch_{{resource}}.output.data
 ```
 
 ### get action
 ```yaml
-- name: get_{{resource}}
+- actionId: get_{{resource}}
+  categories:
+    - {{category}}
   actionType: custom
-  entrypointUrl: "/{{resource}}/${inputs.id}"
-  entrypointHttpMethod: GET
+  label: Get {{Resource}}
+  description: Get a specific {{resource}} by ID
   inputs:
-    id:
+    - name: id
+      description: {{Resource}} ID
       type: string
+      in: path
       required: true
   steps:
-    - type: request
-      id: fetch_{{resource}}
+    - stepId: fetch_{{resource}}
+      description: Retrieve {{resource}} by ID
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/{{resource}}/${inputs.id}'
+          method: get
+  result:
+    data: $.steps.fetch_{{resource}}.output.data
 ```
 
 ### create action
 ```yaml
-- name: create_{{resource}}
+- actionId: create_{{resource}}
+  categories:
+    - {{category}}
   actionType: custom
-  entrypointUrl: "/{{resource}}"
-  entrypointHttpMethod: POST
+  label: Create {{Resource}}
+  description: Create a new {{resource}}
   inputs:
-    body:
-      type: object
+    - name: {{field_name}}
+      description: {{field_description}}
+      type: string
+      in: body
       required: true
   steps:
-    - type: request
-      id: create_{{resource}}
+    - stepId: create_{{resource}}
+      description: Create a new {{resource}}
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/{{resource}}'
+          method: post
+          args:
+            - name: {{field_name}}
+              value: $.inputs.{{field_name}}
+              in: body
+  result:
+    data: $.steps.create_{{resource}}.output.data
 ```
 
 ### update action
 ```yaml
-- name: update_{{resource}}
+- actionId: update_{{resource}}
+  categories:
+    - {{category}}
   actionType: custom
-  entrypointUrl: "/{{resource}}/${inputs.id}"
-  entrypointHttpMethod: PATCH
+  label: Update {{Resource}}
+  description: Update an existing {{resource}}
   inputs:
-    id:
+    - name: id
+      description: {{Resource}} ID
       type: string
+      in: path
       required: true
-    body:
-      type: object
-      required: true
+    - name: {{field_name}}
+      description: {{field_description}}
+      type: string
+      in: body
+      required: false
   steps:
-    - type: request
-      id: update_{{resource}}
+    - stepId: update_{{resource}}
+      description: Update {{resource}}
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/{{resource}}/${inputs.id}'
+          method: patch
+          args:
+            - name: {{field_name}}
+              value: $.inputs.{{field_name}}
+              in: body
+              condition: '{{present(inputs.{{field_name}})}}'
+  result:
+    data: $.steps.update_{{resource}}.output.data
 ```
 
 ### delete action
 ```yaml
-- name: delete_{{resource}}
+- actionId: delete_{{resource}}
+  categories:
+    - {{category}}
   actionType: custom
-  entrypointUrl: "/{{resource}}/${inputs.id}"
-  entrypointHttpMethod: DELETE
+  label: Delete {{Resource}}
+  description: Delete a {{resource}} by ID
   inputs:
-    id:
+    - name: id
+      description: {{Resource}} ID
       type: string
+      in: path
       required: true
   steps:
-    - type: request
-      id: delete_{{resource}}
+    - stepId: delete_{{resource}}
+      description: Delete {{resource}}
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/{{resource}}/${inputs.id}'
+          method: delete
+  result:
+    data: $.steps.delete_{{resource}}.output.data
 ```
 
 ---
@@ -122,8 +179,8 @@ Read `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` and add a `$ref` 
 
 ```yaml
 actions:
-  - $ref: "./{{provider}}.employees.s1.partial.yaml"
-  - $ref: "./{{provider}}.departments.s1.partial.yaml"
+  $ref: {{provider}}.employees
+  $ref: {{provider}}.departments
 ```
 
 ---

@@ -77,7 +77,7 @@
 |-------|------|-------------|
 | `account_id` | `string` | ID of the ledger account this line references |
 | `description` | `string` | Description of the journal line |
-| `amount` | `number` | Amount of the journal line in minor units, e.g. 10010 for 100.10 USD. Positive for debit, negativ... |
+| `amount` | `number` | Amount of the journal line in minor units, e.g. 10010 for 100.10 USD. Positive for debit, negative for credit. |
 | `tax_rate_id` | `string` | ID of the tax rate applied |
 | `tax_amount` | `number` | Tax amount of the line in minor units, e.g. 10010 for 100.10 USD |
 
@@ -90,7 +90,7 @@
 | `description` | `string` | Description of the journal line |
 | `currency_code` | `CurrencyEnum` | Currency code for this line |
 | `exchange_rate` | `number` | Exchange rate to company base currency |
-| `amount` | `number` | Amount of the journal line in minor units, e.g. 10010 for 100.10 USD. Positive for debit, negativ... |
+| `amount` | `number` | Amount of the journal line in minor units, e.g. 10010 for 100.10 USD. Positive for debit, negative for credit. |
 | `tax_amount` | `number` | Tax amount of the line in minor units, e.g. 10010 for 100.10 USD |
 | `tax_rate_percentage` | `number` | Tax rate percentage |
 

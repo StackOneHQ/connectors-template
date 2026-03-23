@@ -535,4 +535,4 @@ result:
 | Subdomain | `${PROVIDER_SUBDOMAIN}` | `${BAMBOOHR_SUBDOMAIN}` |
 | Account ID | `${PROVIDER_ACCOUNT_ID}` | `${NETSUITE_ACCOUNT_ID}` |
 
-Reference inside the connector using `${args.<name>.value}` after defining in the authentication `args` block.
+Reference inside the connector using `$.credentials.<key>` (JSONPath) or `${credentials.<key>}` (string interpolation), where `<key>` matches a `configFields` or `setupFields` key in the authentication block.

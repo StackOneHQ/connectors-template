@@ -54,7 +54,13 @@ Save the use case description to session as `use_case`.
 
 ## Step 3: Present a recommended scope
 
-Based on the session `resources` and the use case, recommend an action set.
+First, check if indexed provider actions are available:
+```
+get_provider_actions("{{provider_key}}")
+```
+If indexed actions exist, use them to inform the recommendation — only suggest actions the provider's API actually supports. If no indexed data is available, recommend based on the session `resources` and use case, but note that support should be verified during testing.
+
+Based on the session `resources`, the use case, and any indexed provider actions, recommend an action set.
 
 Example recommendation:
 > "Based on your schema and use case, here's what I recommend:

@@ -41,13 +41,13 @@ Work through each action across all `{{provider}}.{{resource}}.s1.partial.yaml` 
 
 1. **`actionType: custom`** — Every action must have `actionType: custom`. No other value is valid for generic connectors.
 
-2. **`entrypointUrl` present** — Every action must have an `entrypointUrl`. It must be a string starting with `/` or a full URL. Template expressions like `${inputs.id}` are allowed.
+2. **`entrypointUrl` present (non-custom only)** — Actions with `actionType` other than `custom` must have an `entrypointUrl`. It must be a string starting with `/` or a full URL. Template expressions like `${inputs.id}` are allowed. Not required for `actionType: custom`.
 
-3. **`entrypointHttpMethod` present** — Every action must have `entrypointHttpMethod`. Valid values: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+3. **`entrypointHttpMethod` present (non-custom only)** — Actions with `actionType` other than `custom` must have `entrypointHttpMethod`. Valid values: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Not required for `actionType: custom`.
 
 4. **At least one `type: request` step** — Every action must have a `steps` array with at least one entry where `type: request`. Generic actions have exactly one step.
 
-5. **`list` actions have pagination inputs** — Actions named `list_*` must have at least one pagination input (`page`, `per_page`, `offset`, `limit`, or provider-specific equivalent) with `required: false`.
+5. **`list` actions have pagination inputs (if supported)** — Actions named `list_*` should have pagination inputs (`page`, `per_page`, `offset`, `limit`, or provider-specific equivalent) with `required: false`, if the provider endpoint supports pagination.
 
 6. **`get` actions reference `${inputs.id}` in URL** — Actions named `get_*` must have `${inputs.id}` in `entrypointUrl` and an `id` input with `required: true`.
 
@@ -77,10 +77,22 @@ Cause: The action YAML block is missing the `entrypointUrl` key.
 
 Fix — add the field:
 ```yaml
-- name: list_employees
+- actionId: list_employees
+  categories:
+    - {{category}}
   actionType: custom
-  entrypointUrl: "/employees"   # <-- add this
-  entrypointHttpMethod: GET
+  label: List Employees
+  description: List all employees
+  steps:
+    - stepId: fetch_employees
+      description: Retrieve all employees
+      stepFunction:
+        functionName: request
+        parameters:
+          url: '/employees'
+          method: get
+  result:
+    data: $.steps.fetch_employees.output.data
 ```
 
 ---

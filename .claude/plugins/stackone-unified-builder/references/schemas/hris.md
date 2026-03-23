@@ -800,6 +800,8 @@
 
 ## Enums
 
+> **Note:** In API responses, enum fields are returned as objects with `value` (the unified enum value from the table below) and `source_value` (the raw provider value). For example: `{ "value": "active", "source_value": "Active" }`.
+
 | Enum | Values |
 |------|--------|
 | `BankAccountTypeEnum` | `savings`, `checking`, `current`, `business`, `personal`, `other` |

@@ -52,6 +52,9 @@ actions:
               collection: true
     result:
       data: $.steps.fetch_candidates.output.data
+      nextCursor: $.steps.fetch_candidates.output.data.nextCursor
+      syncToken: $.steps.fetch_candidates.output.data.syncToken
+      moreDataAvailable: $.steps.fetch_candidates.output.data.moreDataAvailable
 
   - actionId: get_candidate
     label: Get Candidate
@@ -541,6 +544,9 @@ actions:
               collection: true
     result:
       data: $.steps.fetch_notes.output.data
+      nextCursor: $.steps.fetch_notes.output.data.nextCursor
+      syncToken: $.steps.fetch_notes.output.data.syncToken
+      moreDataAvailable: $.steps.fetch_notes.output.data.moreDataAvailable
 
   - actionId: create_candidate_note
     label: Create Candidate Note

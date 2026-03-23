@@ -74,7 +74,9 @@ Show the written auth block and ask:
 
 Apply any corrections.
 
-Save `auth_type` to session.
+Save to session:
+- `auth_type`: The authentication type (`custom` or `oauth2`)
+- `auth_details`: Full auth configuration including header names, credential references, and authorization type (e.g., `{ "authorization_type": "none", "custom_headers": [{ "name": "X-Api-Key", "value": "$.credentials.apiKey" }] }`). This is needed by `/build-config` to add the correct auth headers to each action's request step.
 
 ---
 

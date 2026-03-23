@@ -12,8 +12,10 @@ Step 1 of the unified connector build process.
 
 Read `.connector-build-session.json` from the project root if it exists.
 
-If it exists and `schema` is already set, greet the builder:
-> "Resuming session — schema already set to `{{schema}}` ({{schema_source}}). Run `/check-connector` to continue, or type `reset` to start over."
+If it exists and both `schema` and `provider` are already set, greet the builder:
+> "Resuming session — schema already set to `{{schema}}` ({{schema_source}}) for provider `{{provider}}`. Run `/check-connector` to continue, or type `reset` to start over."
+
+If it exists and `schema` is set but `provider` is missing (e.g., from an imported schema), proceed to Step 1 to collect the provider name.
 
 If it does not exist or `schema` is empty, proceed below.
 
@@ -67,7 +69,7 @@ Read the schema file. Use the **Endpoints** section to show the builder what API
 Ask:
 > "Which resource(s) do you need to expose? Here's what's available in `{{category}}`:"
 
-List the model names from the schema file (e.g., `Employee`, `Employment`, `HRISDepartment`).
+List the available resources from the schema file (e.g., `Employee`, `Employment`, `HRISDepartment`). When saving to session, convert model names to lowercase resource slugs (e.g., `Employee` → `employees`, `HRISDepartment` → `departments`) since later steps use slugs for action names and file paths.
 
 Once resources are chosen, show the fields table for each from the loaded schema file.
 

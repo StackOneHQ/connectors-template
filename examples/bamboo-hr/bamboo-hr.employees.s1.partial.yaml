@@ -9,10 +9,6 @@
   entrypointUrl: /employees/directory
   entrypointHttpMethod: get
 
-  cursor:
-    enabled: true
-    pageSize: 50
-
   steps:
     - stepId: get_employees
       description: Fetch all employees from BambooHR employee directory
@@ -52,7 +48,7 @@
               expression: $.employeeNumber
               type: string
             - targetFieldKey: title
-              expression: $.prefix
+              expression: $.jobTitle
               type: string
           dataSource: $.steps.get_employees.output.data.employees
 
@@ -90,7 +86,7 @@
   description: Returns a single employee record by ID with full unified HRIS schema field mapping, including bank details and employment history.
   details: Makes three parallel-style API calls — main employee fields, directDeposit table for all bank accounts, and jobInfo table for full employment history — then combines them into a single unified response. Bank details and employment history are fetched as complete arrays in one call each. 404s on table endpoints are handled gracefully and return empty arrays.
   resources: https://documentation.bamboohr.com/reference/get-employee
-  entrypointUrl: /employees/${inputs.id}
+  entrypointUrl: /employees/:id
   entrypointHttpMethod: get
 
   inputs:
@@ -113,7 +109,7 @@
               value: application/json
               in: headers
             - name: fields
-              value: id,firstName,lastName,dateOfBirth,homeEmail,terminationDate,mobilePhone,hireDate,address1,address2,city,zipCode,country,employmentHistoryStatus,employeeNumber,maritalStatus,prefix,ssn
+              value: id,firstName,lastName,dateOfBirth,homeEmail,terminationDate,mobilePhone,hireDate,address1,address2,city,zipCode,country,employmentHistoryStatus,employeeNumber,maritalStatus,jobTitle,ssn
               in: query
 
     - stepId: fetch_bank_details
@@ -221,7 +217,7 @@
               type: object
               expression: $.fetch_bank_details.data
             - targetFieldKey: title
-              expression: $.fetch_employee.prefix
+              expression: $.fetch_employee.jobTitle
               type: string
 
     - stepId: typecast_employee_data
@@ -301,7 +297,7 @@
       in: body
       required: false
     - name: title
-      description: The employee's name prefix (Mr, Ms, Dr, etc.)
+      description: The employee's job title
       type: string
       in: body
       required: false
@@ -379,7 +375,7 @@
               value: $.inputs.start_date
               in: body
               condition: '{{present(inputs.start_date)}}'
-            - name: prefix
+            - name: jobTitle
               value: $.inputs.title
               in: body
               condition: '{{present(inputs.title)}}'
@@ -425,7 +421,7 @@
   description: Updates an existing employee record in BambooHR.
   details: Updates one or more fields on an existing employee. Only provided fields will be updated — all body fields are optional except the employee ID path parameter. BambooHR uses POST (not PATCH) for employee field updates.
   resources: https://documentation.bamboohr.com/reference/update-employee
-  entrypointUrl: /employees/${inputs.id}
+  entrypointUrl: /employees/:id
   entrypointHttpMethod: post
 
   inputs:
@@ -470,7 +466,7 @@
       in: body
       required: false
     - name: title
-      description: The employee's name prefix (Mr, Ms, Dr, etc.)
+      description: The employee's job title
       type: string
       in: body
       required: false
@@ -554,7 +550,7 @@
               value: $.inputs.termination_date
               in: body
               condition: '{{present(inputs.termination_date)}}'
-            - name: prefix
+            - name: jobTitle
               value: $.inputs.title
               in: body
               condition: '{{present(inputs.title)}}'
@@ -600,7 +596,7 @@
   description: Terminates an employee in BambooHR by setting their termination date.
   details: BambooHR does not support hard deletion of employee records. This action terminates an employee by setting their termination date. The employee record remains accessible in the system after termination.
   resources: https://documentation.bamboohr.com/reference/update-employee
-  entrypointUrl: /employees/${inputs.id}
+  entrypointUrl: /employees/:id
   entrypointHttpMethod: post
 
   inputs:

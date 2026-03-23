@@ -85,12 +85,19 @@ Translate provider-specific values to your schema's enum values:
 
 **Important:** Keys are case-sensitive and must match the provider's exact values.
 
-For complex logic, use `matchExpression` (JEXL):
+For complex logic, use `enumMapper.matcher[]` with `matchExpression` (JEXL):
 ```yaml
 - targetFieldKey: gender
   expression: "$.gender"
+  type: enum
   enumMapper:
-    matchExpression: "'{{$.gender === \"M\" ? \"male\" : $.gender === \"F\" ? \"female\" : \"other\"}}'"
+    matcher:
+      - matchExpression: '{{$.gender == "M"}}'
+        value: male
+      - matchExpression: '{{$.gender == "F"}}'
+        value: female
+      - matchExpression: '{{$.gender != "M" && $.gender != "F"}}'
+        value: other
 ```
 
 ---

@@ -252,6 +252,8 @@
 
 ## Enums
 
+> **Note:** In API responses, enum fields are returned as objects with `value` (the unified enum value from the table below) and `source_value` (the raw provider value). For example: `{ "value": "pending", "source_value": "Pending" }`.
+
 | Enum | Values |
 |------|--------|
 | `AssignmentStatusEnum` | `pending`, `in_progress`, `completed` |

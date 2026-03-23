@@ -144,10 +144,12 @@ Poll with `get_analyze_versioning_task_status`. Identifies deprecated endpoints 
 
 ### B6: Save to session
 
+Save only the actions the builder explicitly selected — not all discovered actions:
+
 ```json
 {
   "discovery_mode": "maximal",
-  "action_scope": { "...all confirmed actions..." },
+  "action_scope": { "...only builder-selected actions..." },
   "use_case": "Full API coverage"
 }
 ```

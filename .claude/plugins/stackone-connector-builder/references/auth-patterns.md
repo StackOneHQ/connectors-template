@@ -160,33 +160,71 @@ authentication:
   - oauth2:
       type: oauth2
       label: OAuth 2.0
-      grantType: authorization_code
-      authorizationUrl: https://api.provider.com/oauth/authorize
-      tokenUrl: https://api.provider.com/oauth/token
       setupFields:
         - key: clientId
           label: Client ID
-          type: string
+          type: text
           required: true
         - key: clientSecret
           label: Client Secret
           type: password
           required: true
           secret: true
-      scopes:
-        - resource.read
-        - resource.write
+        - key: scopes
+          label: Application Scopes
+          type: text
+          required: false
+      authorization:
+        type: oauth2
+        authorizationUrl: https://api.provider.com/oauth/authorize
+        authorizationParams:
+          response_type: code
+          client_id: $.credentials.clientId
+          redirect_uri: ${apiHostUri}/connect/oauth2/provider/callback
+          scope: $.credentials.scopes
+        tokenUrl: https://api.provider.com/oauth/token
+        token: $.credentials.accessToken
+        includeBearer: true
       testActions:
         - action: get_current_user
           required: true
 ```
 
-If the refresh token request does not require authorization headers, add:
+If the refresh token request does not require authorization headers, add `authorization: type: none` on the refresh request **step** (not at the top level):
 
 ```yaml
 refreshAuthentication:
-  authorization:
-    type: none
+  action:
+    actionId: refresh_token_provider
+    categories:
+      - internal
+    actionType: refresh_token
+    label: Refresh Token
+    description: Refresh OAuth2 token
+    steps:
+      - stepId: refresh_token_request
+        description: Get new access token
+        stepFunction:
+          functionName: request
+          parameters:
+            baseUrl: https://api.provider.com
+            url: /oauth/token
+            method: post
+            authorization:
+              type: none
+            args:
+              - name: grant_type
+                value: refresh_token
+                in: body
+              - name: refresh_token
+                value: $.credentials.refreshToken
+                in: body
+              - name: client_id
+                value: $.credentials.clientId
+                in: body
+              - name: client_secret
+                value: $.credentials.clientSecret
+                in: body
 ```
 
 ---

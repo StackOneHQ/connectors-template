@@ -46,11 +46,13 @@ Use any matching results to inform the fieldConfigs you build.
 
 Getting a real sample response makes field mapping accurate.
 
-**If `cli_available` is true in session:**
+**If `cli_available` is true in session and the action already exists in the connector YAML:**
 ```bash
 npx @stackone/cli test {{provider}} list_{{resource}} --debug
 ```
 This shows the raw JSON before any mapping. Use the output to identify exact field paths.
+
+**If the action does not exist yet** (e.g., new connector with no actions built): Skip the CLI test for now — the action will be created in Step 3. Instead, use `vector_search` or `web_search` to find example API responses for the provider's endpoint, or ask the builder to provide one.
 
 **If CLI is not available:** Ask:
 > "Could you paste an example response from `{{provider}}`'s `{{resource}}` API endpoint? Even a partial response with one or two records is enough. This helps me map the fields accurately."
@@ -61,7 +63,7 @@ This shows the raw JSON before any mapping. Use the output to identify exact fie
 
 Work through resources one at a time.
 
-For each schema field (from `schema_fields` in session or the built-in schema from `unified-schemas.md`):
+For each schema field (from `schema_fields` in session, or — for built-in schemas — from the selected `schema_file` at `${CLAUDE_PLUGIN_ROOT}/{{schema_file}}`):
 
 1. Show the field: e.g., `first_name (string, required)`
 2. Ask: "What is the field path in the `{{provider}}` response? (e.g., `$.firstName`, `$.contact.first_name`)"
@@ -94,7 +96,7 @@ For each resource, create or update:
 
 Use the unified action pattern from `connector-patterns.md`. For each action in scope:
 
-- `name: unified_{{action}}_{{resource}}`
+- `actionId: unified_{{action}}_{{resource}}`
 - `actionType: {{action}}`
 - `schemaType: unified`
 - `schema: {{schema}}/{{resource}}`

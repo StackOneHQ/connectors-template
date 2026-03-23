@@ -59,11 +59,17 @@ If unavailable:
 
 ## Step 4: Pull or scaffold
 
-**If CLI available and provider exists in StackOne index:**
+**If CLI available, first check if a pullable connector exists:**
+```bash
+npx @stackone/cli list | grep -i {{provider}}
+```
+If found in the CLI list, pull it:
 ```bash
 npx @stackone/cli pull {{provider}}
 ```
 Verify `src/configs/{{provider}}/` was created. Save `connector_exists: true`.
+
+Note: A provider may have indexed actions (from Step 2) but no pullable connector config. Always check the CLI list before attempting `pull`.
 
 **If not in index or scaffolding fresh:**
 ```bash

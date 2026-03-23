@@ -712,6 +712,7 @@ actions:
       data: $.steps.create_sickness.output.data
   # Blind Mapped as the provider gives 500 while creating with right payload (need to recheck)
   - actionId: create_employee
+    published: false
     categories:
       - hris
     actionType: create
@@ -1331,7 +1332,7 @@ actions:
             response:
               collection: true
     result:
-      data: $.steps.get_all_other_leave_reasons_v1.output.data
+      data: $.steps.get_all_other_leave_reasons.output.data
   - actionId: approve_leave_request
     categories:
       - hris

@@ -66,9 +66,9 @@ WORKDAY_BASE_URL=https://api.workday.com
 | `YAML parse error at line N` | Invalid YAML syntax | Check indentation — use 2 spaces, not tabs |
 | `Missing required field: entrypointUrl` | Action missing URL | Add `entrypointUrl` to the action |
 | `Unknown actionType: custom2` | Typo in actionType | Valid: `custom`, `list`, `get`, `create`, `update`, `delete` |
-| `schemaType required for unified action` | Missing schemaType | Add `schemaType: unified` to the action |
-| `fieldConfigs required when schemaType is unified` | Missing field mapping | Add `fieldConfigs` array to the action |
-| `Missing step: map_fields` | Unified action missing pipeline step | Add all three steps: `request`, `map_fields`, `typecast` |
+| `schemaType required for unified action` | Missing schemaType (unified actions only) | Add `schemaType: unified` — only needed for unified actions, not `actionType: custom` |
+| `fieldConfigs required when schemaType is unified` | Missing field mapping (unified actions only) | Add `fieldConfigs` array — only applicable to unified actions |
+| `Missing step: map_fields` | Unified action missing pipeline step (unified actions only) | Add `request`, `map_fields`, `typecast` steps — only for unified actions |
 | `401 Unauthorized` | Bad credentials | Check `.env` and the `authentication` block in connector YAML |
 | `404 Not Found` | Wrong endpoint URL | Verify `entrypointUrl` against provider API docs |
 | `Cannot find module '@stackone/cli'` | CLI not installed | Run `npm install -g @stackone/cli` or use `npx` |

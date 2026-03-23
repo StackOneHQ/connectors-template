@@ -109,9 +109,8 @@ For conditional logic, transformations. **Wrap in single quotes.**
 - String manipulation: `'{{inputs.name.toUpperCase()}}'`
 
 **IMPORTANT:**
-- For `value` fields: use JSONPath `$.inputs.fieldName`
+- For `value` fields: prefer JSONPath `$.inputs.fieldName` for simple references. JEXL `'{{...}}'` is also supported in `value` fields when you need transformations, conditionals, or string manipulation.
 - For `condition` fields: use JEXL `'{{present(inputs.fieldName)}}'`
-- **Never use JEXL for `value` fields**
 
 ## Step Functions
 

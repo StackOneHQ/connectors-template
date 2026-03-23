@@ -134,10 +134,10 @@ Write the updated `test_artifacts` array back to `.connector-build-session.json`
 
 ### Deleting Test Records
 
-After the `update` step for a resource is verified, run `delete` on the test record created during `create`:
+After the last mutating step for a resource is verified (e.g., `update`, or `create` if no `update` exists), run `delete` on the test record created during `create`:
 
 - If `delete_{{resource}}` is in `action_scope`: run it targeting the created record's ID
-- After delete: run `get_{{resource}}` for that ID and confirm a 404 or empty response
+- After delete: if `get_{{resource}}` is in `action_scope`, run it for that ID and confirm a 404 or empty response
 - Mark the artifact as `cleaned_up: true` in the session file
 
 ### When Delete Is Not Available

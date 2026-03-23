@@ -31,6 +31,7 @@ npx @stackone/cli validate src/configs/{{provider}}/{{provider}}.connector.s1.ya
 
 Read each `.yaml` and `.partial.yaml` file in `src/configs/{{provider}}/` and check:
 - All unified actions have `schemaType: unified`
+- All unified actions have `entrypointUrl` and `entrypointHttpMethod`
 - All unified actions have a `fieldConfigs` array
 - All unified actions have all three steps: `request`, `map_fields` (version 2), `typecast` (version 2)
 - `list` actions have a `cursor` block
