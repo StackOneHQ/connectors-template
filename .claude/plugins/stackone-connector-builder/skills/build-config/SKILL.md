@@ -179,8 +179,8 @@ Read `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` and add a `$ref` 
 
 ```yaml
 actions:
-  $ref: {{provider}}.employees
-  $ref: {{provider}}.departments
+  - $ref: {{provider}}.employees.s1.partial.yaml
+  - $ref: {{provider}}.departments.s1.partial.yaml
 ```
 
 ---

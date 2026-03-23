@@ -728,7 +728,7 @@
 | `remote_policy_id` | `string` | Provider's unique identifier of the time off policy id associated with this balance |
 | `policy` | `TimeOffPolicies` | The time off policy associated with this balance |
 | `current_balance` | `number` | The current numeric balance for the associated employee and time off policy |
-| `initial_balance` | `number` | The initial numeric balance for the associated employee and time off policy as of the balance sta... |
+| `initial_balance` | `number` | The initial numeric balance for the associated employee and time off policy as of the balance start date |
 | `balance_unit` | `TimeOffBalanceUnitEnum` | The duration unit of the current balance |
 | `balance_start_date` | `string` | The date of when the initial balance quantity was set |
 | `balance_expiry_date` | `string` | The date of when the current balance expires |

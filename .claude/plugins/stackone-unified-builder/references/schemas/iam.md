@@ -131,7 +131,7 @@
 | `last_active_at` | `string` | The date this user was last active |
 | `last_login_at` | `string` | The date this user last logged in |
 | `created_at` | `string` | The date the user was created |
-| `updated_at` | `string` | The date the user was created |
+| `updated_at` | `string` | The date the user was last updated |
 | `multi_factor_enabled` | `array<IamMfaTypeEnum>` | The list of Multi-Factor Authentication (MFA) types enabled for the user. |
 | `avatar` | `File` | The user's avatar data. This generally contains a URL within this property's 'contents' array. |
 

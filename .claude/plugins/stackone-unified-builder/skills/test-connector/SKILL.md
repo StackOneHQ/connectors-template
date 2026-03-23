@@ -88,7 +88,7 @@ npx @stackone/cli test {{provider}} unified_{{action}}_{{resource}}
 
 **Field is null or missing in output:**
 > "Field `{{field}}` is missing. Let's debug:
-> 1. Run with `--debug` to see the raw provider response: `npx @stackone/cli test {{provider}} {{action}} --debug`
+> 1. Run with `--debug` to see the raw provider response: `npx @stackone/cli test {{provider}} unified_{{action}}_{{resource}} --debug`
 > 2. Find `{{field}}` in the raw response — what is the actual JSONPath?
 > 3. Update the `expression` in `fieldConfigs` to match."
 

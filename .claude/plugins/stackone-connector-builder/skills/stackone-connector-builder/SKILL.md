@@ -15,7 +15,7 @@ For connectors that normalise data to a standard schema, use `/build-unified-con
 | Step | Command | What it does |
 |------|---------|-------------|
 | 1 | `/setup-connector` | Provider name, index check, CLI pull or scaffold |
-| 2 | `/configure-auth` | Set up authentication (API key, OAuth2, Basic Auth) |
+| 2 | `/configure-auth` | Set up authentication (custom or OAuth2) |
 | 3 | `/discover-actions` | Choose scoped actions or discover everything |
 | 4 | `/build-config` | Generate YAML for all confirmed actions |
 | 5 | `/validate-connector` | Validate the YAML config |
@@ -95,7 +95,7 @@ Execute `/test-connector` logic. Saves: `tested: true`, `test_artifacts`, `compl
 
 ## Rules
 
-- Do not write YAML until Step 4 (`build-config`)
+- Do not write action YAML until Step 4 (`build-config`) — auth config written in Step 2 is the exception
 - Do not run tests until Step 5 (`validate-connector`) passes
 - Always clean up test records — log anything that cannot be removed
 - Always run `scramble_credentials` after testing

@@ -1,4 +1,3 @@
-````markdown
 # Field Mapping Guide
 
 Detailed reference for writing `fieldConfigs` in unified connectors.
@@ -318,4 +317,3 @@ This shows exactly what the provider returns before any mapping. Use it to find 
 - Do NOT use `objectMapping` — it is not supported by the validator
 - Use the inline block scalar `expression: |` pattern instead
 - In `group_data` context, confirm the step ID prefix is correct
-````
