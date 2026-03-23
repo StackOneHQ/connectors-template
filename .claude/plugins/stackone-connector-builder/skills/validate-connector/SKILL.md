@@ -49,13 +49,13 @@ Work through each action across all `{{provider}}.{{resource}}.s1.partial.yaml` 
 
 5. **`list` actions have pagination inputs (if supported)** — Actions named `list_*` should have pagination inputs (`page`, `per_page`, `offset`, `limit`, or provider-specific equivalent) with `required: false`, if the provider endpoint supports pagination.
 
-6. **`get` actions reference `${inputs.id}` in URL** — Actions named `get_*` must have `${inputs.id}` in `entrypointUrl` and an `id` input with `required: true`.
+6. **`get` actions reference `${inputs.id}` in step URL** — Actions named `get_*` must have `${inputs.id}` in the request step's `url` parameter and an `id` input with `required: true`.
 
-7. **`create` actions use POST** — Actions named `create_*` must have `entrypointHttpMethod: POST` and a `body` input with `type: object` and `required: true`.
+7. **`create` actions use POST** — Actions named `create_*` must have `method: post` in the request step.
 
-8. **`update` actions use PATCH or PUT** — Actions named `update_*` must have `entrypointHttpMethod: PATCH` or `entrypointHttpMethod: PUT`.
+8. **`update` actions use PATCH or PUT** — Actions named `update_*` must have `method: patch` or `method: put` in the request step.
 
-9. **`delete` actions use DELETE** — Actions named `delete_*` must have `entrypointHttpMethod: DELETE`.
+9. **`delete` actions use DELETE** — Actions named `delete_*` must have `method: delete` in the request step.
 
 10. **All `$ref` paths in main connector file exist** — Read `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`. For every `$ref` entry under `actions`, verify the referenced partial file exists on disk at the given relative path.
 
@@ -73,14 +73,16 @@ For each error from the CLI output or the manual checklist, identify the cause a
 
 **`Missing required field: entrypointUrl`**
 
-Cause: The action YAML block is missing the `entrypointUrl` key.
+Cause: A non-custom action (e.g., `actionType: list`) is missing the `entrypointUrl` key. Note: this error does not apply to `actionType: custom` actions, which do not require `entrypointUrl`.
 
-Fix — add the field:
+Fix — add the field to the non-custom action:
 ```yaml
 - actionId: list_employees
   categories:
     - {{category}}
-  actionType: custom
+  actionType: list
+  entrypointUrl: /employees        # <-- add this
+  entrypointHttpMethod: get        # <-- add this
   label: List Employees
   description: List all employees
   steps:

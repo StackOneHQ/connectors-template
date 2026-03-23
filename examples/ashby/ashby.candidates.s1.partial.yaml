@@ -51,7 +51,7 @@ actions:
             response:
               collection: true
     result:
-      data: $.steps.fetch_candidates.output.data
+      data: $.steps.fetch_candidates.output.data.results
       nextCursor: $.steps.fetch_candidates.output.data.nextCursor
       syncToken: $.steps.fetch_candidates.output.data.syncToken
       moreDataAvailable: $.steps.fetch_candidates.output.data.moreDataAvailable
@@ -543,7 +543,7 @@ actions:
             response:
               collection: true
     result:
-      data: $.steps.fetch_notes.output.data
+      data: $.steps.fetch_notes.output.data.results
       nextCursor: $.steps.fetch_notes.output.data.nextCursor
       syncToken: $.steps.fetch_notes.output.data.syncToken
       moreDataAvailable: $.steps.fetch_notes.output.data.moreDataAvailable

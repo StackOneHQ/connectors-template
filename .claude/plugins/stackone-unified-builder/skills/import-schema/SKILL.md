@@ -169,9 +169,9 @@ Once confirmed, save to `.connector-build-session.json`:
 >
 > These fields will be used as your `targetFieldKey` names in `/map-fields`. The next step is deciding which provider operations to build.
 >
-> - If you haven't set a provider yet: tell me which provider you're building for, then run `/check-connector`
+> - If you haven't set a provider yet: tell me which provider you're building for (ask directly — do not redirect to `/choose-schema`), then run `/check-connector`
 > - If provider is already set but connector hasn't been pulled/scaffolded: run `/check-connector`
 > - If provider + connector + actions are already set: run `/map-fields` directly"
 
 Update session:
-- `session_step` → `"check-connector"` (if provider is set but connector not yet pulled/scaffolded) or `"choose-schema"` (if provider is not set — the choose-schema flow will collect the provider name first since `provider` is missing)
+- `session_step` → `"map-fields"` (if provider, connector, and action_scope are all set) or `"check-connector"` (if provider is set but connector not yet pulled/scaffolded) or `"choose-schema"` (if provider is not set — ask for provider name directly before redirecting)

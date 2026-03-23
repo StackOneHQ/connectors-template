@@ -48,7 +48,7 @@ Getting a real sample response makes field mapping accurate.
 
 **If `cli_available` is true in session and the action already exists in the connector YAML:**
 ```bash
-npx @stackone/cli test {{provider}} list_{{resource}} --debug
+npx @stackone/cli test {{provider}} unified_list_{{resource}} --debug
 ```
 This shows the raw JSON before any mapping. Use the output to identify exact field paths.
 

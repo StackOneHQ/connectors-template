@@ -61,9 +61,9 @@ If unavailable:
 
 **If CLI available, first check if a pullable connector exists:**
 ```bash
-npx @stackone/cli list | grep -i {{provider}}
+npx @stackone/cli list | grep -iw {{provider}}
 ```
-If found in the CLI list, pull it:
+Use `-w` for word-boundary matching to avoid substring matches (e.g., `bamboo` matching `bamboohr`). If found in the CLI list, pull it:
 ```bash
 npx @stackone/cli pull {{provider}}
 ```

@@ -46,7 +46,7 @@ Use `test_actions` for automated testing:
 ```
 test_actions({
   provider: "{{provider}}",
-  actions: ["unified_list_{{resource}}", "unified_get_{{resource}}", "unified_create_{{resource}}", "unified_update_{{resource}}", "unified_delete_{{resource}}"]
+  actions: ["unified_list_{{resource}}", "unified_get_{{resource}}", "unified_create_{{resource}}", "unified_update_{{resource}}", "unified_delete_{{resource}}"],
   // Include only actions that exist in action_scope
 })
 ```
