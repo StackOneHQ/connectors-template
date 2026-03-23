@@ -73,29 +73,7 @@ For each error from the CLI output or the manual checklist, identify the cause a
 
 **`Missing required field: entrypointUrl`**
 
-Cause: A non-custom action (e.g., `actionType: list`) is missing the `entrypointUrl` key. Note: this error does not apply to `actionType: custom` actions, which do not require `entrypointUrl`.
-
-Fix — add the field to the non-custom action:
-```yaml
-- actionId: list_employees
-  categories:
-    - {{category}}
-  actionType: list
-  entrypointUrl: /employees        # <-- add this
-  entrypointHttpMethod: get        # <-- add this
-  label: List Employees
-  description: List all employees
-  steps:
-    - stepId: fetch_employees
-      description: Retrieve all employees
-      stepFunction:
-        functionName: request
-        parameters:
-          url: '/employees'
-          method: get
-  result:
-    data: $.steps.fetch_employees.output.data
-```
+Cause: This error applies to non-custom actions (`actionType: list`, `get`, etc.) that are missing the `entrypointUrl` key. This error should not occur in this plugin's workflow since all actions use `actionType: custom`, which does not require `entrypointUrl`. If you see this error, check that the action has `actionType: custom`.
 
 ---
 

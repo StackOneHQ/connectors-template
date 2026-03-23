@@ -69,7 +69,7 @@ Read the schema file. Use the **Endpoints** section to show the builder what API
 Ask:
 > "Which resource(s) do you need to expose? Here's what's available in `{{category}}`:"
 
-List the available resources by deriving them from the **Endpoints** section of the schema file (not the Models section, which includes helper types that are not buildable resources). Use the resource slugs from the endpoint paths (e.g., `/unified/hris/employees` → `employees`, `/unified/hris/groups/departments` → `departments`). Save these slugs directly to session since later steps use them for action names and file paths.
+List the available resources by deriving them from the **Endpoints** section of the schema file (not the Models section, which includes helper types that are not buildable resources). Only include canonical resource slugs that correspond to top-level CRUD-able entities — filter out operation-specific sub-paths like `/invite`, `/download`, `/upload`, `/batch`, or `/callback`. Use the resource slugs from the endpoint paths (e.g., `/unified/hris/employees` → `employees`, `/unified/hris/groups/departments` → `departments`). Save these slugs directly to session since later steps use them for action names and file paths.
 
 Once resources are chosen, show the fields table for each from the loaded schema file.
 

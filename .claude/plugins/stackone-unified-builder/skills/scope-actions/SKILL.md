@@ -54,10 +54,10 @@ Save the use case description to session as `use_case`.
 
 ## Step 3: Present a recommended scope
 
-First, resolve the provider key and check if indexed provider actions are available:
+First, resolve the provider key (from session `provider`) and check if indexed provider actions are available:
 ```
-map_provider_key("{{provider}}")  // Resolve to exact provider key
-get_provider_actions("{{resolved_provider_key}}")
+provider_key = map_provider_key(session.provider)
+get_provider_actions(provider_key)
 ```
 If indexed actions exist, use them to inform the recommendation — only suggest actions the provider's API actually supports. If no indexed data is available, recommend based on the session `resources` and use case, but note that support should be verified during testing.
 
