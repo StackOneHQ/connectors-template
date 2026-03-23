@@ -2,13 +2,10 @@
   label: List Employees
   categories:
     - hris
-  actionType: list
-  description: Returns a paginated list of employees from BambooHR using the employee directory endpoint.
-  details: Lists all employees with basic unified schema fields including ID, name, contact information, and employee number. Uses BambooHR's directory endpoint which returns a subset of fields. For full field detail including date of birth, address, and employment history, use get_employee.
+  actionType: custom
+  description: Returns a list of employees from BambooHR using the employee directory endpoint.
+  details: Lists all employees from the BambooHR directory. Returns employee data including names, contact information, job title, department, and employment status. For full employee detail including date of birth, address, and custom fields, use get_employee.
   resources: https://documentation.bamboohr.com/reference/get-employees-list
-  entrypointUrl: /employees/directory
-  entrypointHttpMethod: get
-
   steps:
     - stepId: get_employees
       description: Fetch all employees from BambooHR employee directory
@@ -21,84 +18,31 @@
             - name: Accept
               value: application/json
               in: headers
-
-    - stepId: map_employees_data
-      description: Map employee directory fields to unified HRIS schema
-      stepFunction:
-        functionName: map_fields
-        version: '2'
-        parameters:
-          fields:
-            - targetFieldKey: id
-              expression: $.id
-              type: string
-            - targetFieldKey: first_name
-              expression: $.firstName
-              type: string
-            - targetFieldKey: last_name
-              expression: $.lastName
-              type: string
-            - targetFieldKey: personal_email
-              expression: $.homeEmail
-              type: string
-            - targetFieldKey: personal_phone_number
-              expression: $.mobilePhone
-              type: string
-            - targetFieldKey: employee_number
-              expression: $.employeeNumber
-              type: string
-            - targetFieldKey: title
-              expression: $.jobTitle
-              type: string
-          dataSource: $.steps.get_employees.output.data.employees
-
-    - stepId: typecast_employees_data
-      description: Apply unified schema types to employee list data
-      stepFunction:
-        functionName: typecast
-        version: '2'
-        parameters:
-          fields:
-            - targetFieldKey: id
-              type: string
-            - targetFieldKey: first_name
-              type: string
-            - targetFieldKey: last_name
-              type: string
-            - targetFieldKey: personal_email
-              type: string
-            - targetFieldKey: personal_phone_number
-              type: string
-            - targetFieldKey: employee_number
-              type: string
-            - targetFieldKey: title
-              type: string
-          dataSource: $.steps.map_employees_data.output.data
-
   result:
-    data: $.steps.typecast_employees_data.output.data
+    data: $.steps.get_employees.output.data
 
 - actionId: get_employee
   label: Get Employee
   categories:
     - hris
-  actionType: get
-  description: Returns a single employee record by ID with full unified HRIS schema field mapping, including bank details and employment history.
-  details: Makes three parallel-style API calls — main employee fields, directDeposit table for all bank accounts, and jobInfo table for full employment history — then combines them into a single unified response. Bank details and employment history are fetched as complete arrays in one call each. 404s on table endpoints are handled gracefully and return empty arrays.
+  actionType: custom
+  description: Returns a single employee record by ID with the requested fields.
+  details: Retrieves detailed information for a specific employee from BambooHR. Uses the fields query parameter to request specific BambooHR field names. Returns raw BambooHR field names in the response.
   resources: https://documentation.bamboohr.com/reference/get-employee
-  entrypointUrl: /employees/:id
-  entrypointHttpMethod: get
-
   inputs:
     - name: id
-      description: The unique identifier of the employee to retrieve
+      description: The BambooHR employee ID
       type: string
       in: path
       required: true
-
+    - name: fields
+      description: Comma-separated list of BambooHR field names to return (e.g. firstName,lastName,jobTitle,department,workEmail)
+      type: string
+      in: query
+      required: false
   steps:
     - stepId: fetch_employee
-      description: Fetch core employee fields from BambooHR
+      description: Fetch employee by ID from BambooHR
       stepFunction:
         functionName: request
         parameters:
@@ -109,235 +53,101 @@
               value: application/json
               in: headers
             - name: fields
-              value: id,firstName,lastName,dateOfBirth,homeEmail,terminationDate,mobilePhone,hireDate,address1,address2,city,zipCode,country,employmentHistoryStatus,employeeNumber,maritalStatus,jobTitle,ssn
+              value: $.inputs.fields
               in: query
-
-    - stepId: fetch_bank_details
-      description: Fetch all bank account (direct deposit) records for the employee
-      stepFunction:
-        functionName: request
-        parameters:
-          url: /employees/${inputs.id}/tables/directDeposit
-          method: get
-          args:
-            - name: Accept
-              value: application/json
-              in: headers
-          customErrors:
-            - receivedStatus: 404
-              targetStatus: 200
-              message: No bank details found for this employee
-
-    - stepId: fetch_employment_history
-      description: Fetch full employment history (job info) records for the employee
-      stepFunction:
-        functionName: request
-        parameters:
-          url: /employees/${inputs.id}/tables/jobInfo
-          method: get
-          args:
-            - name: Accept
-              value: application/json
-              in: headers
-          customErrors:
-            - receivedStatus: 404
-              targetStatus: 200
-              message: No employment history found for this employee
-
-    - stepId: group_employee_data
-      description: Combine core employee data, bank details, and employment history into a single object
-      stepFunction:
-        functionName: group_data
-        parameters:
-          stepsDataToGroup:
-            - fetch_employee
-            - fetch_bank_details
-            - fetch_employment_history
-          isSingleRecord: true
-
-    - stepId: map_employee_data
-      description: Map combined employee data to unified HRIS schema fields
-      stepFunction:
-        functionName: map_fields
-        version: '2'
-        parameters:
-          dataSource: $.steps.group_employee_data.output.data
-          fields:
-            - targetFieldKey: id
-              expression: $.fetch_employee.id
-              type: string
-            - targetFieldKey: first_name
-              expression: $.fetch_employee.firstName
-              type: string
-            - targetFieldKey: last_name
-              expression: $.fetch_employee.lastName
-              type: string
-            - targetFieldKey: date_of_birth
-              expression: $.fetch_employee.dateOfBirth
-              type: string
-            - targetFieldKey: personal_email
-              expression: $.fetch_employee.homeEmail
-              type: string
-            - targetFieldKey: termination_date
-              expression: $.fetch_employee.terminationDate
-              type: string
-            - targetFieldKey: personal_phone_number
-              expression: $.fetch_employee.mobilePhone
-              type: string
-            - targetFieldKey: start_date
-              expression: $.fetch_employee.hireDate
-              type: string
-            - targetFieldKey: home_location
-              type: object
-              expression: |
-                {
-                  "street_1": $.fetch_employee.address1,
-                  "street_2": $.fetch_employee.address2,
-                  "city": $.fetch_employee.city,
-                  "zip_code": $.fetch_employee.zipCode,
-                  "country": $.fetch_employee.country
-                }
-            - targetFieldKey: employments
-              type: object
-              expression: $.fetch_employment_history.data
-            - targetFieldKey: employee_number
-              expression: $.fetch_employee.employeeNumber
-              type: string
-            - targetFieldKey: marital_status
-              expression: $.fetch_employee.maritalStatus
-              type: string
-            - targetFieldKey: national_identity_numbers
-              type: object
-              expression: |
-                [{
-                  "value": $.fetch_employee.ssn,
-                  "type": "ssn"
-                }]
-            - targetFieldKey: bank_details
-              type: object
-              expression: $.fetch_bank_details.data
-            - targetFieldKey: title
-              expression: $.fetch_employee.jobTitle
-              type: string
-
-    - stepId: typecast_employee_data
-      description: Apply unified schema types to combined employee data
-      stepFunction:
-        functionName: typecast
-        version: '2'
-        parameters:
-          dataSource: $.steps.map_employee_data.output.data
-          fields:
-            - targetFieldKey: id
-              type: string
-            - targetFieldKey: first_name
-              type: string
-            - targetFieldKey: last_name
-              type: string
-            - targetFieldKey: date_of_birth
-              type: datetime_string
-            - targetFieldKey: personal_email
-              type: string
-            - targetFieldKey: termination_date
-              type: datetime_string
-            - targetFieldKey: personal_phone_number
-              type: string
-            - targetFieldKey: start_date
-              type: datetime_string
-            - targetFieldKey: employee_number
-              type: string
-            - targetFieldKey: marital_status
-              type: string
-            - targetFieldKey: title
-              type: string
-
+              condition: '{{present(inputs.fields)}}'
   result:
-    data: $.steps.typecast_employee_data.output.data
+    data: $.steps.fetch_employee.output.data
 
 - actionId: create_employee
   label: Create Employee
   categories:
     - hris
-  actionType: create
+  actionType: custom
   description: Creates a new employee record in BambooHR.
-  details: Creates a new employee with the provided personal and contact details. First name and last name are required. All other fields are optional and will only be sent if provided.
-  resources: https://documentation.bamboohr.com/reference/post-employee
-  entrypointUrl: /employees
-  entrypointHttpMethod: post
-
+  details: Creates a new employee with the provided fields. firstName and lastName are required. All other fields are optional. Returns the Location header with the new employee URL.
+  resources: https://documentation.bamboohr.com/reference/add-employee-1
   inputs:
-    - name: first_name
-      description: The employee's first name
+    - name: firstName
+      description: Employee first name
       type: string
       in: body
       required: true
-    - name: last_name
-      description: The employee's last name
+    - name: lastName
+      description: Employee last name
       type: string
       in: body
       required: true
-    - name: date_of_birth
-      description: The employee's date of birth in YYYY-MM-DD format
-      type: datetime_string
-      in: body
-      required: false
-    - name: personal_email
-      description: The employee's personal email address
+    - name: jobTitle
+      description: Employee job title
       type: string
       in: body
       required: false
-    - name: personal_phone_number
-      description: The employee's personal mobile phone number
+    - name: department
+      description: Employee department name
       type: string
       in: body
       required: false
-    - name: start_date
-      description: The employee's hire date in YYYY-MM-DD format
-      type: datetime_string
-      in: body
-      required: false
-    - name: title
-      description: The employee's job title
+    - name: workEmail
+      description: Employee work email address
       type: string
       in: body
       required: false
-    - name: employee_number
-      description: The assigned employee number or ID
+    - name: homeEmail
+      description: Employee personal email address
       type: string
       in: body
       required: false
-    - name: marital_status
-      description: The employee's marital status
+    - name: mobilePhone
+      description: Employee mobile phone number
       type: string
       in: body
       required: false
-    - name: home_location
-      description: The employee's home address details
-      type: object
+    - name: hireDate
+      description: Employee hire date in YYYY-MM-DD format
+      type: string
       in: body
       required: false
-      properties:
-        - name: street_1
-          description: First line of the home address
-          type: string
-          required: false
-        - name: street_2
-          description: Second line of the home address
-          type: string
-          required: false
-        - name: city
-          description: City of the home address
-          type: string
-          required: false
-        - name: zip_code
-          description: ZIP or postal code of the home address
-          type: string
-          required: false
-        - name: country
-          description: Country of the home address
-          type: string
-          required: false
-
+    - name: dateOfBirth
+      description: Employee date of birth in YYYY-MM-DD format
+      type: string
+      in: body
+      required: false
+    - name: employeeNumber
+      description: Assigned employee number
+      type: string
+      in: body
+      required: false
+    - name: maritalStatus
+      description: Employee marital status
+      type: string
+      in: body
+      required: false
+    - name: address1
+      description: First line of home address
+      type: string
+      in: body
+      required: false
+    - name: address2
+      description: Second line of home address
+      type: string
+      in: body
+      required: false
+    - name: city
+      description: Home address city
+      type: string
+      in: body
+      required: false
+    - name: zipCode
+      description: Home address ZIP or postal code
+      type: string
+      in: body
+      required: false
+    - name: country
+      description: Home address country
+      type: string
+      in: body
+      required: false
   steps:
     - stepId: create_employee
       description: Create new employee record in BambooHR
@@ -354,159 +164,169 @@
               value: application/json
               in: headers
             - name: firstName
-              value: $.inputs.first_name
+              value: $.inputs.firstName
               in: body
             - name: lastName
-              value: $.inputs.last_name
+              value: $.inputs.lastName
               in: body
-            - name: dateOfBirth
-              value: $.inputs.date_of_birth
-              in: body
-              condition: '{{present(inputs.date_of_birth)}}'
-            - name: homeEmail
-              value: $.inputs.personal_email
-              in: body
-              condition: '{{present(inputs.personal_email)}}'
-            - name: mobilePhone
-              value: $.inputs.personal_phone_number
-              in: body
-              condition: '{{present(inputs.personal_phone_number)}}'
-            - name: hireDate
-              value: $.inputs.start_date
-              in: body
-              condition: '{{present(inputs.start_date)}}'
             - name: jobTitle
-              value: $.inputs.title
+              value: $.inputs.jobTitle
               in: body
-              condition: '{{present(inputs.title)}}'
+              condition: '{{present(inputs.jobTitle)}}'
+            - name: department
+              value: $.inputs.department
+              in: body
+              condition: '{{present(inputs.department)}}'
+            - name: workEmail
+              value: $.inputs.workEmail
+              in: body
+              condition: '{{present(inputs.workEmail)}}'
+            - name: homeEmail
+              value: $.inputs.homeEmail
+              in: body
+              condition: '{{present(inputs.homeEmail)}}'
+            - name: mobilePhone
+              value: $.inputs.mobilePhone
+              in: body
+              condition: '{{present(inputs.mobilePhone)}}'
+            - name: hireDate
+              value: $.inputs.hireDate
+              in: body
+              condition: '{{present(inputs.hireDate)}}'
+            - name: dateOfBirth
+              value: $.inputs.dateOfBirth
+              in: body
+              condition: '{{present(inputs.dateOfBirth)}}'
             - name: employeeNumber
-              value: $.inputs.employee_number
+              value: $.inputs.employeeNumber
               in: body
-              condition: '{{present(inputs.employee_number)}}'
+              condition: '{{present(inputs.employeeNumber)}}'
             - name: maritalStatus
-              value: $.inputs.marital_status
+              value: $.inputs.maritalStatus
               in: body
-              condition: '{{present(inputs.marital_status)}}'
+              condition: '{{present(inputs.maritalStatus)}}'
             - name: address1
-              value: $.inputs.home_location.street_1
+              value: $.inputs.address1
               in: body
-              condition: '{{present(inputs.home_location.street_1)}}'
+              condition: '{{present(inputs.address1)}}'
             - name: address2
-              value: $.inputs.home_location.street_2
+              value: $.inputs.address2
               in: body
-              condition: '{{present(inputs.home_location.street_2)}}'
+              condition: '{{present(inputs.address2)}}'
             - name: city
-              value: $.inputs.home_location.city
+              value: $.inputs.city
               in: body
-              condition: '{{present(inputs.home_location.city)}}'
+              condition: '{{present(inputs.city)}}'
             - name: zipCode
-              value: $.inputs.home_location.zip_code
+              value: $.inputs.zipCode
               in: body
-              condition: '{{present(inputs.home_location.zip_code)}}'
+              condition: '{{present(inputs.zipCode)}}'
             - name: country
-              value: $.inputs.home_location.country
+              value: $.inputs.country
               in: body
-              condition: '{{present(inputs.home_location.country)}}'
-
+              condition: '{{present(inputs.country)}}'
   result:
-    message: Employee created successfully
-    data:
-      id: $.steps.create_employee.output.data.id
+    data: $.steps.create_employee.output.data
 
 - actionId: update_employee
   label: Update Employee
   categories:
     - hris
-  actionType: update
+  actionType: custom
   description: Updates an existing employee record in BambooHR.
-  details: Updates one or more fields on an existing employee. Only provided fields will be updated — all body fields are optional except the employee ID path parameter. BambooHR uses POST (not PATCH) for employee field updates.
+  details: Updates one or more fields on an existing employee. Only provided fields will be sent. BambooHR uses POST (not PATCH) for employee field updates.
   resources: https://documentation.bamboohr.com/reference/update-employee
-  entrypointUrl: /employees/:id
-  entrypointHttpMethod: post
-
   inputs:
     - name: id
-      description: The unique identifier of the employee to update
+      description: The BambooHR employee ID
       type: string
       in: path
       required: true
-    - name: first_name
-      description: The employee's first name
+    - name: firstName
+      description: Employee first name
       type: string
       in: body
       required: false
-    - name: last_name
-      description: The employee's last name
+    - name: lastName
+      description: Employee last name
       type: string
       in: body
       required: false
-    - name: date_of_birth
-      description: The employee's date of birth in YYYY-MM-DD format
-      type: datetime_string
-      in: body
-      required: false
-    - name: personal_email
-      description: The employee's personal email address
+    - name: jobTitle
+      description: Employee job title
       type: string
       in: body
       required: false
-    - name: personal_phone_number
-      description: The employee's personal mobile phone number
+    - name: department
+      description: Employee department name
       type: string
       in: body
       required: false
-    - name: start_date
-      description: The employee's hire date in YYYY-MM-DD format
-      type: datetime_string
-      in: body
-      required: false
-    - name: termination_date
-      description: The employee's termination date in YYYY-MM-DD format
-      type: datetime_string
-      in: body
-      required: false
-    - name: title
-      description: The employee's job title
+    - name: workEmail
+      description: Employee work email address
       type: string
       in: body
       required: false
-    - name: employee_number
-      description: The assigned employee number or ID
+    - name: homeEmail
+      description: Employee personal email address
       type: string
       in: body
       required: false
-    - name: marital_status
-      description: The employee's marital status
+    - name: mobilePhone
+      description: Employee mobile phone number
       type: string
       in: body
       required: false
-    - name: home_location
-      description: The employee's home address details
-      type: object
+    - name: hireDate
+      description: Employee hire date in YYYY-MM-DD format
+      type: string
       in: body
       required: false
-      properties:
-        - name: street_1
-          description: First line of the home address
-          type: string
-          required: false
-        - name: street_2
-          description: Second line of the home address
-          type: string
-          required: false
-        - name: city
-          description: City of the home address
-          type: string
-          required: false
-        - name: zip_code
-          description: ZIP or postal code of the home address
-          type: string
-          required: false
-        - name: country
-          description: Country of the home address
-          type: string
-          required: false
-
+    - name: terminationDate
+      description: Employee termination date in YYYY-MM-DD format
+      type: string
+      in: body
+      required: false
+    - name: dateOfBirth
+      description: Employee date of birth in YYYY-MM-DD format
+      type: string
+      in: body
+      required: false
+    - name: employeeNumber
+      description: Assigned employee number
+      type: string
+      in: body
+      required: false
+    - name: maritalStatus
+      description: Employee marital status
+      type: string
+      in: body
+      required: false
+    - name: address1
+      description: First line of home address
+      type: string
+      in: body
+      required: false
+    - name: address2
+      description: Second line of home address
+      type: string
+      in: body
+      required: false
+    - name: city
+      description: Home address city
+      type: string
+      in: body
+      required: false
+    - name: zipCode
+      description: Home address ZIP or postal code
+      type: string
+      in: body
+      required: false
+    - name: country
+      description: Home address country
+      type: string
+      in: body
+      required: false
   steps:
     - stepId: update_employee
       description: Update employee record fields in BambooHR
@@ -523,94 +343,95 @@
               value: application/json
               in: headers
             - name: firstName
-              value: $.inputs.first_name
+              value: $.inputs.firstName
               in: body
-              condition: '{{present(inputs.first_name)}}'
+              condition: '{{present(inputs.firstName)}}'
             - name: lastName
-              value: $.inputs.last_name
+              value: $.inputs.lastName
               in: body
-              condition: '{{present(inputs.last_name)}}'
-            - name: dateOfBirth
-              value: $.inputs.date_of_birth
-              in: body
-              condition: '{{present(inputs.date_of_birth)}}'
-            - name: homeEmail
-              value: $.inputs.personal_email
-              in: body
-              condition: '{{present(inputs.personal_email)}}'
-            - name: mobilePhone
-              value: $.inputs.personal_phone_number
-              in: body
-              condition: '{{present(inputs.personal_phone_number)}}'
-            - name: hireDate
-              value: $.inputs.start_date
-              in: body
-              condition: '{{present(inputs.start_date)}}'
-            - name: terminationDate
-              value: $.inputs.termination_date
-              in: body
-              condition: '{{present(inputs.termination_date)}}'
+              condition: '{{present(inputs.lastName)}}'
             - name: jobTitle
-              value: $.inputs.title
+              value: $.inputs.jobTitle
               in: body
-              condition: '{{present(inputs.title)}}'
+              condition: '{{present(inputs.jobTitle)}}'
+            - name: department
+              value: $.inputs.department
+              in: body
+              condition: '{{present(inputs.department)}}'
+            - name: workEmail
+              value: $.inputs.workEmail
+              in: body
+              condition: '{{present(inputs.workEmail)}}'
+            - name: homeEmail
+              value: $.inputs.homeEmail
+              in: body
+              condition: '{{present(inputs.homeEmail)}}'
+            - name: mobilePhone
+              value: $.inputs.mobilePhone
+              in: body
+              condition: '{{present(inputs.mobilePhone)}}'
+            - name: hireDate
+              value: $.inputs.hireDate
+              in: body
+              condition: '{{present(inputs.hireDate)}}'
+            - name: terminationDate
+              value: $.inputs.terminationDate
+              in: body
+              condition: '{{present(inputs.terminationDate)}}'
+            - name: dateOfBirth
+              value: $.inputs.dateOfBirth
+              in: body
+              condition: '{{present(inputs.dateOfBirth)}}'
             - name: employeeNumber
-              value: $.inputs.employee_number
+              value: $.inputs.employeeNumber
               in: body
-              condition: '{{present(inputs.employee_number)}}'
+              condition: '{{present(inputs.employeeNumber)}}'
             - name: maritalStatus
-              value: $.inputs.marital_status
+              value: $.inputs.maritalStatus
               in: body
-              condition: '{{present(inputs.marital_status)}}'
+              condition: '{{present(inputs.maritalStatus)}}'
             - name: address1
-              value: $.inputs.home_location.street_1
+              value: $.inputs.address1
               in: body
-              condition: '{{present(inputs.home_location.street_1)}}'
+              condition: '{{present(inputs.address1)}}'
             - name: address2
-              value: $.inputs.home_location.street_2
+              value: $.inputs.address2
               in: body
-              condition: '{{present(inputs.home_location.street_2)}}'
+              condition: '{{present(inputs.address2)}}'
             - name: city
-              value: $.inputs.home_location.city
+              value: $.inputs.city
               in: body
-              condition: '{{present(inputs.home_location.city)}}'
+              condition: '{{present(inputs.city)}}'
             - name: zipCode
-              value: $.inputs.home_location.zip_code
+              value: $.inputs.zipCode
               in: body
-              condition: '{{present(inputs.home_location.zip_code)}}'
+              condition: '{{present(inputs.zipCode)}}'
             - name: country
-              value: $.inputs.home_location.country
+              value: $.inputs.country
               in: body
-              condition: '{{present(inputs.home_location.country)}}'
-
+              condition: '{{present(inputs.country)}}'
   result:
-    message: Employee updated successfully
-    data:
-      id: $.inputs.id
+    data: $.steps.update_employee.output.data
 
 - actionId: terminate_employee
   label: Terminate Employee
   categories:
     - hris
-  actionType: delete
+  actionType: custom
   description: Terminates an employee in BambooHR by setting their termination date.
-  details: BambooHR does not support hard deletion of employee records. This action terminates an employee by setting their termination date. The employee record remains accessible in the system after termination.
+  details: BambooHR does not support hard deletion of employee records. This action terminates an employee by setting their terminationDate field. The employee record remains accessible in the system after termination.
   resources: https://documentation.bamboohr.com/reference/update-employee
-  entrypointUrl: /employees/:id
-  entrypointHttpMethod: post
-
   inputs:
     - name: id
-      description: The unique identifier of the employee to terminate
+      description: The BambooHR employee ID
       type: string
       in: path
       required: true
-    - name: termination_date
+    - name: terminationDate
       description: The termination date in YYYY-MM-DD format
-      type: datetime_string
+      type: string
       in: body
       required: true
-
   steps:
     - stepId: terminate_employee
       description: Set termination date on employee record in BambooHR
@@ -627,10 +448,7 @@
               value: application/json
               in: headers
             - name: terminationDate
-              value: $.inputs.termination_date
+              value: $.inputs.terminationDate
               in: body
-
   result:
-    message: Employee terminated successfully
-    data:
-      id: $.inputs.id
+    data: $.steps.terminate_employee.output.data
