@@ -18,7 +18,8 @@ Each plugin has detailed reference files in its `references/` directory covering
 | Scenario | Command/Trigger |
 |----------|----------------|
 | First time / unsure | `/on-boarding` |
-| Schema-based connector (know what you want) | `start unified build for [provider]` |
+| Generic (non-unified) connector | `/build-connector` |
+| Schema-based (unified) connector | `/build-unified-connector` or `start unified build for [provider]` |
 | Agentic connector (know what you want) | Just describe what you want |
 | Test connector with AI agent | `/test-mcp-connector <provider>` |
 
@@ -56,7 +57,7 @@ When building Schema-Based connectors, follow this workflow:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  1. FORK CONNECTOR                                          │
-│     └─ Run `stackone pull <provider>` to get existing      │
+│     └─ Run `npx @stackone/cli pull <provider>` to get existing      │
 │     └─ Fork existing or create new from template           │
 ├─────────────────────────────────────────────────────────────┤
 │  2. BUILD AUTH                                              │
@@ -102,7 +103,7 @@ When building Schema-Based connectors, follow this workflow:
 First, pull the existing connector from StackOne:
 ```bash
 # Pull existing connector from StackOne registry
-stackone pull <provider>
+npx @stackone/cli pull <provider>
 ```
 
 If pull succeeds: Fork and modify the existing connector
@@ -123,7 +124,7 @@ Before anything else, configure and validate authentication:
 Push connector and create a test account:
 ```bash
 # Push to your profile
-stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile <your-profile>
+npx @stackone/cli push src/configs/<provider>/<provider>.connector.s1.yaml --profile <your-profile>
 
 # User creates account in StackOne dashboard
 # Get account ID for testing
@@ -131,7 +132,7 @@ stackone push src/configs/<provider>/<provider>.connector.s1.yaml --profile <you
 
 **Step 4: Define Schema and Use Case**
 
-**🔴 CRITICAL**: Before researching endpoints, get the user's schema:
+**CRITICAL**: Before researching endpoints, get the user's schema:
 
 Ask the user:
 ```
@@ -151,13 +152,13 @@ Example format:
 
 **Step 5: Research & Present Options**
 
-**🔴 MANDATORY CHECKPOINT**: Research ALL endpoints, then present options:
+**MANDATORY CHECKPOINT**: Research ALL endpoints, then present options:
 
 | Endpoint | Field Coverage | Performance | Permissions | Status |
 |----------|----------------|-------------|-------------|--------|
 | Option A | 70% of schema  | Fast        | Narrow      | Active |
 | Option B | 100% of schema | Medium      | Moderate    | Active |
-| Option C | 100% of schema | Slow        | Broad       | ⚠️ Deprecated |
+| Option C | 100% of schema | Slow        | Broad       | Deprecated |
 
 **Get explicit user approval before proceeding to implementation.**
 
@@ -193,9 +194,7 @@ Test, refine, and push updates as needed.
 
 **File Structure:**
 - `src/configs/` – Provider-specific folders with YAML connector configs
-
-**Naming Convention:**
-- Provider folder: `src/configs/provider-name/` (lowercase)
+- Provider folder: `src/configs/providername/` (lowercase, no hyphens)
 - Config file: `provider.connector.s1.yaml`
 - Example: `src/configs/slack/slack.connector.s1.yaml`
 
@@ -230,7 +229,7 @@ This project has **skills** - documented workflows that you should follow when p
 3. Version Validation
 4. Config Building (YAML with partials)
 5. YAML Validation
-6. Coverage Validation (≥80%)
+6. Coverage Validation (>=80%)
 7. Action Tracking Setup
 8. Testing Phase (100% coverage, all auth types)
 9. Test Completion Verification
@@ -246,7 +245,7 @@ This project has **skills** - documented workflows that you should follow when p
 **Summary**: Comprehensive testing workflow for Falcon connectors:
 - Create action tracking file (mandatory)
 - Test every operation with EVERY auth type
-- Cycle-based testing (LIST → GET → CREATE → UPDATE → DELETE)
+- Cycle-based testing (LIST -> GET -> CREATE -> UPDATE -> DELETE)
 - Fix failures immediately
 - Verify 100% completion before proceeding
 - Update tracking file after each test
@@ -350,21 +349,55 @@ These skills are for building connectors that map provider data to **customer-de
 - **PRACTICAL UTILITY**: Focus on production-ready operations; ignore deprecated/internal endpoints
 - **LEAVE NO TRACE**: Clean up test data after testing; scramble credentials when done
 
-## Critical Workflow (STRICT ORDER)
+## Workflows
 
-Follow this **exact sequence** when building Falcon API configurations:
+### Plugin Workflows (Recommended)
 
-1. **Research Phase (PARALLEL)** → Launch `discover_actions` subagent + main agent for auth/docs/external repos
-2. **Synchronization** → Collect and integrate subagent results
-3. **Version Validation** → `analyze_versioning()` → Detect/resolve API version conflicts
-4. **Config Building** → Create comprehensive YAML with all discovered operations
-5. **YAML Validation** → `stackone validate src/configs/<provider>/<provider>.connector.s1.yaml`
-6. **Coverage Validation** → `check_all_endpoints()` → Confirm ≥80% coverage
-7. **Action Tracking Setup** → **MANDATORY** - Save action inventory to `/tmp/<provider>_actions_tracking.json`
-8. **Testing Phase** → `test_actions()` → Test EVERY operation with real API calls for EVERY auth type
-9. **Test Completion Verification** → Verify 100% coverage
-10. **Security** → `scramble_credentials()` → Secure all credentials
-11. **Meta Feedback** → `meta_feedback()` → **MANDATORY** - Send feedback for tracking
+The plugins automate the full build process. Use these when possible:
+
+**Generic connector (`/build-connector`):**
+
+| Step | Command | What it does |
+|------|---------|--------------|
+| 1 | `/setup-connector` | Provider setup, checks StackOne index, CLI pull or scaffold |
+| 2 | `/configure-auth` | Auth configuration (API key, OAuth2, Basic Auth, custom) |
+| 3 | `/discover-actions` | Choose scoped or maximal discovery (MCP-powered) |
+| 4 | `/build-config` | Generate YAML with `actionType: custom` for all actions |
+| 5 | `/validate-connector` | Validate YAML structure |
+| 6 | `/test-connector` | Live test + automatic cleanup + credential scrambling |
+
+**Unified connector (`/build-unified-connector`):**
+
+| Step | Command | What it does |
+|------|---------|--------------|
+| 1 | `/choose-schema` | Pick a StackOne built-in schema, point to your own, or define one interactively |
+| 2 | `/check-connector` | Check if a base connector exists, pull it or scaffold a new one |
+| 3 | `/scope-actions` | Choose which resources and CRUD operations to expose |
+| 4 | `/map-fields` | Map provider API fields to your schema, writes YAML partials |
+| 5 | `/validate-connector` | Validate the YAML config structure |
+| 6 | `/test-connector` | Test live against the provider API and verify field output |
+
+**Plugin features:**
+- **Session persistence** — progress is saved to `.connector-build-session.json` so you can pause and resume at any step
+- **Two discovery modes** — *Scoped* (vector search, quick) or *Maximal* (async MCP, 5-15 min, full coverage)
+- **Test cleanup** — every record created during testing is tracked and deleted afterwards
+- **Automatic credential scrambling** — `scramble_credentials` is always called after testing
+
+### Manual Workflow (Legacy)
+
+When not using plugins, follow this sequence:
+
+1. **Research Phase (PARALLEL)** -> Launch `discover_actions` subagent + main agent for auth/docs/external repos
+2. **Synchronization** -> Collect and integrate subagent results
+3. **Version Validation** -> `analyze_versioning()` -> Detect/resolve API version conflicts
+4. **Config Building** -> Create comprehensive YAML with all discovered operations
+5. **YAML Validation** -> `npx @stackone/cli validate src/configs/<provider>/<provider>.connector.s1.yaml`
+6. **Coverage Validation** -> Confirm adequate endpoint coverage
+7. **Action Tracking Setup** -> **MANDATORY** - Save action inventory to `/tmp/<provider>_actions_tracking.json`
+8. **Testing Phase** -> `test_actions()` -> Test EVERY operation with real API calls for EVERY auth type
+9. **Test Completion Verification** -> Verify 100% coverage
+10. **Security** -> `scramble_credentials()` -> Secure all credentials
+11. **Meta Feedback** -> `meta_feedback()` -> **MANDATORY** - Send feedback for tracking
 
 **Skip/Disorder = Incomplete Task**
 
@@ -372,35 +405,35 @@ Follow this **exact sequence** when building Falcon API configurations:
 
 ### Quick Reference Workflow
 
-**Step 0:** Reference existing connector → `src/configs/` (same category/auth type)
-**Step 1:** StackOne context → `get_stackone_categories()`, `get_stackone_actions(category)`
-**Step 2:** Action discovery → `discover_actions()` (PRIMARY - autonomous subagent)
-**Step 3:** Auth research → `vector_search()`, `web_search()`
-**Step 4:** Documentation → `get_provider_coverage()`, `fetch()`, `extract_oas_actions()`
-**Step 5:** External repos → `get_external_integrations()`, `scan_external_repo()`
-**Step 6:** Parallel execution → Synchronize all results
+**Step 0:** Reference existing connector -> `src/configs/` (same category/auth type)
+**Step 1:** StackOne context -> `get_stackone_categories()`, `get_stackone_actions(category)`
+**Step 2:** Action discovery -> `discover_actions()` (PRIMARY - autonomous subagent)
+**Step 3:** Auth research -> `vector_search()`, `web_search()`
+**Step 4:** Documentation -> `get_provider_coverage()`, `fetch()`, `extract_oas_actions()`
+**Step 5:** External repos -> `get_external_integrations()`, `scan_external_repo()`
+**Step 6:** Parallel execution -> Synchronize all results
 
 ### Action Discovery (PRIMARY)
 
 **Check S3 first:**
 ```typescript
-map_provider_key("provider_name") → Get exact provider key
-get_provider_actions("provider_key") → Check for indexed data
+map_provider_key("provider_name") // Get exact provider key
+get_provider_actions("provider_key") // Check for indexed data
 ```
 
 **Launch autonomous discovery if no data exists:**
 ```typescript
 // Launch (returns immediately)
 discover_actions({ provider: "provider_name", maxIterations: 30 })
-→ { taskId: "rpc_xxx", ... }
+// -> { taskId: "rpc_xxx", ... }
 
 // Poll every 60-90 seconds
 get_discover_actions_task_status(taskId, provider)
-→ Status: "pending" → "running" → "complete"
+// Status: "pending" -> "running" -> "complete"
 
 // Extract results (5-15 minutes)
-→ Result: JSON report with ~100 discovered actions
-→ Auto-saved to S3 for future use
+// Result: JSON report with ~100 discovered actions
+// Auto-saved to S3 for future use
 ```
 
 **Benefits:** Autonomous (20+ tool calls), Comprehensive, Async (5-15 min), Persistent
@@ -415,11 +448,11 @@ const endpoints = discoveredActions.map(a => a.endpoints[0]);
 
 // Launch versioning analysis (2-5 minutes)
 analyze_versioning({ provider: "provider_name", endpoints, maxIterations: 5 })
-→ { taskId: "rpc_xxx", ... }
+// -> { taskId: "rpc_xxx", ... }
 
 // Poll for status
 get_analyze_versioning_task_status(taskId, provider)
-→ Result: Version analysis with conflicts, migrations, recommendations
+// Result: Version analysis with conflicts, migrations, recommendations
 ```
 
 **Checklist:**
@@ -431,7 +464,7 @@ get_analyze_versioning_task_status(taskId, provider)
 
 ### Parallel Execution Strategy
 
-1. **Minute 0:** Launch `discover_actions(provider)` → Get taskId
+1. **Minute 0:** Launch `discover_actions(provider)` -> Get taskId
 2. **Minutes 0-5:** Complete Steps 0-5 (reference, context, auth, docs, repos)
 3. **Minutes 5-15:** Poll `get_discover_actions_task_status()` every 60-90 seconds
 4. **Minute 15:** Synchronize results
@@ -444,23 +477,22 @@ get_analyze_versioning_task_status(taskId, provider)
 
 ### Prerequisites & Guidelines
 
-**Important:**
 - **Default to non-unified actions** unless explicitly told otherwise
   - Non-unified: Map exactly to provider's API, output provider's response entirely
   - Unified: Use StackOne schema - only use when explicitly requested
 - **Ignore deprecated actions, fields, and inputs**
 - **YAML Best Practice:** Never use `:` as a literal value (use parentheses instead)
-  - ✅ `description: Filter by status (pending, approved)`
-  - ❌ `description: Filter by status: pending`
+  - GOOD: `description: Filter by status (pending, approved)`
+  - BAD: `description: Filter by status: pending`
 
 ### File Structure (ALWAYS Use Partials)
 
-**⚠️ ALWAYS use the partials approach - never create monolithic connector files.**
+ALWAYS use the partials approach - never create monolithic connector files.
 
 ```
 src/configs/{provider}/
-├── {provider}.connector.s1.yaml              # Main: info, auth, $refs only
-└── {provider}.{resource}.s1.partial.yaml     # Actions grouped by resource
+  {provider}.connector.s1.yaml              # Main: info, auth, $refs only
+  {provider}.{resource}.s1.partial.yaml     # Actions grouped by resource
 ```
 
 - Folder names: **lowercase, no hyphens** (e.g., `smartrecruiters/`)
@@ -469,12 +501,12 @@ src/configs/{provider}/
 **Example:**
 ```
 src/configs/clickup/
-├── clickup.connector.s1.yaml      # Main file
-├── clickup.tasks.s1.partial.yaml  # Task actions
-└── clickup.users.s1.partial.yaml  # User actions
+  clickup.connector.s1.yaml      # Main file
+  clickup.tasks.s1.partial.yaml  # Task actions
+  clickup.users.s1.partial.yaml  # User actions
 ```
 
-## Key Rules
+### Key Rules
 
 - **camelCase** for ALL config field names (`scopeDefinitions`, NOT `scope_definitions`)
 - Never use `:` in YAML string values — use parentheses or rephrase instead
@@ -486,7 +518,7 @@ src/configs/clickup/
 - `response:` block: unified actions ONLY (omit for non-unified)
 - `context` field was renamed to `resources` (v2.2.0 breaking change)
 
-## Authentication
+### Authentication
 
 Only two auth types exist in Falcon:
 
@@ -496,9 +528,9 @@ Only two auth types exist in Falcon:
 Analyze the provider's ACTUAL auth flow, not their marketing terminology. See plugin `references/auth-patterns.md` for detailed patterns and examples.
 
 **Decision Guide:**
-- Token exchange via endpoint call? → `oauth2`
-- No token exchange? → `custom`
-- Custom headers (not Authorization)? → `authorization.type: none` + define headers in action `args`
+- Token exchange via endpoint call? -> `oauth2`
+- No token exchange? -> `custom`
+- Custom headers (not Authorization)? -> `authorization.type: none` + define headers in action `args`
 
 **Field Types:**
 - `setupFields`: T1-facing (OAuth apps, multi-tenant credentials) e.g., Client ID, Client Secret, scopes
@@ -542,7 +574,7 @@ authentication:
 
 #### OAuth 2.0 Examples
 
-**Typical OAuth:** `asana`, `gmail`, `xero` (Authorization code → Access Token → Refresh Token)
+**Typical OAuth:** `asana`, `gmail`, `xero` (Authorization code -> Access Token -> Refresh Token)
 **Complex:** `jira` (includes post-auth call)
 **Client Credentials:** `greenhouse`, `globalizationpartners`, `bigchange`
 
@@ -589,9 +621,9 @@ scopeDefinitions:
 
 ### Inputs
 
-**⚠️ For non-unified actions: inputs must match exactly the provider's request parameters.**
-**DO NOT CREATE INPUTS THAT DO NOT EXIST IN THE PROVIDER API.**
-**Ignore deprecated actions/fields/inputs.**
+For non-unified actions: inputs must match exactly the provider's request parameters.
+DO NOT CREATE INPUTS THAT DO NOT EXIST IN THE PROVIDER API.
+Ignore deprecated actions/fields/inputs.
 
 Reference with JSONPath: `$.inputs.fieldName` (preferred) or JEXL `'{{inputs.fieldName}}'` for conditional logic/string construction.
 
@@ -666,8 +698,8 @@ fieldConfigs:
 
 ### Steps
 
-**⚠️ Every step must have a `description` field.**
-**⚠️ Custom authentication headers must be in `args` of every action's request step.**
+Every step must have a `description` field.
+Custom authentication headers must be in `args` of every action's request step.
 
 ```yaml
 steps:
@@ -696,7 +728,7 @@ Defined in `packages/core/src/stepFunctions/stepFunctionsList.ts`.
 
 **Always use `args` for parameters (never direct `body` field).**
 
-**⚠️ IMPORTANT:**
+**IMPORTANT:**
 - **For `value` fields**: Use JSONPath `value: $.inputs.fieldName`
 - **For `condition` fields**: Use JEXL `condition: "{{present(inputs.fieldName)}}"`
 - **Never use JEXL `'{{inputs.fieldName}}'` for `value` fields**
@@ -810,7 +842,7 @@ For embedding dynamic values within strings:
 
 **ONLY USE JEXL EXPRESSIONS DEFINED IN THE EXPRESSIONS PACKAGE.**
 
-📖 **Full reference (operators, functions, examples):** `node_modules/@stackone/expressions/README.md`
+Full reference (operators, functions, examples): `node_modules/@stackone/expressions/README.md`
 
 For conditional logic, transformations, complex expressions (wrap in single quotes):
 
@@ -881,7 +913,7 @@ steps:
 
 #### Nested Objects in Queries
 
-**⚠️ IMPORTANT: When querying nested objects, ONLY return the `id` field if a separate action exists to fetch the full object.**
+**IMPORTANT: When querying nested objects, ONLY return the `id` field if a separate action exists to fetch the full object.**
 
 Applies to both GraphQL and REST APIs.
 
@@ -959,8 +991,7 @@ result:
 ### YAML Validation (MANDATORY)
 
 ```bash
-npm install -g @stackone/cli
-stackone validate [pathToYaml]
+npx @stackone/cli validate src/configs/<provider>/<provider>.connector.s1.yaml
 ```
 
 Config MUST pass validation before proceeding to testing.
@@ -970,11 +1001,10 @@ Config MUST pass validation before proceeding to testing.
 2. Similar connectors (same auth type or structure)
 3. Provider API documentation
 4. Working actions in same connector
-5. `connectors/DEVELOPERS.md`
 
 ### Action Tracking (MANDATORY)
 
-Before testing begins, create `/tmp/<provider>_actions_tracking.json` with complete action inventory including all auth types. Formula: `total_required_tests = operations × auth_types`.
+Before testing begins, create `/tmp/<provider>_actions_tracking.json` with complete action inventory including all auth types. Formula: `total_required_tests = operations x auth_types`.
 
 ### Testing Phase
 
@@ -985,15 +1015,16 @@ Before testing begins, create `/tmp/<provider>_actions_tracking.json` with compl
 **You MUST test every operation with EVERY auth type. Partial testing is NOT acceptable.**
 
 **Testing Cycles (Dependency Order):**
-1. LIST (no dependencies) → Capture IDs
+1. LIST (no dependencies) -> Capture IDs
 2. GET (use IDs from LIST)
 3. CREATE (generate new resources) — Full mode only
 4. UPDATE (use IDs from CREATE) — Full mode only
 5. DELETE (clean up from CREATE) — Full mode only
 
 **Testing Methods:**
-- **Async Tool**: `test_actions()` → poll `get_test_actions_task_status()` (best for batch testing)
-- **Manual CLI**: `stackone run --connector <file> --account <file> --credentials <file> --action-id <name> [--params <file>] [--debug]`
+- **Plugin**: `/test-connector` runs live tests with automatic cleanup and credential scrambling
+- **Async MCP Tool**: `test_actions()` -> poll `get_test_actions_task_status()` (best for batch testing)
+- **Manual CLI**: `npx @stackone/cli test <provider> <action-name> [--debug]`
 
 **Error Fix Strategy:**
 - **400:** Fix parameter structure/type/location
@@ -1015,7 +1046,9 @@ Before proceeding to security:
 
 ### Credential Scrambling (MANDATORY)
 
-After successful testing, call `scramble_credentials()` with `securityLevel: "PRODUCTION"`. Save ONLY scrambled versions. Delete originals.
+When using plugins, credential scrambling is **automatic** — `/test-connector` calls `scramble_credentials` after testing completes.
+
+When working manually, call `scramble_credentials()` with `securityLevel: "PRODUCTION"` after successful testing. Save ONLY scrambled versions. Delete originals.
 
 **Never:**
 - Commit unscrambled configs to git
@@ -1049,7 +1082,7 @@ Call `meta_feedback()` after EVERY config generation, regardless of user prefere
 
 ### Testing
 - `test_actions` / `get_test_actions_task_status` — Run connector action tests (async batch)
-- **Manual CLI**: `stackone run --connector <file> --account <file> --credentials <file> --action-id <name> [--params <file>] [--debug]`
+- **Manual CLI**: `npx @stackone/cli test <provider> <action-name> [--debug]`
 
 ### Description Improvement
 - `improve_descriptions` / `get_improve_descriptions_task_status` — Improve YAML descriptions (async)
@@ -1058,17 +1091,21 @@ Call `meta_feedback()` after EVERY config generation, regardless of user prefere
 - `scramble_credentials` — Scramble stored credentials after use (MANDATORY)
 - `meta_feedback` — Submit feedback for tracking (MANDATORY)
 
-### CLI Validation
-- `stackone validate <config_file>` — Validate YAML syntax and structure
+### CLI
+- `npx @stackone/cli validate <config_file>` — Validate YAML syntax and structure
+- `npx @stackone/cli test <provider> <action-name>` — Test a single action live
+- `npx @stackone/cli pull <provider>` — Pull existing connector from StackOne index
+- `npx @stackone/cli scaffold <provider>` — Create blank connector template
+- `npx @stackone/cli list` — List available connectors in StackOne index
 
 ## Boundaries
 
 **Always:**
-- Follow the 11-step Critical Workflow in exact order
-- Create action tracking file before testing
+- Use plugin workflows when available (`/build-connector` or `/build-unified-connector`)
+- When working manually, follow the 11-step workflow in exact order
 - Test every operation with EVERY auth type
 - Validate YAML before testing
-- Scramble credentials before storage
+- Scramble credentials before storage (automatic via plugins, manual otherwise)
 - Send meta feedback
 
 **Ask First:**
@@ -1078,11 +1115,10 @@ Call `meta_feedback()` after EVERY config generation, regardless of user prefere
 - Proceeding with partial test coverage
 
 **Never:**
-- Skip action tracking file creation
 - Skip testing any auth type
-- Proceed without 100% test coverage
+- Proceed without full test coverage
 - Skip `discover_actions` for research
-- Skip `scramble_credentials`
+- Skip `scramble_credentials` (unless using plugins, which do it automatically)
 - Skip `meta_feedback`
 - Commit plaintext credentials
 - Ignore validation errors

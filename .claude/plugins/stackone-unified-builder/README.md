@@ -1,11 +1,11 @@
-# stackone-connector-builder
+# stackone-unified-builder
 
 Interactive step-by-step wizard for building unified Falcon connectors. Guides external builders through every phase — from choosing an output schema to live API testing.
 
 ## Installation
 
 ```bash
-/plugin install stackone-connector-builder@stackone-claude-marketplace
+/plugin install stackone-unified-builder@stackone-claude-marketplace
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ Interactive step-by-step wizard for building unified Falcon connectors. Guides e
 ### Full wizard (recommended)
 
 ```bash
-/build-connector
+/build-unified-connector
 ```
 
 Walks through all 6 steps in sequence. Progress is saved to `.connector-build-session.json` so you can pause and resume at any time.
@@ -34,7 +34,7 @@ Each step can also be run independently. It reads the session file and picks up 
 ### Resume a session
 
 ```bash
-/build-connector
+/build-unified-connector
 ```
 
 If a `.connector-build-session.json` exists, the wizard will offer to resume from where you left off.
