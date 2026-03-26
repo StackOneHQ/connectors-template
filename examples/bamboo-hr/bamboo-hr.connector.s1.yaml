@@ -1,7 +1,7 @@
 StackOne: 1.0.0
 info:
-  title: BambooHR Unified
-  key: bamboo-hr-unified
+  title: BambooHR
+  key: bamboo-hr
   version: 1.0.0
   assets:
     icon: https://stackone-logos.com/api/bamboo_hr/filled/png

@@ -11,7 +11,7 @@ Step 5 of the unified connector build process.
 ## Session File
 
 Read `.connector-build-session.json`. Confirm:
-> "Validating connector at `src/configs/{{provider}}/`"
+> "Validating connector at `connectors/{{provider}}/`"
 
 If `connector_path` is missing:
 > "No connector path in session. Run `/check-connector` first."
@@ -24,12 +24,12 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/cli-commands.md` for the error table.
 
 **If `cli_available` is true:**
 ```bash
-npx @stackone/cli validate src/configs/{{provider}}/{{provider}}.connector.s1.yaml
+npx @stackone/cli validate connectors/{{provider}}/{{provider}}.connector.s1.yaml
 ```
 
 **If `cli_available` is false (manual review):**
 
-Read each `.yaml` and `.partial.yaml` file in `src/configs/{{provider}}/` and check:
+Read each `.yaml` and `.partial.yaml` file in `connectors/{{provider}}/` and check:
 - All unified actions have `schemaType: unified`
 - All unified actions have `entrypointUrl` and `entrypointHttpMethod`
 - All unified actions have a `fieldConfigs` array
@@ -97,7 +97,7 @@ When validation passes (or manual review finds no issues):
 > - Provider: `{{provider}}`
 > - Resources: {{resources}}
 > - Actions: {{action_scope}}
-> - Config path: `src/configs/{{provider}}/`"
+> - Config path: `connectors/{{provider}}/`"
 
 Save `"validated": true` to session.
 

@@ -46,7 +46,7 @@ Ask for the specific values needed:
 
 ## Step 3: Write auth block into connector YAML
 
-Read `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`.
+Read `connectors/{{provider}}/{{provider}}.connector.s1.yaml`.
 
 Replace the `authentication: {}` placeholder with the correct pattern from `auth-patterns.md`.
 

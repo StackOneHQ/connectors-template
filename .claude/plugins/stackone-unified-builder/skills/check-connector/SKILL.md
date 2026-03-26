@@ -85,11 +85,11 @@ Run:
 npx @stackone/cli pull {{provider}}
 ```
 
-Verify `src/configs/{{provider}}/` was created and contains at least one `.yaml` file.
+Verify `connectors/{{provider}}/` was created and contains at least one `.yaml` file.
 
 List the files found and confirm:
 > "Pulled connector config:
-> - `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`
+> - `connectors/{{provider}}/{{provider}}.connector.s1.yaml`
 > - ..."
 >
 > "This is a starting point — we'll add unified actions on top. Does the folder look right?"
@@ -98,7 +98,7 @@ Save to session:
 ```json
 {
   "connector_exists": true,
-  "connector_path": "src/configs/{{provider}}"
+  "connector_path": "connectors/{{provider}}"
 }
 ```
 
@@ -114,7 +114,7 @@ Ask the builder about authentication:
 > **C) Basic Auth** — username and password
 > **D) Something else** — I'll help you figure it out"
 
-Read `${CLAUDE_PLUGIN_ROOT}/references/connector-patterns.md` and use the matching pattern to create `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`.
+Read `${CLAUDE_PLUGIN_ROOT}/references/connector-patterns.md` and use the matching pattern to create `connectors/{{provider}}/{{provider}}.connector.s1.yaml`.
 
 **If CLI is available, try scaffolding first:**
 ```bash
@@ -126,7 +126,7 @@ Then open the generated file and update the `authentication` block to match the 
 **If CLI is not available:** Write the starter YAML directly using the matching pattern from `connector-patterns.md`.
 
 After creating the file, tell the builder:
-> "Created starter connector at `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`.
+> "Created starter connector at `connectors/{{provider}}/{{provider}}.connector.s1.yaml`.
 >
 > Before testing, add your credentials to `.env`:
 > ```
@@ -139,7 +139,7 @@ Save to session:
 ```json
 {
   "connector_exists": false,
-  "connector_path": "src/configs/{{provider}}",
+  "connector_path": "connectors/{{provider}}",
   "auth_type": "{{auth_type}}"
 }
 ```
@@ -149,7 +149,7 @@ Save to session:
 ## Handoff
 
 After the connector is set up:
-> "Connector is ready at `src/configs/{{provider}}/`. ✓
+> "Connector is ready at `connectors/{{provider}}/`. ✓
 >
 > **CLI available:** {{cli_available}}
 > **Connector was pre-existing:** {{connector_exists}}

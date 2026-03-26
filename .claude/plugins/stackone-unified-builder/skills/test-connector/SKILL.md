@@ -30,7 +30,7 @@ Ask before running anything:
 > {{PROVIDER_CREDENTIAL_NAME}}=your_value_here
 > ```
 >
-> The exact variable name is in `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` — look in the `authentication` block for the `args` key names."
+> The exact variable name is in `connectors/{{provider}}/{{provider}}.connector.s1.yaml` — look in the `authentication` block for the `args` key names."
 
 Wait for confirmation before proceeding.
 
@@ -133,7 +133,7 @@ When all actions pass:
 > | `{{resource2}}` | {{actions2}} | ✓ |
 >
 > **Next steps:**
-> 1. Commit your connector: `git add src/configs/{{provider}}/ && git commit -m 'feat: add {{provider}} unified connector'`
+> 1. Commit your connector: `git add connectors/{{provider}}/ && git commit -m 'feat: add {{provider}} unified connector'`
 > 2. If you'd like StackOne to index this connector, open a pull request to the connectors repository.
 > 3. Test end-to-end with a real integration account."
 

@@ -67,7 +67,7 @@ Use `-x` for full-line matching to avoid false positives from substring or hyphe
 ```bash
 npx @stackone/cli pull {{provider}}
 ```
-Verify `src/configs/{{provider}}/` was created. Save `connector_exists: true`.
+Verify `connectors/{{provider}}/` was created. Save `connector_exists: true`.
 
 Note: A provider may have indexed actions (from Step 2) but no pullable connector config. Always check the CLI list before attempting `pull`.
 
@@ -75,7 +75,7 @@ Note: A provider may have indexed actions (from Step 2) but no pullable connecto
 ```bash
 npx @stackone/cli scaffold {{provider}}
 ```
-Or if CLI unavailable, create `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` manually:
+Or if CLI unavailable, create `connectors/{{provider}}/{{provider}}.connector.s1.yaml` manually:
 ```yaml
 name: {{provider}}
 version: "1.0"
@@ -85,13 +85,13 @@ actions: []
 ```
 Save `connector_exists: false`.
 
-Save `connector_path: "src/configs/{{provider}}"` to session.
+Save `connector_path: "connectors/{{provider}}"` to session.
 
 ---
 
 ## Handoff
 
-> "Setup complete. ✓ Connector at `src/configs/{{provider}}/`
+> "Setup complete. ✓ Connector at `connectors/{{provider}}/`
 >
 > Next: configure authentication.
 > Run `/configure-auth` to continue."

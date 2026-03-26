@@ -41,7 +41,7 @@ If a `.connector-build-session.json` exists, the wizard will offer to resume fro
 
 ## What it builds
 
-A set of YAML configuration files in `src/configs/<provider>/` that expose provider API data through StackOne's unified API. Supports both StackOne built-in schemas (HRIS, ATS, CRM, etc.) and custom schemas you define.
+A set of YAML configuration files in `connectors/<provider>/` that expose provider API data through StackOne's unified API. Supports both StackOne built-in schemas (HRIS, ATS, CRM, etc.) and custom schemas you define.
 
 ## Schema options
 
@@ -53,7 +53,7 @@ A set of YAML configuration files in `src/configs/<provider>/` that expose provi
 
 ## Requirements
 
-- `connectors-template` project structure (`src/configs/` directory)
+- `connectors-template` project structure (`connectors/` directory)
 - Node.js — for the StackOne CLI (optional but recommended)
 - Provider API credentials in `.env`
 

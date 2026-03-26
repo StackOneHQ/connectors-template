@@ -14,7 +14,7 @@ If this returns a version number, the CLI is available. If it errors, proceed wi
 
 ### Validate a connector config
 ```bash
-npx @stackone/cli validate src/configs/<provider>/<provider>.connector.s1.yaml
+npx @stackone/cli validate connectors/<provider>/<provider>.connector.s1.yaml
 ```
 Checks YAML structure, required fields, and action definitions. Returns validation errors with line numbers.
 
@@ -28,7 +28,7 @@ Returns a list of provider names StackOne has indexed. Use to check if a connect
 ```bash
 npx @stackone/cli pull <provider-name>
 ```
-Downloads the connector config to `src/configs/<provider>/`. Creates the folder and YAML files if they don't exist. Use as a starting point.
+Downloads the connector config to `connectors/<provider>/`. Creates the folder and YAML files if they don't exist. Use as a starting point.
 
 ### Test an action
 ```bash
@@ -45,7 +45,7 @@ npx @stackone/cli test <provider> <action-name> --debug
 ```bash
 npx @stackone/cli scaffold <provider-name>
 ```
-Creates `src/configs/<provider>/` with a starter `<provider>.connector.s1.yaml`. Does NOT pull from StackOne's index — creates a blank template.
+Creates `connectors/<provider>/` with a starter `<provider>.connector.s1.yaml`. Does NOT pull from StackOne's index — creates a blank template.
 
 ## Environment Setup
 

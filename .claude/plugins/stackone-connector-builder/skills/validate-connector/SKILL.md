@@ -26,14 +26,14 @@ Reference `${CLAUDE_PLUGIN_ROOT}/references/cli-commands.md` for CLI usage and e
 
 Run:
 ```bash
-npx @stackone/cli validate src/configs/{{provider}}/{{provider}}.connector.s1.yaml
+npx @stackone/cli validate connectors/{{provider}}/{{provider}}.connector.s1.yaml
 ```
 
 Capture the full output. Proceed to Step 2 to interpret any errors.
 
 ### If `cli_available: false`
 
-The CLI is not available. Run the manual checklist below against every partial file in `src/configs/{{provider}}/`.
+The CLI is not available. Run the manual checklist below against every partial file in `connectors/{{provider}}/`.
 
 **Manual checklist for generic connectors:**
 
@@ -57,7 +57,7 @@ Work through each action across all `{{provider}}.{{resource}}.s1.partial.yaml` 
 
 9. **`delete` actions use DELETE** — Actions named `delete_*` must have `method: delete` in the request step.
 
-10. **All `$ref` paths in main connector file exist** — Read `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`. For every `$ref` entry under `actions`, verify the referenced partial file exists on disk at the given relative path.
+10. **All `$ref` paths in main connector file exist** — Read `connectors/{{provider}}/{{provider}}.connector.s1.yaml`. For every `$ref` entry under `actions`, verify the referenced partial file exists on disk at the given relative path.
 
 11. **No tabs — 2-space indentation only** — Scan each YAML file for tab characters (`\t`). YAML does not allow tabs. All indentation must use spaces (2 per level).
 
@@ -120,7 +120,7 @@ actions:
   - $ref: "./{{provider}}.employees.s1.partial.yaml"
 ```
 
-The file `src/configs/{{provider}}/{{provider}}.employees.s1.partial.yaml` must exist. Check for typos in the provider name, resource name, or `.s1.partial.yaml` suffix.
+The file `connectors/{{provider}}/{{provider}}.employees.s1.partial.yaml` must exist. Check for typos in the provider name, resource name, or `.s1.partial.yaml` suffix.
 
 ---
 
@@ -196,7 +196,7 @@ Once validation passes with no errors:
 > "Validation passed. ✓
 >
 > **`{{provider}}` connector summary:**
-> - Config: `src/configs/{{provider}}/{{provider}}.connector.s1.yaml`
+> - Config: `connectors/{{provider}}/{{provider}}.connector.s1.yaml`
 > - Partial files: {{list each partial file}}
 > - Actions validated: {{N}} ({{list action names}})
 > - All actions use `actionType: custom`

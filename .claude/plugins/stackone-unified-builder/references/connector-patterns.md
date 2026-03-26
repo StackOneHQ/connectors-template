@@ -6,7 +6,7 @@ Used by `map-fields` and `validate-connector` sub-skills.
 ## File Structure
 
 ```
-src/configs/<provider>/
+connectors/<provider>/
 ├── <provider>.connector.s1.yaml             # Main connector (auth, base config)
 └── <provider>.<resource>.s1.partial.yaml   # Actions for each resource
 ```

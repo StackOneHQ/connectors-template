@@ -31,7 +31,7 @@ Use any data from `get_provider_actions` or the builder's API docs.
 
 ## Step 2: Write partial YAML files
 
-Create `src/configs/{{provider}}/{{provider}}.{{resource}}.s1.partial.yaml` for each resource.
+Create `connectors/{{provider}}/{{provider}}.{{resource}}.s1.partial.yaml` for each resource.
 
 ### list action
 ```yaml
@@ -175,7 +175,7 @@ Create `src/configs/{{provider}}/{{provider}}.{{resource}}.s1.partial.yaml` for 
 
 ## Step 3: Update main connector YAML with $refs
 
-Read `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` and add a `$ref` per partial under `actions`:
+Read `connectors/{{provider}}/{{provider}}.connector.s1.yaml` and add a `$ref` per partial under `actions`:
 
 ```yaml
 actions:
@@ -188,8 +188,8 @@ actions:
 ## Step 4: Review with builder
 
 > "Config written:
-> - `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` (updated)
-> - `src/configs/{{provider}}/{{provider}}.employees.s1.partial.yaml`
+> - `connectors/{{provider}}/{{provider}}.connector.s1.yaml` (updated)
+> - `connectors/{{provider}}/{{provider}}.employees.s1.partial.yaml`
 > - ...
 >
 > Do the endpoint URLs and HTTP methods look right? Any actions need adjusting?"

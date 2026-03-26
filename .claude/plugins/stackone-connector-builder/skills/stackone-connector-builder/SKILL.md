@@ -53,7 +53,7 @@ Execute `/configure-auth` logic. Saves: `auth_type`. Writes auth block to connec
 Execute `/discover-actions` logic. Saves: `discovery_mode`, `action_scope`, `use_case`.
 
 ### Step 4 — Build Config
-Execute `/build-config` logic. Writes action YAML to `src/configs/{{provider}}/`.
+Execute `/build-config` logic. Writes action YAML to `connectors/{{provider}}/`.
 
 ### Step 5 — Validate
 Execute `/validate-connector` logic. Saves: `validated: true`.
@@ -69,7 +69,7 @@ Execute `/test-connector` logic. Saves: `tested: true`, `test_artifacts`, `compl
 {
   "provider": "workday",
   "provider_key": "workday",
-  "connector_path": "src/configs/workday",
+  "connector_path": "connectors/workday",
   "cli_available": true,
   "connector_exists": false,
   "auth_type": "oauth2",

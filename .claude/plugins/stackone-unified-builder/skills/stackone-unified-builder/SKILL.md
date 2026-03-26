@@ -86,7 +86,7 @@ Execute the full `/scope-actions` skill logic.
 
 Execute the full `/map-fields` skill logic.
 
-**Outcome:** Partial YAML files written to `src/configs/{{provider}}/`
+**Outcome:** Partial YAML files written to `connectors/{{provider}}/`
 
 ---
 
@@ -123,7 +123,7 @@ Execute the full `/test-connector` skill logic.
   "resources": ["employees", "time_off"],
   "cli_available": true,
   "connector_exists": false,
-  "connector_path": "src/configs/bamboohr",
+  "connector_path": "connectors/bamboohr",
   "auth_type": "api_key",
   "action_scope": {
     "employees": ["list", "get"],

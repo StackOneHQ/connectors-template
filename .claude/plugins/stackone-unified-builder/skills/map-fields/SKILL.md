@@ -92,7 +92,7 @@ When all fields for a resource are mapped, show the complete list and ask:
 ## Step 3: Write the partial YAML file
 
 For each resource, create or update:
-`src/configs/{{provider}}/{{provider}}.{{resource}}.s1.partial.yaml`
+`connectors/{{provider}}/{{provider}}.{{resource}}.s1.partial.yaml`
 
 Use the unified action pattern from `connector-patterns.md`. For each action in scope:
 
@@ -130,8 +130,8 @@ After all resources are mapped and partials are written:
 > "Field mapping complete. ✓
 >
 > Files written:
-> - `src/configs/{{provider}}/{{provider}}.connector.s1.yaml` (updated with $refs)
-> - `src/configs/{{provider}}/{{provider}}.employees.s1.partial.yaml`
+> - `connectors/{{provider}}/{{provider}}.connector.s1.yaml` (updated with $refs)
+> - `connectors/{{provider}}/{{provider}}.employees.s1.partial.yaml`
 > - ...
 >
 > Next step: validate the YAML configuration.
