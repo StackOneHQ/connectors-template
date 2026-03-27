@@ -127,7 +127,7 @@ Ask the user:
 **After getting the provider name, ALWAYS attempt to pull the existing connector from StackOne:**
 
 ```bash
-stackone pull <provider>
+stackone pull -c <provider>
 ```
 
 This will:
@@ -135,7 +135,11 @@ This will:
 - Place files in `connectors/<provider>/`
 - Provide a foundation to build upon
 
-**If pull succeeds**: Fork and modify the existing connector
+**If pull succeeds**:
+- Create a NEW partial file for your new actions
+- Add a `$ref` to the existing connector to include your partial
+- **DO NOT** create a separate connector or duplicate auth config
+
 **If pull fails** (connector doesn't exist): Check local configs and create new if needed:
 ```bash
 ls connectors/ | grep -i <provider>
@@ -223,11 +227,25 @@ If user selects **Extend Existing Connector**, follow the StackOne Agent workflo
 1. **Fork Existing Connector**
    ```bash
    # Pull the existing connector from StackOne
-   stackone pull <provider>
+   stackone pull -c <provider>
    ```
    - This downloads the existing connector configuration
    - Places files in `connectors/<provider>/`
    - **If pull fails**: The connector doesn't exist - redirect to Path A1 (Create New Connector)
+
+   **⚠️ CRITICAL: When extending a forked connector:**
+   - **DO NOT** create a new connector file with a different key
+   - **DO NOT** duplicate the authentication config
+   - **DO** create a new partial file for your new actions (e.g., `<provider>.<resource>.s1.partial.yaml`)
+   - **DO** add a `$ref` to the existing connector file to include your new partial
+   - **DO** leverage the existing auth config as-is
+
+   Example structure after extending:
+   ```
+   connectors/bamboohr/
+     bamboohr_v1-0-0.s1.yaml           # Existing pulled connector (may need $ref added)
+     bamboohr.new-actions.s1.partial.yaml  # Your NEW partial with new actions
+   ```
 
 2. **Set Up the StackOne Agent**
    - Ensure the StackOne Agent is configured in the project
@@ -297,10 +315,10 @@ If user selects **Schema-Based**, guide through this structured workflow:
 
 **First, pull existing connector from StackOne:**
 ```bash
-stackone pull <provider>
+stackone pull -c <provider>
 ```
 
-- **If pull succeeds**: Review and modify the existing connector files
+- **If pull succeeds**: Review the existing connector files
 - **If pull fails**: Check local configs and create new if needed:
   ```bash
   ls connectors/ | grep -i <provider>
@@ -308,6 +326,22 @@ stackone pull <provider>
   If not found locally, create new folder and files:
   - `connectors/<provider>/<provider>.connector.s1.yaml`
   - `connectors/<provider>/<provider>.<resource>.s1.partial.yaml`
+
+**⚠️ CRITICAL: When adding unified actions to a forked connector:**
+- **DO NOT** create a new connector file with a different key
+- **DO NOT** duplicate the authentication config
+- **DO** create a new partial file for your unified actions (e.g., `<provider>.unified-<resource>.s1.partial.yaml`)
+- **DO** add a `$ref` to the existing connector file to include your new partial
+- **DO** leverage the existing auth config as-is
+
+Example structure after adding unified actions:
+```
+connectors/bamboohr/
+  bamboohr_v1-0-0.s1.yaml                    # Existing pulled connector (add $ref to it)
+  bamboohr.unified-documents.s1.partial.yaml # Your NEW partial with unified actions
+```
+
+The existing connector already has working auth - don't recreate it.
 
 ### Step 2: Build Auth
 

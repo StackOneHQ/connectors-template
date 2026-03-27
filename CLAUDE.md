@@ -57,8 +57,9 @@ When building Schema-Based connectors, follow this workflow:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  1. FORK CONNECTOR                                          │
-│     └─ Run `npx @stackone/cli pull <provider>` to get existing      │
-│     └─ Fork existing or create new from template           │
+│     └─ Run `npx @stackone/cli pull -c <provider>` to get existing   │
+│     └─ Create NEW partial for your actions (don't duplicate auth)  │
+│     └─ Add $ref to existing connector to include your partial      │
 ├─────────────────────────────────────────────────────────────┤
 │  2. BUILD AUTH                                              │
 │     └─ Configure authentication (API Key, OAuth, etc.)     │
@@ -103,21 +104,29 @@ When building Schema-Based connectors, follow this workflow:
 First, pull the existing connector from StackOne:
 ```bash
 # Pull existing connector from StackOne registry
-npx @stackone/cli pull <provider>
+npx @stackone/cli pull -c <provider>
 ```
 
-If pull succeeds: Fork and modify the existing connector
+If pull succeeds:
+- **DO NOT** create a new connector file with a different key
+- **DO NOT** duplicate the authentication config
+- **DO** create a new partial file for your unified actions (e.g., `<provider>.unified-<resource>.s1.partial.yaml`)
+- **DO** add a `$ref` to the existing connector file to include your new partial
+- **DO** leverage the existing auth config as-is
+
 If pull fails: Check local configs, then create new if needed:
 ```bash
 ls connectors/ | grep -i <provider>
 ```
 
-**Step 2: Build Auth**
+**Step 2: Build Auth** (only if creating new connector)
 
-Before anything else, configure and validate authentication:
+If creating a new connector (not extending existing), configure and validate authentication:
 - Determine auth type (API Key, OAuth 2.0, etc.)
 - Configure `authentication` section in connector YAML
 - Test auth works with a simple action
+
+**If extending an existing connector, skip this step** - the pulled connector already has working auth.
 
 **Step 3: Connect Account**
 
