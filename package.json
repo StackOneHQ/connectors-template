@@ -5,6 +5,9 @@
     "author": "",
     "private": true,
     "license": "UNLICENSED",
+    "engines": {
+        "node": ">=22.14.0"
+    },
     "scripts": {
         "clean": "rimraf dist",
         "build": "node --import=tsx ./scripts/build.ts",
@@ -39,7 +42,9 @@
         "axios": "1.16.1",
         "qs": "6.15.0",
         "fast-xml-parser": "5.8.0",
-        "@xmldom/xmldom": "0.9.10",
+        "saml": {
+            "@xmldom/xmldom": "0.7.13"
+        },
         "yaml": "2.9.0",
         "uuid": "11.1.1",
         "langsmith": "0.7.1"
