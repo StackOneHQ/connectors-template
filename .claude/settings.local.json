@@ -36,11 +36,7 @@
       "mcp__stackone-agent-global__falcon_oauth",
       "mcp__stackone-agent-global__falcon_test",
       "mcp__stackone-agent-global__falcon_security",
-      "Bash(grep:*)",
-      "Bash(stackone validate:*)",
-      "Bash(npm ls *)",
-      "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(grep:*)"
     ]
   }
 }
