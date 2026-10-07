@@ -12,7 +12,7 @@ env:
 jobs:
     verify-connector-configs:
         if: github.event_name == 'pull_request'
-        runs-on: ubuntu-24.04
+        runs-on: warp-ubuntu-2404-x64-4x
         concurrency:
             group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
             cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -30,7 +30,7 @@ jobs:
 
     push-connector-configs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        runs-on: ubuntu-24.04
+        runs-on: warp-ubuntu-2404-x64-4x
         concurrency:
             group: release-${{ github.job }}-${{ github.ref }}
             cancel-in-progress: false
