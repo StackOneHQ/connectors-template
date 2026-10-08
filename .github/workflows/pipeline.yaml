@@ -18,9 +18,9 @@ jobs:
             cancel-in-progress: ${{ github.event_name == 'pull_request' }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
             - name: Use Node.js 22.14.0
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: 22.14.0
             - name: Install dependencies
@@ -36,9 +36,9 @@ jobs:
             cancel-in-progress: false
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
             - name: Use Node.js 22.14.0
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: 22.14.0
             - name: Install dependencies
