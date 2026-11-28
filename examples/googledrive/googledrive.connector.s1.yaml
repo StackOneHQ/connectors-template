@@ -3,6 +3,8 @@ info:
   title: Google Drive
   key: googledrive
   version: 1.0.0
+  changelog:
+    summary: Initial version of this example connector.
   assets:
     icon: https://stackone-logos.com/api/google-drive/filled/png
   description: Google Drive connector for document management

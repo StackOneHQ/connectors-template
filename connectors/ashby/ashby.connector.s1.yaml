@@ -3,6 +3,8 @@ info:
   title: Ashby Custom Test
   key: ashby-custom-test
   version: 1.0.0
+  changelog:
+    summary: Initial version of the Ashby example connector.
   assets:
     icon: https://stackone-logos.com/api/ashby/filled/png
   description: Ashby is an all-in-one recruiting software platform designed for ambitious teams, providing tools for applicant tracking, interview scheduling, and analytics.

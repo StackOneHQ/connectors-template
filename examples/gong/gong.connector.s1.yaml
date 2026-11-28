@@ -3,6 +3,8 @@ info:
   title: Gong
   key: gong_crm
   version: 1.0.0
+  changelog:
+    summary: Initial version of this example connector.
   description: Gong is a revenue intelligence platform that captures customer interactions and provides insights to sales teams.
   assets:
     icon: https://stackone-logos.com/api/gong/filled/png

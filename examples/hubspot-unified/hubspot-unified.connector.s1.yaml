@@ -3,6 +3,8 @@ info:
   title: HubSpot
   key: hubspot
   version: 1.0.0
+  changelog:
+    summary: Initial version of this example connector.
   assets:
     icon: https://stackone-logos.com/api/hubspot/filled/png
   description: CRM platform for marketing, sales, and customer service

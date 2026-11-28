@@ -3,6 +3,8 @@ info:
   title: Lattice HRIS
   key: lattice_hris
   version: 1.0.0
+  changelog:
+    summary: Initial version of this example connector.
   assets:
     icon: https://stackone-logos.com/api/lattice/filled/png
   description: Lattice is a people management platform for performance reviews, engagement surveys, goal tracking, and employee data management

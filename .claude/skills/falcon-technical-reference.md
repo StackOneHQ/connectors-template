@@ -44,6 +44,8 @@ info:
   title: Provider Name
   key: provider-name
   version: 1.0.0
+  changelog:
+    summary: What changed in this version. # required by `stackone push` (CLI 2.6+)
   assets:
     icon: https://stackone-logos.com/api/provider_name/filled/png
   description: Brief description of the provider
