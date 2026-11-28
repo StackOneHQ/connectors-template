@@ -3,6 +3,8 @@ info:
   title: BambooHR
   key: bamboo-hr
   version: 1.0.0
+  changelog:
+    summary: Initial version of this example connector.
   assets:
     icon: https://stackone-logos.com/api/bamboo_hr/filled/png
   description: Unified connector for BambooHR HRIS that returns employee data in a standardized schema.

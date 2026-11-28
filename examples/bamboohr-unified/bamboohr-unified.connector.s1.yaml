@@ -3,6 +3,8 @@ info:
   title: BambooHR
   key: bamboohr
   version: 1.0.0
+  changelog:
+    summary: Initial version of this example connector.
   assets:
     icon: https://stackone-logos.com/api/bamboohr/filled/png
   description: Human resources information system for managing employee data
